@@ -1,0 +1,154 @@
+package com.litongjava.llm.service;
+
+import java.io.IOException;
+import java.util.List;
+
+import com.jfinal.kit.Kv;
+import com.litongjava.db.TableResult;
+import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.llm.can.ChatStreamCallCan;
+import com.litongjava.llm.consts.AiChatEventName;
+import com.litongjava.openai.chat.ChatResponseDelta;
+import com.litongjava.openai.chat.Choice;
+import com.litongjava.openai.chat.OpenAiChatRequestVo;
+import com.litongjava.openai.chat.OpenAiChatResponseVo;
+import com.litongjava.openai.client.OpenAiClient;
+import com.litongjava.tio.core.ChannelContext;
+import com.litongjava.tio.core.Tio;
+import com.litongjava.tio.http.common.sse.SsePacket;
+import com.litongjava.tio.http.server.util.SseEmitter;
+import com.litongjava.tio.utils.json.FastJson2Utils;
+import com.litongjava.tio.utils.json.JsonUtils;
+import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
+
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okio.BufferedSource;
+
+@Slf4j
+public class ChatOpenAiStreamCommonService {
+
+  /**
+   * 启动聊天流
+   *
+   * @param chatRequestVo  聊天请求对象
+   * @param chatId        会话ID
+   * @param channelContext 通道上下文
+   * @param start         开始时间
+   */
+  public void stream(OpenAiChatRequestVo chatRequestVo, Long chatId, ChannelContext channelContext, long start) {
+    Call call = OpenAiClient.chatCompletions(chatRequestVo, getCallback(channelContext, chatId, start));
+    ChatStreamCallCan.put(chatId, call);
+  }
+
+  /**
+   * 获取回调对象
+   *
+   * @param channelContext 通道上下文
+   * @param chatId         会话ID
+   * @param start          开始时间
+   * @return 回调对象
+   */
+  public Callback getCallback(ChannelContext channelContext, Long chatId, long start) {
+    return new Callback() {
+      @Override
+      public void onResponse(Call call, Response response) throws IOException {
+        if (!response.isSuccessful()) {
+          SsePacket packet = new SsePacket(AiChatEventName.progress, "Chat model response an unsuccessful message:" + response.body().string());
+          Tio.bSend(channelContext, packet);
+        }
+
+        try (ResponseBody responseBody = response.body()) {
+          if (responseBody == null) {
+            String message = "response body is null";
+            log.error(message);
+            SsePacket ssePacket = new SsePacket(AiChatEventName.progress, message);
+            Tio.bSend(channelContext, ssePacket);
+            return;
+          }
+          StringBuffer completionContent = onResponseSuccess(channelContext, responseBody, start);
+
+          if (completionContent != null && !completionContent.toString().isEmpty()) {
+            long answerId = SnowflakeIdUtils.id();
+            TableResult<Kv> tr = Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, chatId, completionContent.toString());
+            if (tr.getCode() != 1) {
+              log.error("Failed to save assistant answer: {}", tr);
+            } else {
+              Kv kv = Kv.by("answer_id", answerId);
+              SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
+              Tio.bSend(channelContext, packet);
+            }
+          }
+        }
+        try {
+          ChatStreamCallCan.remove(chatId);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        SseEmitter.closeSeeConnection(channelContext);
+      }
+
+      @Override
+      public void onFailure(Call call, IOException e) {
+        SsePacket packet = new SsePacket(AiChatEventName.progress, "error: " + e.getMessage());
+        Tio.bSend(channelContext, packet);
+        ChatStreamCallCan.remove(chatId);
+        SseEmitter.closeSeeConnection(channelContext);
+      }
+    };
+  }
+
+  /**
+   * 处理ChatGPT成功响应
+   *
+   * @param channelContext 通道上下文
+   * @param responseBody    响应体
+   * @return 完整内容
+   * @throws IOException
+   */
+  public StringBuffer onResponseSuccess(ChannelContext channelContext, ResponseBody responseBody, Long start) throws IOException {
+    StringBuffer completionContent = new StringBuffer();
+    BufferedSource source = responseBody.source();
+    String line;
+    boolean sentCitations = false;
+    while ((line = source.readUtf8Line()) != null) {
+      if (line.length() < 1) {
+        continue;
+      }
+      // 处理数据行
+      if (line.length() > 6) {
+        String data = line.substring(6);
+        if (data.endsWith("}")) {
+          OpenAiChatResponseVo chatResponse = FastJson2Utils.parse(data, OpenAiChatResponseVo.class);
+          List<String> citations = chatResponse.getCitations();
+          if (citations != null && !sentCitations) {
+            SsePacket ssePacket = new SsePacket(AiChatEventName.citations, JsonUtils.toJson(citations));
+            Tio.bSend(channelContext, ssePacket);
+            sentCitations = true;
+          }
+          List<Choice> choices = chatResponse.getChoices();
+          if (!choices.isEmpty()) {
+            ChatResponseDelta delta = choices.get(0).getDelta();
+            String content = delta.getContent();
+            String part = delta.getContent();
+            if (part != null && !part.isEmpty()) {
+              completionContent.append(part);
+              SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", content)));
+              Tio.bSend(channelContext, ssePacket);
+            }
+          }
+        } else {
+          log.info("Data does not end with }:{}", line);
+        }
+      }
+    }
+
+    // 关闭连接
+    long end = System.currentTimeMillis();
+    log.info("finish llm in {} (ms)", (end - start));
+    return completionContent;
+  }
+}
