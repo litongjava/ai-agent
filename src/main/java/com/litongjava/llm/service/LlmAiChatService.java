@@ -44,11 +44,19 @@ public class LlmAiChatService {
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
 
-    String textQuestion = apiSendVo.getMessages().get(0).getContent();
-    if(ApiChatSendType.translator.equals(apiSendVo.getType())) {
-      textQuestion = PromptEngine.renderToString("translator_prompt.txt",Kv.by("data", textQuestion));
+    String inputQestion = apiSendVo.getMessages().get(0).getContent();
+    apiSendVo.setInput_quesiton(inputQestion);
+    String textQuestion = null;
+    if (ApiChatSendType.translator.equals(apiSendVo.getType())) {
+      if(StrUtil.isNotBlank(inputQestion)) {
+        textQuestion = PromptEngine.renderToString("translator_prompt.txt", Kv.by("data", inputQestion));
+      }else {
+        return RespBodyVo.fail("input question can not be empty");
+      }
+      
+    } else {
+      textQuestion = inputQestion;
     }
-    apiSendVo.setInput_quesiton(textQuestion);
     boolean stream = apiSendVo.isStream();
     Long schoolId = apiSendVo.getSchool_id();
     String userId = apiSendVo.getUser_id();
@@ -99,7 +107,7 @@ public class LlmAiChatService {
       }
     }
     List<Row> histories = null;
-    if(ApiChatSendType.general.equals(apiSendVo.getType())) {
+    if (ApiChatSendType.general.equals(apiSendVo.getType())) {
       try {
         histories = Aop.get(LlmChatHistoryService.class).getHistory(sessionId);
       } catch (Exception e) {
@@ -127,7 +135,7 @@ public class LlmAiChatService {
     List<ChatMessage> historyMessage = new ArrayList<>();
     if (histories == null || size < 1) {
       isFirstQuestion = true;
-    }else {
+    } else {
       for (Row record : histories) {
         String role = record.getStr("role");
         String content = record.getStr("content");
@@ -135,13 +143,11 @@ public class LlmAiChatService {
       }
     }
 
-    
-
     AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
     // save to the user question to db
-    if (StrUtil.isNotEmpty(textQuestion)) {
-      long questionId = SnowflakeIdUtils.id();
-      TableResult<Kv> ts = Aop.get(LlmChatHistoryService.class).saveUser(questionId, sessionId, textQuestion);
+    long questionId = SnowflakeIdUtils.id();
+    if (StrUtil.isNotEmpty(inputQestion)) {
+      TableResult<Kv> ts = Aop.get(LlmChatHistoryService.class).saveUser(questionId, sessionId, inputQestion);
       if (ts.getCode() != 1) {
         log.error("Failed to save message:{}", ts.toString());
       } else {
@@ -207,7 +213,7 @@ public class LlmAiChatService {
       aiChatResponseVo.setContent(message);
       return RespBodyVo.ok(message);
     }
-    if(apiSendVo.getType().equals(ApiChatSendType.general)) {
+    if (apiSendVo.getType().equals(ApiChatSendType.general)) {
       if (isFirstQuestion && textQuestion != null) {
         if (schoolDict != null) {
           textQuestion += " at " + schoolDict.getFullName();
@@ -215,6 +221,11 @@ public class LlmAiChatService {
       }
     }
 
+    ChatParamVo chatParamVo = new ChatParamVo();
+    chatParamVo.setFirstQuestion(isFirstQuestion).setTextQuestion(textQuestion)
+        //
+        .setHistory(historyMessage).setChannelContext(channelContext);
+    
     if (textQuestion != null && textQuestion.startsWith("4o:")) {
       if (stream) {
         SsePacket packet = new SsePacket(AiChatEventName.progress, "The user specifies that the gpt4o model is used for message processing");
@@ -243,15 +254,12 @@ public class LlmAiChatService {
             Tio.bSend(channelContext, packet);
           }
           aiChatResponseVo.setRewrite(textQuestion);
-          apiSendVo.setRewrite_quesiton(textQuestion);
+          chatParamVo.setRewriteQuestion(textQuestion);
         }
 
       }
 
-      ChatParamVo chatParamVo = new ChatParamVo();
-      chatParamVo.setFirstQuestion(isFirstQuestion)
-          //
-          .setHistory(historyMessage).setChannelContext(channelContext);
+  
       aiChatSearchService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }

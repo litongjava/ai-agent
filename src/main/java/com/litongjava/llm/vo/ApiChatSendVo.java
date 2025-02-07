@@ -27,5 +27,4 @@ public class ApiChatSendVo {
   private List<ChatMessage> messages;
   private List<Long> file_ids;
   private String input_quesiton;
-  private String rewrite_quesiton;
 }

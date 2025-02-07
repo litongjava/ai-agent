@@ -47,10 +47,10 @@ public class LLmChatOpenAiService {
     List<ChatMessage> history = paramVo.getHistory();
     Long sesionId = apiSendVo.getSession_id();
     List<ChatMessage> messages = apiSendVo.getMessages();
-    String rewrite_quesiton = apiSendVo.getRewrite_quesiton();
-    String textQuestion = null;
-    if (rewrite_quesiton == null) {
-      textQuestion = apiSendVo.getInput_quesiton();
+    String rewrite_quesiton = paramVo.getRewriteQuestion();
+    String textQuestion = paramVo.getTextQuestion();
+    if (rewrite_quesiton != null) {
+      textQuestion = rewrite_quesiton;
     }
 
     // 发送搜索进度
@@ -70,7 +70,9 @@ public class LLmChatOpenAiService {
     //    }
 
     //添加历史
-    messages.addAll(history);
+    if (history != null) {
+      messages.addAll(history);
+    }
     // 添加用户问题
     messages.add(new ChatMessage("user", textQuestion));
     if (stream) {
