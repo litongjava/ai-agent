@@ -8,4 +8,6 @@ public interface AgentTableNames {
   String user_asked_questions = "user_asked_questions";
   String llm_vector_embedding = "llm_vector_embedding";
 
+  String chat_upload_file = "chat_upload_file";
+
 }
