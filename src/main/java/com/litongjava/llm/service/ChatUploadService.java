@@ -157,4 +157,14 @@ public class ChatUploadService implements StorageService {
   public UploadResultVo getUrlByMd5(String md5) {
     return Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);
   }
+
+  public RespBodyVo file(String md5) {
+    boolean exists = Db.exists(AgentTableNames.chat_upload_file, "md5", md5);
+    UploadResultVo uploadResultVo = Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);
+
+    if (exists && uploadResultVo != null) {
+      return RespBodyVo.ok(uploadResultVo);
+    }
+    return RespBodyVo.fail();
+  }
 }
