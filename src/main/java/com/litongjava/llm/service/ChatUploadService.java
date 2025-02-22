@@ -8,6 +8,11 @@ import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.groq.GropConst;
+import com.litongjava.groq.GropModel;
+import com.litongjava.groq.GroqSpeechClient;
+import com.litongjava.groq.TranscriptionsRequest;
+import com.litongjava.groq.TranscriptionsResponse;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.body.RespBodyVo;
@@ -37,8 +42,12 @@ public class ChatUploadService implements StorageService {
     Long id = uploadResultVo.getId();
     if (!Db.exists(AgentTableNames.chat_upload_file, "id", id)) {
       String content = parseContent(uploadFile);
-      Row row = Row.by("id", id).set("name", uploadFile.getName()).set("content", content).set("md5", uploadResultVo.getMd5());
-      Db.save(AgentTableNames.chat_upload_file, row);
+      if (content == null) {
+        return RespBodyVo.fail("un support file type");
+      } else {
+        Row row = Row.by("id", id).set("name", uploadFile.getName()).set("content", content).set("md5", uploadResultVo.getMd5());
+        Db.save(AgentTableNames.chat_upload_file, row);
+      }
 
     }
     return RespBodyVo.ok(uploadResultVo);
@@ -46,10 +55,19 @@ public class ChatUploadService implements StorageService {
 
   private String parseContent(UploadFile uploadFile) {
     String name = uploadFile.getName();
-    String suffix = FilenameUtils.getSuffix(name);
+    byte[] data = uploadFile.getData();
+    String suffix = FilenameUtils.getSuffix(name).toLowerCase();
     String text = null;
     if ("txt".equals(suffix) || "md".equals(suffix)) {
       text = new String(uploadFile.getData(), StandardCharsets.UTF_8);
+    } else if (GropConst.SUPPORT_LIST.contains(suffix)) {
+      TranscriptionsRequest transcriptionsRequest = new TranscriptionsRequest();
+      transcriptionsRequest.setModel(GropModel.WHISPER_LARGE_V3_TURBO);
+      TranscriptionsResponse transcriptions = GroqSpeechClient.transcriptions(data, name, transcriptionsRequest);
+      text = transcriptions.getText();
+
+    } else if ("pdf".equals(suffix)) {
+
     }
     return text;
   }
