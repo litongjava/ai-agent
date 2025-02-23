@@ -128,7 +128,10 @@ public class ApiChatHandler {
     Long sesion_id = request.getLong("session_id");
     log.info("sesion_id", sesion_id);
     if (sesion_id == null) {
-      return response.fail(RespBodyVo.fail("sesion_id can not be empty"));
+      sesion_id = request.getLong("chat_id");
+      if (sesion_id == null) {
+        return response.fail(RespBodyVo.fail("sesion_id can not be empty"));
+      }
     }
 
     String userId = TioRequestContext.getUserIdString();
@@ -175,11 +178,14 @@ public class ApiChatHandler {
     CORSUtils.enableCORS(response);
 
     Long sessionId = request.getLong("session_id");
-    String name = request.getParam("name");
-
     if (sessionId == null) {
-      return response.fail(RespBodyVo.fail("session_id can not be empty"));
+      sessionId = request.getLong("chat_id");
+      if (sessionId == null) {
+        return response.fail(RespBodyVo.fail("session_id can not be empty"));
+      }
     }
+
+    String name = request.getParam("name");
 
     if (StrUtil.isEmpty(name)) {
       return response.fail(RespBodyVo.fail("name can not be empty"));
@@ -204,20 +210,23 @@ public class ApiChatHandler {
 
   public HttpResponse getChatHistory(HttpRequest request) {
     String userId = TioRequestContext.getUserIdString();
-    
+
     HttpResponse response = TioRequestContext.getResponse();
     CORSUtils.enableCORS(response);
 
     Long session_id = request.getLong("session_id");
     if (session_id == null) {
-      return response.fail(RespBodyVo.fail("chat_id can not be empty"));
+      session_id = request.getLong("chat_id");
+      if (session_id == null) {
+        return response.fail(RespBodyVo.fail("chat_id can not be empty"));
+      }
     }
 
     Integer pageNo = request.getInt("offset");
     Integer pageSize = request.getInt("limit");
 
-    if(userId==null) {
-      userId=request.getString("user_id");
+    if (userId == null) {
+      userId = request.getString("user_id");
     }
     if (pageNo == null) {
       pageNo = 1;
@@ -228,10 +237,8 @@ public class ApiChatHandler {
       pageSize = 100;
     }
 
-    
     LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
     boolean exists = llmChatSessionService.exists(session_id, userId);
-
     if (!exists) {
       log.info("invalid session:{},{}", session_id, userId);
       return response.fail(RespBodyVo.fail("invalid session"));
@@ -368,12 +375,17 @@ public class ApiChatHandler {
   }
 
   public HttpResponse stop(HttpRequest request) {
-    Long session_id = request.getLong("session_id");
     HttpResponse response = TioRequestContext.getResponse();
     CORSUtils.enableCORS(response);
+
+    Long session_id = request.getLong("session_id");
     if (session_id == null) {
-      return response.setJson(RespBodyVo.fail("id can not be empty"));
+      session_id = request.getLong("chat_id");
+      if (session_id == null) {
+        return response.setJson(RespBodyVo.fail("id can not be empty"));
+      }
     }
+
     ChatStreamCallCan.stop(session_id);
     return response.setJson(RespBodyVo.ok());
   }

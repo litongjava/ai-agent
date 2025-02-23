@@ -2,26 +2,30 @@ package com.litongjava.llm.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
+import org.postgresql.util.PGobject;
 
 import com.jfinal.kit.Kv;
 import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
+import com.litongjava.openai.chat.MessageRole;
 import com.litongjava.table.services.ApiTable;
+import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
 
 public class LlmChatHistoryService {
 
   public RespBodyVo getHistory(Long session_id, int pageNo, int pageSize) {
-    TableInput ti = TableInput.create().setColumns("id,role,content,liked,metadata,create_time")
+    TableInput ti = TableInput.create().setColumns("id,role,content,liked,metadata,citations,images,create_time")
         //
-        .setJsonFields("metadata")
+        .setJsonFields("metadata,citations,images")
         //
         .set("session_id", session_id).set("hidden", false)
         //
@@ -85,5 +89,14 @@ public class LlmChatHistoryService {
         AgentBotUserThumbUtils.send(messageText.toString());
       });
     }
+  }
+
+  public void saveFuntionValue(Long chatId, String fnName, String fnValue) {
+    PGobject pgJson = PgObjectUtils.json(fnValue);
+
+    Row saveMessage = Row.by("id", SnowflakeIdUtils.id()).set("session_id", chatId)
+        //
+        .set("role", MessageRole.function).set("content", fnName).set("metadata", pgJson);
+    Db.save(AgentTableNames.llm_chat_history, saveMessage);
   }
 }
