@@ -8,6 +8,7 @@ import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
+import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.utils.AgentBotQuestionUtils;
@@ -198,6 +199,10 @@ public class LlmAiChatService {
       }
 
       log.info("question:{}", stringBuffer.toString());
+      RunningNotificationService notification = AiAgentContext.me().getNotification();
+      if (notification != null) {
+        notification.sendQuestion(stringBuffer.toString());
+      }
 
       if (!EnvUtils.isDev()) {
         String thatTextQuestion = textQuestion;
