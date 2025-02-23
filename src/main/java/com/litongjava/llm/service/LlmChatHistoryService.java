@@ -11,6 +11,7 @@ import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.kit.PgObjectUtils;
+import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
 import com.litongjava.model.body.RespBodyVo;
@@ -44,7 +45,7 @@ public class LlmChatHistoryService {
   }
 
   public List<Row> getHistory(Long sessionId) {
-    String sql = "select create_time,role,content,metadata from %s where session_id =? order by create_time";
+    String sql = "select role,type,content,metadata,create_time from %s where session_id =? order by create_time";
     sql = String.format(sql, AgentTableNames.llm_chat_history);
     return Db.find(sql, sessionId);
   }
@@ -57,7 +58,7 @@ public class LlmChatHistoryService {
 
   public TableResult<Kv> saveUser(long id, Long sessionId, String textQuestion, List<UploadResultVo> fileInfo) {
     TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id", sessionId);
-    ti.set("metadata", fileInfo);
+    ti.set("type", AgentMessageType.FILE).set("metadata", fileInfo);
     ti.setJsonFields("metadata");
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;

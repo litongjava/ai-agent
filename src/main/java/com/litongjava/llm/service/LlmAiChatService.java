@@ -9,6 +9,7 @@ import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
+import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.utils.AgentBotQuestionUtils;
@@ -142,9 +143,26 @@ public class LlmAiChatService {
       isFirstQuestion = true;
     } else {
       for (Row record : histories) {
-        String role = record.getStr("role");
-        String content = record.getStr("content");
-        historyMessage.add(new ChatMessage(role, content));
+        String messageType = record.getStr("type");
+        if (AgentMessageType.TEXT.equals(messageType)) {
+          String role = record.getStr("role");
+          String content = record.getStr("content");
+          historyMessage.add(new ChatMessage(role, content));
+        } else if (AgentMessageType.FILE.equals(messageType)) {
+          String role = record.getStr("role");
+          String content = record.getStr("content");
+
+          String str = record.getStr("metadata");
+          List<UploadResultVo> uploadVos = JsonUtils.parseArray(str, UploadResultVo.class);
+          for (UploadResultVo uploadResult : uploadVos) {
+            historyMessage.add(new ChatMessage(role, String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
+          }
+
+          if (StrUtil.notBlank(content)) {
+            historyMessage.add(new ChatMessage(role, content));
+          }
+
+        }
       }
     }
 
