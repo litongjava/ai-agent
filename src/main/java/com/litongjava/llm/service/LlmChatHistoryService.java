@@ -110,4 +110,9 @@ public class LlmChatHistoryService {
     Db.save(AgentTableNames.llm_chat_history, saveMessage);
   }
 
+  public void remove(Long previous_question_id, Long previous_answer_id) {
+    String sql = "delete from %s where id=? or id=?";
+    sql = String.format(sql, AgentTableNames.llm_chat_history);
+    Db.delete(sql, previous_question_id, previous_answer_id);
+  }
 }

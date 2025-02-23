@@ -113,10 +113,17 @@ public class LlmAiChatService {
         return RespBodyVo.fail(error);
       }
     }
+
+    LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
+    if (apiSendVo.isRewrite()) {
+      Long previous_question_id = apiSendVo.getPrevious_question_id();
+      Long previous_answer_id = apiSendVo.getPrevious_answer_id();
+      llmChatHistoryService.remove(previous_question_id, previous_answer_id);
+    }
     List<Row> histories = null;
     if (ApiChatSendType.general.equals(apiSendVo.getType())) {
       try {
-        histories = Aop.get(LlmChatHistoryService.class).getHistory(sessionId);
+        histories = llmChatHistoryService.getHistory(sessionId);
       } catch (Exception e) {
         e.printStackTrace();
         String error = e.getMessage();
@@ -178,9 +185,9 @@ public class LlmAiChatService {
       if (file_ids != null) {
         fileInfo = Aop.get(ChatUploadService.class).getFileBasicInfoByIds(file_ids);
         chatParamVo.setUploadFiles(fileInfo);
-        ts = Aop.get(LlmChatHistoryService.class).saveUser(questionId, sessionId, inputQestion, fileInfo);
+        ts = llmChatHistoryService.saveUser(questionId, sessionId, inputQestion, fileInfo);
       } else {
-        ts = Aop.get(LlmChatHistoryService.class).saveUser(questionId, sessionId, inputQestion);
+        ts = llmChatHistoryService.saveUser(questionId, sessionId, inputQestion);
       }
 
       if (ts.getCode() != 1) {
@@ -244,7 +251,7 @@ public class LlmAiChatService {
       long answerId = SnowflakeIdUtils.id();
       aiChatResponseVo.setAnswerId(answerId);
 
-      Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sessionId, message);
+      llmChatHistoryService.saveAssistant(answerId, sessionId, message);
       Kv kv = Kv.by("answer_id", answerId);
       if (stream) {
         SsePacket ssePacket = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(Kv.by("content", message)));

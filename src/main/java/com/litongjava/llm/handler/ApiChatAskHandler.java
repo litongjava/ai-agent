@@ -50,6 +50,9 @@ public class ApiChatAskHandler {
     String provider = reqVo.getString("provider");
     String model = reqVo.getString("model");
     JSONArray jsonArray = reqVo.getJSONArray("file_ids");
+    Boolean rewrite = reqVo.getBoolean("rewrite");
+    Long previous_question_id = reqVo.getLong("previous_question_id");
+    Long previous_answer_id = reqVo.getLong("previous_answer_id");
 
     if (stream == null) {
       stream = true;
@@ -92,6 +95,8 @@ public class ApiChatAskHandler {
       List<Long> fileIds = jsonArray.toJavaList(Long.class);
       apiChatSendVo.setFile_ids(fileIds);
     }
+
+    apiChatSendVo.setRewrite(rewrite).setPrevious_question_id(previous_question_id).setPrevious_answer_id(previous_answer_id);
     LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
 
     if (validateChatId) {
