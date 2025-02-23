@@ -23,6 +23,7 @@ import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
 import com.litongjava.template.PromptEngine;
+import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -40,20 +41,23 @@ import okhttp3.Callback;
 @Slf4j
 public class LlmAiChatService {
   ChatOpenAiStreamCommonService chatStreamCommonService = Aop.get(ChatOpenAiStreamCommonService.class);
-  LLmChatOpenAiService aiChatSearchService = Aop.get(LLmChatOpenAiService.class);
+  LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
 
+    /**
+     * inputQestion 用户输入的问题
+     * textQuestion 用户输入的问题和提示器
+     */
     String inputQestion = apiSendVo.getMessages().get(0).getContent();
     apiSendVo.setInput_quesiton(inputQestion);
     String textQuestion = null;
     if (ApiChatSendType.translator.equals(apiSendVo.getType())) {
-      if(StrUtil.isNotBlank(inputQestion)) {
+      if (StrUtil.isNotBlank(inputQestion)) {
         textQuestion = PromptEngine.renderToString("translator_prompt.txt", Kv.by("data", inputQestion));
-      }else {
+      } else {
         return RespBodyVo.fail("input question can not be empty");
       }
-      
     } else {
       textQuestion = inputQestion;
     }
@@ -63,6 +67,7 @@ public class LlmAiChatService {
     Long sessionId = apiSendVo.getSession_id();
     Long appId = apiSendVo.getApp_id();
     String type = apiSendVo.getType();
+    List<Long> file_ids = apiSendVo.getFile_ids();
 
     if (textQuestion != null) {
       if (stream) {
@@ -70,7 +75,6 @@ public class LlmAiChatService {
         SsePacket packet = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(kv));
         Tio.bSend(channelContext, packet);
       }
-
     }
     if (textQuestion.startsWith("__echo:")) {
       String[] split = textQuestion.split(":");
@@ -144,10 +148,21 @@ public class LlmAiChatService {
     }
 
     AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
+    // save file content to history
+    ChatParamVo chatParamVo = new ChatParamVo();
     // save to the user question to db
     long questionId = SnowflakeIdUtils.id();
     if (StrUtil.isNotEmpty(inputQestion)) {
-      TableResult<Kv> ts = Aop.get(LlmChatHistoryService.class).saveUser(questionId, sessionId, inputQestion);
+      TableResult<Kv> ts = null;
+      List<UploadResultVo> fileInfo = null;
+      if (file_ids != null) {
+        fileInfo = Aop.get(ChatUploadService.class).getFileBasicInfoByIds(file_ids);
+        chatParamVo.setUploadFiles(fileInfo);
+        ts = Aop.get(LlmChatHistoryService.class).saveUser(questionId, sessionId, inputQestion, fileInfo);
+      } else {
+        ts = Aop.get(LlmChatHistoryService.class).saveUser(questionId, sessionId, inputQestion);
+      }
+
       if (ts.getCode() != 1) {
         log.error("Failed to save message:{}", ts.toString());
       } else {
@@ -157,7 +172,11 @@ public class LlmAiChatService {
           Tio.bSend(channelContext, packet);
         }
         aiChatResponseVo.setQuesitonId(questionId);
+        if (fileInfo != null) {
+          aiChatResponseVo.setUploadFiles(fileInfo);
+        }
       }
+
     }
 
     if (StrUtil.isNotEmpty(textQuestion)) {
@@ -221,11 +240,10 @@ public class LlmAiChatService {
       }
     }
 
-    ChatParamVo chatParamVo = new ChatParamVo();
     chatParamVo.setFirstQuestion(isFirstQuestion).setTextQuestion(textQuestion)
         //
         .setHistory(historyMessage).setChannelContext(channelContext);
-    
+
     if (textQuestion != null && textQuestion.startsWith("4o:")) {
       if (stream) {
         SsePacket packet = new SsePacket(AiChatEventName.progress, "The user specifies that the gpt4o model is used for message processing");
@@ -236,11 +254,6 @@ public class LlmAiChatService {
       return RespBodyVo.ok(aiChatResponseVo);
 
     } else {
-      //      if (stream) {
-      //        SsePacket packet = new SsePacket(AiChatEventName.progress, "Serach it is processed using ppl");
-      //        Tio.bSend(channelContext, packet);
-      //      }
-
       if (textQuestion != null) {
         if (apiSendVo.isRewrite()) {
           textQuestion = Aop.get(LlmRewriteQuestionService.class).rewrite(textQuestion, historyMessage);
@@ -256,11 +269,9 @@ public class LlmAiChatService {
           aiChatResponseVo.setRewrite(textQuestion);
           chatParamVo.setRewriteQuestion(textQuestion);
         }
-
       }
 
-  
-      aiChatSearchService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
+      dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }
 

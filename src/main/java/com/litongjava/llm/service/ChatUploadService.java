@@ -2,6 +2,8 @@ package com.litongjava.llm.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.jfinal.kit.Kv;
 import com.jfinal.kit.StrKit;
@@ -79,7 +81,7 @@ public class ChatUploadService implements StorageService {
     } else if ("docx".equals(suffix)) {
       text = DocxUtils.parseDocx(data);
 
-    } else if ("jpg".contentEquals(text) || "jpeg".contentEquals(text) || "png".contentEquals(text)) {
+    } else if ("jpg".contentEquals(suffix) || "jpeg".contentEquals(suffix) || "png".contentEquals(suffix)) {
       text = Aop.get(LlmOcrService.class).parse(data, name);
     }
     return text;
@@ -179,5 +181,27 @@ public class ChatUploadService implements StorageService {
       return RespBodyVo.ok(uploadResultVo);
     }
     return RespBodyVo.fail();
+  }
+
+  public List<UploadResultVo> getFileBasicInfoByIds(List<Long> file_ids) {
+    List<Row> row = Aop.get(SystemUploadFileDao.class).getFileBasicInfoByIds(file_ids);
+    List<UploadResultVo> files = new ArrayList<>();
+    for (Row record : row) {
+      Long id = record.getLong("id");
+      String url = this.getUrl(record.getStr("bucket_name"), record.getStr("target_name"));
+      String originFilename = record.getStr("filename");
+      String md5 = record.getString("md5");
+      Long size = record.getLong("size");
+      UploadResultVo uploadResultVo = new UploadResultVo(id, originFilename, size, url, md5);
+      Row contentRow = Db.findColumnsById(AgentTableNames.chat_upload_file, "content", id);
+      if (row != null) {
+        String content = contentRow.getStr("content");
+        uploadResultVo.setContent(content);
+        files.add(uploadResultVo);
+      } else {
+        log.error("not found content of id:" + id);
+      }
+    }
+    return files;
   }
 }

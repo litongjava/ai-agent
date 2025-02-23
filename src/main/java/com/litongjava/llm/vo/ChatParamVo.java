@@ -3,6 +3,7 @@ package com.litongjava.llm.vo;
 import java.util.List;
 
 import com.litongjava.openai.chat.ChatMessage;
+import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 
 import lombok.AllArgsConstructor;
@@ -20,4 +21,5 @@ public class ChatParamVo {
   private String textQuestion;
   private List<ChatMessage> history;
   private ChannelContext channelContext;
+  private List<UploadResultVo> uploadFiles;
 }

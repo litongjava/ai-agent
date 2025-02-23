@@ -5,6 +5,7 @@ public interface AiChatEventName {
   String progress = "progress";
   String markdown = "markdown";
   String delta = "delta";
+  String reasoning = "reasoning";
   String citations = "citations";
   String message_id = "message_id";
 

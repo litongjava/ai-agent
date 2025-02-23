@@ -139,6 +139,12 @@ public class ChatOpenAiStreamCommonService {
               SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", content)));
               Tio.bSend(channelContext, ssePacket);
             }
+
+            String reasoning_content = delta.getReasoning_content();
+            if (reasoning_content != null && !reasoning_content.isEmpty()) {
+              SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", reasoning_content)));
+              Tio.bSend(channelContext, ssePacket);
+            }
           }
         } else {
           log.info("Data does not end with }:{}", line);

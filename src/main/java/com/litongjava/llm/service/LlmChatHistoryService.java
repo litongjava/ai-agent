@@ -17,6 +17,7 @@ import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
 import com.litongjava.openai.chat.MessageRole;
 import com.litongjava.table.services.ApiTable;
+import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
 
@@ -50,6 +51,14 @@ public class LlmChatHistoryService {
 
   public TableResult<Kv> saveUser(Long id, Long sessionId, String textQuestion) {
     TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id", sessionId);
+    TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
+    return ts;
+  }
+
+  public TableResult<Kv> saveUser(long id, Long sessionId, String textQuestion, List<UploadResultVo> fileInfo) {
+    TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id", sessionId);
+    ti.set("metadata", fileInfo);
+    ti.setJsonFields("metadata");
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;
   }
@@ -99,4 +108,5 @@ public class LlmChatHistoryService {
         .set("role", MessageRole.function).set("content", fnName).set("metadata", pgJson);
     Db.save(AgentTableNames.llm_chat_history, saveMessage);
   }
+
 }

@@ -8,6 +8,7 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.vo.AiChatResponseVo;
+import com.litongjava.llm.vo.ApiChatSendProvider;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.openai.chat.ChatMessage;
@@ -15,9 +16,11 @@ import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
+import com.litongjava.siliconflow.SiliconFlowConsts;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
+import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
@@ -26,10 +29,10 @@ import okhttp3.Call;
 import okhttp3.Callback;
 
 @Slf4j
-public class LLmChatOpenAiService {
+public class LLmChatDispatcherService {
 
   /**
-   * 使用搜索模型处理消息
+   * 使用模型处理消息
    *
    * @param schoolId        学校ID
    * @param sessionId       会话ID
@@ -42,6 +45,8 @@ public class LLmChatOpenAiService {
    * @return 响应对象
    */
   public AiChatResponseVo predict(ApiChatSendVo apiSendVo, ChatParamVo paramVo, AiChatResponseVo aiChatResponseVo) {
+    String provider = apiSendVo.getProvider();
+    String model = apiSendVo.getModel();
     Boolean stream = apiSendVo.isStream();
     ChannelContext channelContext = paramVo.getChannelContext();
     List<ChatMessage> history = paramVo.getHistory();
@@ -55,7 +60,7 @@ public class LLmChatOpenAiService {
 
     // 发送搜索进度
     if (stream && channelContext != null) {
-      Kv kv = Kv.by("content", "- Searching... \r\n");
+      Kv kv = Kv.by("content", "- openai... \r\n");
       SsePacket packet = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(kv));
       Tio.bSend(channelContext, packet);
     }
@@ -78,37 +83,59 @@ public class LLmChatOpenAiService {
     if (stream) {
       SsePacket packet = new SsePacket(AiChatEventName.input, JsonUtils.toJson(history));
       Tio.bSend(channelContext, packet);
-    }
+      if (provider.equals(ApiChatSendProvider.siliconflow)) {
+        OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(model)
+            //
+            .setChatMessages(messages);
 
-    OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI)
-        //
-        .setChatMessages(messages);
+        log.info("chatRequestVo:{}", JsonUtils.toSkipNullJson(chatRequestVo));
 
-    log.info("chatRequestVo:{}", JsonUtils.toSkipNullJson(chatRequestVo));
-    if (stream) {
-      // 发送回复提示
-      //      Kv kv = Kv.by("content", "- Reply to your question.\r\n\r\n");
-      //      SsePacket replyPacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(kv));
-      //      Tio.bSend(channelContext, replyPacket);
+        chatRequestVo.setStream(true);
+        long start = System.currentTimeMillis();
 
-      chatRequestVo.setStream(true);
-      long start = System.currentTimeMillis();
+        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, start);
 
-      Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, start);
-      Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
-      ChatStreamCallCan.put(sesionId, call);
-      return null;
+        String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
+        Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
+        ChatStreamCallCan.put(sesionId, call);
+        return null;
+
+      } else {
+        OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI)
+            //
+            .setChatMessages(messages);
+
+        log.info("chatRequestVo:{}", JsonUtils.toSkipNullJson(chatRequestVo));
+
+        chatRequestVo.setStream(true);
+        long start = System.currentTimeMillis();
+
+        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, start);
+        Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
+        ChatStreamCallCan.put(sesionId, call);
+        return null;
+
+      }
     } else {
-      OpenAiChatResponseVo chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
-      List<String> citations = chatCompletions.getCitations();
-      String answerContent = chatCompletions.getChoices().get(0).getMessage().getContent();
-      long answerId = SnowflakeIdUtils.id();
-      Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sesionId, answerContent);
-      aiChatResponseVo.setContent(answerContent);
-      aiChatResponseVo.setAnswerId(answerId);
-      aiChatResponseVo.setCition(citations);
-      return aiChatResponseVo;
+      if (provider.equals(ApiChatSendProvider.siliconflow)) {
+
+      } else {
+        OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI)
+            //
+            .setChatMessages(messages);
+        OpenAiChatResponseVo chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
+        List<String> citations = chatCompletions.getCitations();
+        String answerContent = chatCompletions.getChoices().get(0).getMessage().getContent();
+        long answerId = SnowflakeIdUtils.id();
+        Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sesionId, answerContent);
+        aiChatResponseVo.setContent(answerContent);
+        aiChatResponseVo.setAnswerId(answerId);
+        aiChatResponseVo.setCition(citations);
+        return aiChatResponseVo;
+      }
+
     }
+    return aiChatResponseVo;
   }
 
 }
