@@ -1,9 +1,11 @@
 package com.litongjava.llm.consts;
 
 public interface AiChatEventName {
-  String question = "question";
   String progress = "progress";
+  String question = "question";
+  String rewrite = "rewrite";
   String markdown = "markdown";
+
   String delta = "delta";
   String reasoning = "reasoning";
   String citations = "citations";

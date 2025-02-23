@@ -1,5 +1,7 @@
 package com.litongjava.llm.service;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,11 +21,15 @@ import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
+import com.litongjava.model.web.WebPageContent;
 import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
+import com.litongjava.searxng.SearxngResult;
+import com.litongjava.searxng.SearxngSearchClient;
+import com.litongjava.searxng.SearxngSearchResponse;
 import com.litongjava.template.PromptEngine;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
@@ -61,7 +67,9 @@ public class LlmAiChatService {
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
-    } else {
+    }
+    //
+    else {
       textQuestion = inputQestion;
     }
     boolean stream = apiSendVo.isStream();
@@ -74,8 +82,7 @@ public class LlmAiChatService {
 
     if (textQuestion != null) {
       if (stream) {
-        Kv kv = Kv.by("content", "- Think about your question: " + textQuestion + "\r\n");
-        SsePacket packet = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(kv));
+        SsePacket packet = new SsePacket(AiChatEventName.question, textQuestion);
         Tio.bSend(channelContext, packet);
       }
     }
@@ -120,8 +127,9 @@ public class LlmAiChatService {
       Long previous_answer_id = apiSendVo.getPrevious_answer_id();
       llmChatHistoryService.remove(previous_question_id, previous_answer_id);
     }
+    AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
     List<Row> histories = null;
-    if (ApiChatSendType.general.equals(apiSendVo.getType())) {
+    if (ApiChatSendType.general.equals(apiSendVo.getType()) || ApiChatSendType.search.equals(apiSendVo.getType())) {
       try {
         histories = llmChatHistoryService.getHistory(sessionId);
       } catch (Exception e) {
@@ -174,7 +182,6 @@ public class LlmAiChatService {
       }
     }
 
-    AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
     // save file content to history
     ChatParamVo chatParamVo = new ChatParamVo();
     // save to the user question to db
@@ -285,21 +292,41 @@ public class LlmAiChatService {
       return RespBodyVo.ok(aiChatResponseVo);
 
     } else {
-      if (textQuestion != null) {
-        if (apiSendVo.isRewrite()) {
-          textQuestion = Aop.get(LlmRewriteQuestionService.class).rewrite(textQuestion, historyMessage);
-          log.info("rewrite question:{}", textQuestion);
+      if (textQuestion != null && historyMessage.size() > 1) {
 
-          if (stream && channelContext != null) {
-            SsePacket packet = new SsePacket(AiChatEventName.question, textQuestion);
-            Tio.bSend(channelContext, packet);
-            Kv kv = Kv.by("content", "- Understand your intention: " + textQuestion + "\r\n");
-            packet = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(kv));
-            Tio.bSend(channelContext, packet);
-          }
-          aiChatResponseVo.setRewrite(textQuestion);
-          chatParamVo.setRewriteQuestion(textQuestion);
+        textQuestion = Aop.get(LlmRewriteQuestionService.class).rewrite(textQuestion, historyMessage);
+        log.info("rewrite question:{}", textQuestion);
+
+        if (stream && channelContext != null) {
+          Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
+          SsePacket packet = new SsePacket(AiChatEventName.rewrite, JsonUtils.toJson(kv));
+          Tio.bSend(channelContext, packet);
         }
+        aiChatResponseVo.setRewrite(textQuestion);
+        chatParamVo.setRewriteQuestion(textQuestion);
+      }
+
+      if (ApiChatSendType.search.equals(type)) {
+        log.info("search:{}", textQuestion);
+        SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
+        List<SearxngResult> results = searchResponse.getResults();
+        List<WebPageContent> pages = new ArrayList<>();
+        StringBuffer markdown = new StringBuffer();
+        for (int i = 0; i < results.size(); i++) {
+          SearxngResult searxngResult = results.get(i);
+          String title = searxngResult.getTitle();
+          String url = searxngResult.getUrl();
+          pages.add(new WebPageContent(title, url));
+          markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
+        }
+        SsePacket ssePacket = new SsePacket(AiChatEventName.citations, JsonUtils.toSkipNullJson(pages));
+        Tio.send(channelContext, ssePacket);
+
+        String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+        // 3. 使用 PromptEngine 模版引擎填充提示词
+        Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
+        String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
+        chatParamVo.setSystemPrompt(systemPrompt);
       }
 
       dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
@@ -318,13 +345,14 @@ public class LlmAiChatService {
 
     OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI).setChatMessages(messages);
 
+    long answerId = SnowflakeIdUtils.id();
     if (stream) {
       Kv kv = Kv.by("content", "- Reply to your question.\r\n\r\n");
       SsePacket packet = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(kv));
       Tio.bSend(channelContext, packet);
 
       chatRequestVo.setStream(true);
-      Callback callback = chatStreamCommonService.getCallback(channelContext, sessionId, start);
+      Callback callback = chatStreamCommonService.getCallback(channelContext, sessionId, answerId, start);
       Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
       log.info("add call:{}", sessionId);
       ChatStreamCallCan.put(sessionId, call);

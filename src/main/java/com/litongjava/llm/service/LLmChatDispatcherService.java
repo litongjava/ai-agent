@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.db.activerecord.Db;
+import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
+import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ApiChatSendProvider;
@@ -25,6 +29,7 @@ import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
+import com.litongjava.tio.utils.thread.TioThreadUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
@@ -57,6 +62,7 @@ public class LLmChatDispatcherService {
     String rewrite_quesiton = paramVo.getRewriteQuestion();
     String textQuestion = paramVo.getTextQuestion();
     List<UploadResultVo> uploadFiles = paramVo.getUploadFiles();
+    String systemPrompt = paramVo.getSystemPrompt();
     if (rewrite_quesiton != null) {
       textQuestion = rewrite_quesiton;
     }
@@ -87,27 +93,31 @@ public class LLmChatDispatcherService {
         messages.add(new ChatMessage("user", "upload a " + uploadResultVo.getName() + " content is:" + uploadResultVo.getContent()));
       }
     }
+    if (systemPrompt != null) {
+      messages.add(new ChatMessage("system", systemPrompt));
+    }
     messages.add(new ChatMessage("user", textQuestion));
 
+    long answerId = SnowflakeIdUtils.id();
     if (stream) {
-      SsePacket packet = new SsePacket(AiChatEventName.input, JsonUtils.toJson(history));
-      Tio.bSend(channelContext, packet);
+      //SsePacket packet = new SsePacket(AiChatEventName.input, JsonUtils.toJson(history));
+      //Tio.bSend(channelContext, packet);
 
       if (provider.equals(ApiChatSendProvider.siliconflow)) {
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages);
+        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
         long start = System.currentTimeMillis();
 
-        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, start);
+        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, answerId, start);
         String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
         Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
         ChatStreamCallCan.put(sesionId, call);
         return null;
 
       } else {
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages);
+        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
         long start = System.currentTimeMillis();
-        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, start);
+        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, answerId, sesionId, start);
         Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
         ChatStreamCallCan.put(sesionId, call);
         return null;
@@ -123,7 +133,6 @@ public class LLmChatDispatcherService {
         OpenAiChatResponseVo chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
         List<String> citations = chatCompletions.getCitations();
         String answerContent = chatCompletions.getChoices().get(0).getMessage().getContent();
-        long answerId = SnowflakeIdUtils.id();
         Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sesionId, answerContent);
         aiChatResponseVo.setContent(answerContent);
         aiChatResponseVo.setAnswerId(answerId);
@@ -135,18 +144,22 @@ public class LLmChatDispatcherService {
     return aiChatResponseVo;
   }
 
-  private OpenAiChatRequestVo genOpenAiRequestVo(String model, List<ChatMessage> messages) {
+  private OpenAiChatRequestVo genOpenAiRequestVo(String model, List<ChatMessage> messages, Long answerId) {
     OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(model)
         //
         .setChatMessages(messages);
 
     chatRequestVo.setStream(true);
     String requestJson = JsonUtils.toSkipNullJson(chatRequestVo);
-    log.info("chatRequestVo:{}", requestJson);
     RunningNotificationService notification = AiAgentContext.me().getNotification();
     if (notification != null) {
       notification.sendPredict(requestJson);
     }
+    log.info("chatRequestVo:{}", requestJson);
+    // save to database
+    TioThreadUtils.execute(() -> {
+      Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
+    });
     return chatRequestVo;
   }
 

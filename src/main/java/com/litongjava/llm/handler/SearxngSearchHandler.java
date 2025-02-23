@@ -44,7 +44,7 @@ public class SearxngSearchHandler {
     param.setNo_cache(no_cache);
     param.setTheme(theme);
 
-    String baseUrl = EnvUtils.getStr("SEARXNG_API_URL");
+    String baseUrl = EnvUtils.getStr("SEARXNG_API_BASE");
     String endpoint = baseUrl + "/search";
 
     // 使用封装后的参数调用服务

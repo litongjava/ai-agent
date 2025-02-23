@@ -14,10 +14,11 @@ import lombok.experimental.Accessors;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Accessors(chain=true)
+@Accessors(chain = true)
 public class ChatParamVo {
   private boolean isFirstQuestion;
   private String rewriteQuestion;
+  private String systemPrompt;
   private String textQuestion;
   private List<ChatMessage> history;
   private ChannelContext channelContext;

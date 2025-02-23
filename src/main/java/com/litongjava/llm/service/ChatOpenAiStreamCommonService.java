@@ -19,7 +19,6 @@ import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.http.server.util.SseEmitter;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;
-import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
@@ -39,8 +38,8 @@ public class ChatOpenAiStreamCommonService {
    * @param channelContext 通道上下文
    * @param start         开始时间
    */
-  public void stream(OpenAiChatRequestVo chatRequestVo, Long chatId, ChannelContext channelContext, long start) {
-    Call call = OpenAiClient.chatCompletions(chatRequestVo, getCallback(channelContext, chatId, start));
+  public void stream(OpenAiChatRequestVo chatRequestVo, ChannelContext channelContext, long chatId, long answerId, long start) {
+    Call call = OpenAiClient.chatCompletions(chatRequestVo, getCallback(channelContext, chatId, answerId, start));
     ChatStreamCallCan.put(chatId, call);
   }
 
@@ -52,7 +51,7 @@ public class ChatOpenAiStreamCommonService {
    * @param start          开始时间
    * @return 回调对象
    */
-  public Callback getCallback(ChannelContext channelContext, Long chatId, long start) {
+  public Callback getCallback(ChannelContext channelContext, long chatId, long answerId, long start) {
     return new Callback() {
       @Override
       public void onResponse(Call call, Response response) throws IOException {
@@ -72,7 +71,6 @@ public class ChatOpenAiStreamCommonService {
           StringBuffer completionContent = onResponseSuccess(channelContext, responseBody, start);
 
           if (completionContent != null && !completionContent.toString().isEmpty()) {
-            long answerId = SnowflakeIdUtils.id();
             TableResult<Kv> tr = Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, chatId, completionContent.toString());
             if (tr.getCode() != 1) {
               log.error("Failed to save assistant answer: {}", tr);
