@@ -189,7 +189,7 @@ public class ChatUploadService implements StorageService {
     for (Row record : row) {
       Long id = record.getLong("id");
       String url = this.getUrl(record.getStr("bucket_name"), record.getStr("target_name"));
-      String originFilename = record.getStr("filename");
+      String originFilename = record.getStr("name");
       String md5 = record.getString("md5");
       Long size = record.getLong("size");
       UploadResultVo uploadResultVo = new UploadResultVo(id, originFilename, size, url, md5);

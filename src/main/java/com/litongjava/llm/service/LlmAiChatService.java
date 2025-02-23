@@ -52,6 +52,7 @@ public class LlmAiChatService {
      * textQuestion 用户输入的问题和提示器
      */
     String inputQestion = apiSendVo.getMessages().get(0).getContent();
+    apiSendVo.getMessages().remove(0);
     apiSendVo.setInput_quesiton(inputQestion);
     String textQuestion = null;
     if (ApiChatSendType.translator.equals(apiSendVo.getType())) {

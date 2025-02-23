@@ -79,7 +79,7 @@ public class LLmChatDispatcherService {
 
     //添加历史
     if (history != null) {
-      messages.addAll(history);
+      messages.addAll(0, history);
     }
     // 添加用户问题
     if (uploadFiles != null) {
