@@ -96,7 +96,9 @@ public class ApiChatAskHandler {
       apiChatSendVo.setFile_ids(fileIds);
     }
 
-    apiChatSendVo.setRewrite(rewrite).setPrevious_question_id(previous_question_id).setPrevious_answer_id(previous_answer_id);
+    if (rewrite != null) {
+      apiChatSendVo.setRewrite(rewrite).setPrevious_question_id(previous_question_id).setPrevious_answer_id(previous_answer_id);
+    }
     LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
 
     if (validateChatId) {
