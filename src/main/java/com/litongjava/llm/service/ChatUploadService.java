@@ -1,5 +1,6 @@
 package com.litongjava.llm.service;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import com.jfinal.kit.Kv;
@@ -15,6 +16,8 @@ import com.litongjava.groq.TranscriptionsRequest;
 import com.litongjava.groq.TranscriptionsResponse;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
+import com.litongjava.llm.utils.DocxUtils;
+import com.litongjava.llm.utils.PdfUtils;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.costants.TioBootAdminTableNames;
@@ -41,19 +44,24 @@ public class ChatUploadService implements StorageService {
     UploadResultVo uploadResultVo = uploadBytes(category, uploadFile);
     Long id = uploadResultVo.getId();
     if (!Db.exists(AgentTableNames.chat_upload_file, "id", id)) {
-      String content = parseContent(uploadFile);
-      if (content == null) {
-        return RespBodyVo.fail("un support file type");
-      } else {
-        Row row = Row.by("id", id).set("name", uploadFile.getName()).set("content", content).set("md5", uploadResultVo.getMd5());
-        Db.save(AgentTableNames.chat_upload_file, row);
+      try {
+        String content = parseContent(uploadFile);
+        if (content == null) {
+          return RespBodyVo.fail("un support file type");
+        } else {
+          Row row = Row.by("id", id).set("name", uploadFile.getName()).set("content", content).set("md5", uploadResultVo.getMd5());
+          Db.save(AgentTableNames.chat_upload_file, row);
+        }
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+        return RespBodyVo.fail(e.getMessage());
       }
 
     }
     return RespBodyVo.ok(uploadResultVo);
   }
 
-  private String parseContent(UploadFile uploadFile) {
+  private String parseContent(UploadFile uploadFile) throws IOException {
     String name = uploadFile.getName();
     byte[] data = uploadFile.getData();
     String suffix = FilenameUtils.getSuffix(name).toLowerCase();
@@ -67,7 +75,12 @@ public class ChatUploadService implements StorageService {
       text = transcriptions.getText();
 
     } else if ("pdf".equals(suffix)) {
+      text = PdfUtils.parseContent(data);
+    } else if ("docx".equals(suffix)) {
+      text = DocxUtils.parseDocx(data);
 
+    } else if ("jpg".contentEquals(text) || "jpeg".contentEquals(text) || "png".contentEquals(text)) {
+      text = Aop.get(LlmOcrService.class).parse(data, name);
     }
     return text;
   }

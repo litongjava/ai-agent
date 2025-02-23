@@ -15,7 +15,7 @@ public class PdfUtils {
    * @return 提取的文本内容
    * @throws IOException 如果PDF解析失败
    */
-  public static String extraText(byte[] pdfBytes) throws IOException {
+  public static String parseContent(byte[] pdfBytes) throws IOException {
     try (InputStream is = new ByteArrayInputStream(pdfBytes); PDDocument document = PDDocument.load(is)) {
       PDFTextStripper stripper = new PDFTextStripper();
       stripper.setSortByPosition(true); // 按页面布局排序

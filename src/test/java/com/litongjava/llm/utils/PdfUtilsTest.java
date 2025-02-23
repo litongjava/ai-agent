@@ -17,7 +17,7 @@ public class PdfUtilsTest {
     byte[] bytes = FileUtil.readBytes(new File(path));
     String extraText = null;
     try {
-      extraText = PdfUtils.extraText(bytes);
+      extraText = PdfUtils.parseContent(bytes);
       System.out.println(extraText);
     } catch (IOException e) {
       e.printStackTrace();
