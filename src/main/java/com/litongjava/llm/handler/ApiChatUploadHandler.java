@@ -3,7 +3,6 @@ package com.litongjava.llm.handler;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.service.ChatUploadService;
 import com.litongjava.model.body.RespBodyVo;
-import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.http.common.HttpRequest;
 import com.litongjava.tio.http.common.HttpResponse;

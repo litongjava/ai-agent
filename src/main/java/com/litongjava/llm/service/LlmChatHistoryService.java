@@ -2,6 +2,7 @@ package com.litongjava.llm.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.jfinal.kit.Kv;
 import com.litongjava.db.TableInput;
@@ -54,7 +55,7 @@ public class LlmChatHistoryService {
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;
   }
-  
+
   public void like(Long questionId, Long answerId, Boolean like, String userId) {
     String sql = "update %s set liked=? where id=?";
     sql = String.format(sql, AgentTableNames.llm_chat_history);
