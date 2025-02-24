@@ -12,10 +12,12 @@ import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
+import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.service.LlmQuestionRecommendService;
+import com.litongjava.llm.service.RunningNotificationService;
 import com.litongjava.llm.service.SearchPromptService;
 import com.litongjava.llm.service.VectorService;
 import com.litongjava.model.body.RespBodyVo;
@@ -25,6 +27,7 @@ import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.http.common.HttpRequest;
 import com.litongjava.tio.http.common.HttpResponse;
 import com.litongjava.tio.http.server.util.CORSUtils;
+import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.hutool.StrUtil;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 
@@ -272,14 +275,37 @@ public class ApiChatHandler {
     if (!exists) {
       return response.fail(RespBodyVo.fail("invalid quesion id"));
     }
-
     exists = Db.exists(AgentTableNames.llm_chat_history, "id", answerId);
-
     if (!exists) {
       return response.fail(RespBodyVo.fail("invalid answer id"));
     }
 
     Aop.get(LlmChatHistoryService.class).like(questionId, answerId, like, userId);
+
+    String sql = "SELECT (SELECT content FROM %s WHERE id = ?) AS question,(SELECT content FROM %s WHERE id = ?) AS answer";
+    sql = String.format(sql, AgentTableNames.llm_chat_history, AgentTableNames.llm_chat_history);
+
+    Row row = Db.findFirst(sql, questionId, answerId);
+    StringBuffer messageText = new StringBuffer();
+    if (like) {
+      messageText.append("赞").append("\r\n");
+    } else {
+      messageText.append("踩").append("\r\n");
+    }
+    String question = row.getStr("question");
+    String answer = row.getString("answer");
+
+    messageText.append("app.env:").append(EnvUtils.env()).append("\r\n");
+    messageText.append("user_id:").append(userId).append("\r\n");
+    messageText.append("question_id:").append(questionId).append("\r\n");
+    messageText.append("question:").append(question).append("\r\n\r\n");
+    messageText.append("answer_id:").append(answerId).append("\r\n");
+    messageText.append("answer:").append(answer).append("\r\n");
+
+    RunningNotificationService notification = AiAgentContext.me().getNotification();
+    if (notification != null) {
+      notification.sendLike(messageText);
+    }
     return response.setJson(RespBodyVo.ok());
   }
 
