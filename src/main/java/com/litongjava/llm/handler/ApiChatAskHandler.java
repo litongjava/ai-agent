@@ -82,19 +82,26 @@ public class ApiChatAskHandler {
       return response;
     }
 
+    ApiChatSendVo apiChatSendVo = new ApiChatSendVo();
+
+    if (jsonArray != null) {
+      try {
+        List<Long> fileIds = jsonArray.toJavaList(Long.class);
+        apiChatSendVo.setFile_ids(fileIds);
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+        response.setJson(RespBodyVo.fail("Fail to parse file_ids:" + e.getMessage()));
+        return response;
+      }
+    }
+
     List<ChatMessage> messageList = messages.toJavaList(ChatMessage.class);
 
-    ApiChatSendVo apiChatSendVo = new ApiChatSendVo();
     apiChatSendVo.setProvider(provider).setModel(model).setType(type).setUser_id(userId)
         //
         .setSession_id(session_id).setSchool_id(schoolId)
         //
         .setApp_id(appId).setChat_type(chatType).setStream(stream).setMessages(messageList);
-
-    if (jsonArray != null) {
-      List<Long> fileIds = jsonArray.toJavaList(Long.class);
-      apiChatSendVo.setFile_ids(fileIds);
-    }
 
     if (rewrite != null) {
       apiChatSendVo.setRewrite(rewrite).setPrevious_question_id(previous_question_id).setPrevious_answer_id(previous_answer_id);
