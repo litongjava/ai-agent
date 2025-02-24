@@ -19,7 +19,7 @@ import com.litongjava.tio.utils.hutool.FilenameUtils;
 
 public class LlmOcrService {
 
-  String prompt = "Convert the image to text and just output the text.";
+  String prompt = "Convert the image to text and just output the text.If the picture does not contain text, please describe the image.";
 
   public String parse(byte[] data, String filename) {
 
