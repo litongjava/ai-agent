@@ -7,6 +7,7 @@ import com.jfinal.kit.Kv;
 import com.litongjava.db.TableResult;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
+import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.openai.chat.ChatResponseDelta;
 import com.litongjava.openai.chat.Choice;
@@ -56,8 +57,19 @@ public class ChatOpenAiStreamCommonService {
       @Override
       public void onResponse(Call call, Response response) throws IOException {
         if (!response.isSuccessful()) {
-          SsePacket packet = new SsePacket(AiChatEventName.progress, "Chat model response an unsuccessful message:" + response.body().string());
+          String data = "Chat model response an unsuccessful message:" + response.body().string();
+          log.error(data);
+          RunningNotificationService notification = AiAgentContext.me().getNotification();
+          notification.sendError(data);
+          SsePacket packet = new SsePacket(AiChatEventName.error, data);
           Tio.bSend(channelContext, packet);
+          try {
+            ChatStreamCallCan.remove(chatId);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+          SseEmitter.closeSeeConnection(channelContext);
+          return;
         }
 
         try (ResponseBody responseBody = response.body()) {

@@ -1,9 +1,11 @@
 package com.litongjava.llm.service;
 
 public interface RunningNotificationService {
-  void sendQuestion(String string);
+  void sendQuestion(String msg);
 
-  void sendPredict(String requestJson);
+  void sendPredict(String msg);
 
-  void sendLike(StringBuffer messageText);
+  void sendLike(String msg);
+
+  void sendError(String msg);
 }
