@@ -73,7 +73,7 @@ public class LLmChatDispatcherService {
 
     // 发送搜索进度
     if (stream && channelContext != null) {
-      Kv kv = Kv.by("content", "- openai... \r\n");
+      Kv kv = Kv.by("content", "- " + provider + "\r\n");
       SsePacket packet = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(kv));
       Tio.bSend(channelContext, packet);
     }
