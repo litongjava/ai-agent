@@ -23,5 +23,4 @@ public class PdfUtils {
       return stripper.getText(document);
     }
   }
-
 }

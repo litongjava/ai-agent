@@ -1,7 +1,5 @@
 package com.litongjava.llm.service;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,15 +9,8 @@ import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
-import com.litongjava.groq.GropConst;
-import com.litongjava.groq.GropModel;
-import com.litongjava.groq.GroqSpeechClient;
-import com.litongjava.groq.TranscriptionsRequest;
-import com.litongjava.groq.TranscriptionsResponse;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
-import com.litongjava.llm.utils.DocxUtils;
-import com.litongjava.llm.utils.PdfUtils;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.costants.TioBootAdminTableNames;
@@ -39,6 +30,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 @Slf4j
 public class ChatUploadService implements StorageService {
+  ChatFileService chatFileService = Aop.get(ChatFileService.class);
+
   public RespBodyVo upload(String category, UploadFile uploadFile) {
     if (StrKit.isBlank(category)) {
       category = "default";
@@ -47,7 +40,7 @@ public class ChatUploadService implements StorageService {
     Long id = uploadResultVo.getId();
     if (!Db.exists(AgentTableNames.chat_upload_file, "id", id)) {
       try {
-        String content = parseContent(uploadFile);
+        String content = chatFileService.parseContent(uploadFile);
         if (content == null) {
           return RespBodyVo.fail("un support file type");
         } else {
@@ -61,30 +54,6 @@ public class ChatUploadService implements StorageService {
 
     }
     return RespBodyVo.ok(uploadResultVo);
-  }
-
-  private String parseContent(UploadFile uploadFile) throws IOException {
-    String name = uploadFile.getName();
-    byte[] data = uploadFile.getData();
-    String suffix = FilenameUtils.getSuffix(name).toLowerCase();
-    String text = null;
-    if ("txt".equals(suffix) || "md".equals(suffix)) {
-      text = new String(uploadFile.getData(), StandardCharsets.UTF_8);
-    } else if (GropConst.SUPPORT_LIST.contains(suffix)) {
-      TranscriptionsRequest transcriptionsRequest = new TranscriptionsRequest();
-      transcriptionsRequest.setModel(GropModel.WHISPER_LARGE_V3_TURBO);
-      TranscriptionsResponse transcriptions = GroqSpeechClient.transcriptions(data, name, transcriptionsRequest);
-      text = transcriptions.getText();
-
-    } else if ("pdf".equals(suffix)) {
-      text = PdfUtils.parseContent(data);
-    } else if ("docx".equals(suffix)) {
-      text = DocxUtils.parseDocx(data);
-
-    } else if ("jpg".contentEquals(suffix) || "jpeg".contentEquals(suffix) || "png".contentEquals(suffix)) {
-      text = Aop.get(LlmOcrService.class).parse(data, name);
-    }
-    return text;
   }
 
   public UploadResultVo uploadBytes(String category, UploadFile uploadFile) {
