@@ -58,6 +58,13 @@ public class ApiChatAskHandler {
       stream = true;
     }
 
+    if (provider == null) {
+      response.setJson(RespBodyVo.fail("provider can not be empty"));
+      return response;
+    } else {
+      provider = provider.toLowerCase();
+    }
+
     if (type == null) {
       type = "general";
     }

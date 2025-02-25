@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.consts.AiModelNames;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
@@ -22,6 +23,7 @@ import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
 import com.litongjava.siliconflow.SiliconFlowConsts;
+import com.litongjava.siliconflow.SiliconFlowModels;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
@@ -30,6 +32,8 @@ import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
+import com.litongjava.volcengine.VolcEngineConst;
+import com.litongjava.volcengine.VolcEngineModels;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
@@ -103,7 +107,12 @@ public class LLmChatDispatcherService {
       //SsePacket packet = new SsePacket(AiChatEventName.input, JsonUtils.toJson(history));
       //Tio.bSend(channelContext, packet);
 
-      if (provider.equals(ApiChatSendProvider.siliconflow)) {
+      if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
+        if (AiModelNames.DEEPSEEK_R1.equals(model)) {
+          model = SiliconFlowModels.DEEPSEEK_R1;
+        } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
+          model = SiliconFlowModels.DEEPSEEK_V3;
+        }
         OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
         long start = System.currentTimeMillis();
 
@@ -113,7 +122,22 @@ public class LLmChatDispatcherService {
         ChatStreamCallCan.put(sesionId, call);
         return null;
 
-      } else {
+      } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
+        if (AiModelNames.DEEPSEEK_R1.equals(model)) {
+          model = VolcEngineModels.DEEPSEEK_R1_250120;
+        } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
+          model = VolcEngineModels.DEEPSEEK_V3_241226;
+        }
+        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+        long start = System.currentTimeMillis();
+        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, answerId, start);
+        String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
+        Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+        ChatStreamCallCan.put(sesionId, call);
+        return null;
+      }
+      //
+      else {
         OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
         long start = System.currentTimeMillis();
@@ -124,7 +148,7 @@ public class LLmChatDispatcherService {
 
       }
     } else {
-      if (provider.equals(ApiChatSendProvider.siliconflow)) {
+      if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
 
       } else {
         OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI)

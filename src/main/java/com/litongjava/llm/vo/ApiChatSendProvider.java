@@ -1,7 +1,8 @@
 package com.litongjava.llm.vo;
 
 public interface ApiChatSendProvider {
-  String openai = "openai";
-  String gemini = "gemini";
-  String siliconflow = "siliconflow";
+  String OPENAI = "openai";
+  String GEMINI = "gemini";
+  String SILICONFLOW = "siliconflow";
+  String VOLCENGINE = "volcengine";
 }
