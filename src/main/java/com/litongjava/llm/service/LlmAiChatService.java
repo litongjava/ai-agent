@@ -44,11 +44,10 @@ import com.litongjava.tio.utils.thread.TioThreadUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
-import okhttp3.Callback;
 
 @Slf4j
 public class LlmAiChatService {
-  ChatOpenAiStreamCommonService chatStreamCommonService = Aop.get(ChatOpenAiStreamCommonService.class);
+
   LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
@@ -352,7 +351,7 @@ public class LlmAiChatService {
       Tio.bSend(channelContext, packet);
 
       chatRequestVo.setStream(true);
-      Callback callback = chatStreamCommonService.getCallback(channelContext, sessionId, answerId, start);
+      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
       Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
       log.info("add call:{}", sessionId);
       ChatStreamCallCan.put(sessionId, call);

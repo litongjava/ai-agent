@@ -37,7 +37,6 @@ import com.litongjava.volcengine.VolcEngineModels;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
-import okhttp3.Callback;
 
 @Slf4j
 public class LLmChatDispatcherService {
@@ -61,7 +60,7 @@ public class LLmChatDispatcherService {
     Boolean stream = apiSendVo.isStream();
     ChannelContext channelContext = paramVo.getChannelContext();
     List<ChatMessage> history = paramVo.getHistory();
-    Long sesionId = apiSendVo.getSession_id();
+    Long sessionId = apiSendVo.getSession_id();
     List<ChatMessage> messages = apiSendVo.getMessages();
     String rewrite_quesiton = paramVo.getRewriteQuestion();
     String textQuestion = paramVo.getTextQuestion();
@@ -116,10 +115,10 @@ public class LLmChatDispatcherService {
         OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
         long start = System.currentTimeMillis();
 
-        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, answerId, start);
+        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
         String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
         Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
-        ChatStreamCallCan.put(sesionId, call);
+        ChatStreamCallCan.put(sessionId, call);
         return null;
 
       } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
@@ -130,10 +129,10 @@ public class LLmChatDispatcherService {
         }
         OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
         long start = System.currentTimeMillis();
-        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, sesionId, answerId, start);
+        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
         String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
         Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
-        ChatStreamCallCan.put(sesionId, call);
+        ChatStreamCallCan.put(sessionId, call);
         return null;
       }
       //
@@ -141,9 +140,9 @@ public class LLmChatDispatcherService {
         OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
         long start = System.currentTimeMillis();
-        Callback callback = Aop.get(ChatOpenAiStreamCommonService.class).getCallback(channelContext, answerId, sesionId, start);
+        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
         Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
-        ChatStreamCallCan.put(sesionId, call);
+        ChatStreamCallCan.put(sessionId, call);
         return null;
 
       }
@@ -157,7 +156,7 @@ public class LLmChatDispatcherService {
         OpenAiChatResponseVo chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
         List<String> citations = chatCompletions.getCitations();
         String answerContent = chatCompletions.getChoices().get(0).getMessage().getContent();
-        Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sesionId, answerContent);
+        Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sessionId, answerContent);
         aiChatResponseVo.setContent(answerContent);
         aiChatResponseVo.setAnswerId(answerId);
         aiChatResponseVo.setCition(citations);
