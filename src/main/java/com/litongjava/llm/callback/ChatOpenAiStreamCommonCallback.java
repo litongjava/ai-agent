@@ -1,4 +1,4 @@
-package com.litongjava.llm.service;
+package com.litongjava.llm.callback;
 
 import java.io.IOException;
 import java.util.List;
@@ -9,6 +9,8 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AiChatEventName;
+import com.litongjava.llm.service.LlmChatHistoryService;
+import com.litongjava.llm.service.RunningNotificationService;
 import com.litongjava.openai.chat.ChatResponseDelta;
 import com.litongjava.openai.chat.Choice;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;

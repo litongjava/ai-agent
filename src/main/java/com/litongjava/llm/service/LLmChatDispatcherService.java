@@ -9,6 +9,7 @@ import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.kit.PgObjectUtils;
+import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AgentTableNames;
