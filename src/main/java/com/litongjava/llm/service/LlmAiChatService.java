@@ -319,7 +319,7 @@ public class LlmAiChatService {
           pages.add(new WebPageContent(title, url));
           markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
         }
-        SsePacket ssePacket = new SsePacket(AiChatEventName.citations, JsonUtils.toSkipNullJson(pages));
+        SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
         Tio.send(channelContext, ssePacket);
 
         String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());

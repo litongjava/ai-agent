@@ -135,7 +135,7 @@ public class ChatOpenAiStreamCommonService {
           OpenAiChatResponseVo chatResponse = FastJson2Utils.parse(data, OpenAiChatResponseVo.class);
           List<String> citations = chatResponse.getCitations();
           if (citations != null && !sentCitations) {
-            SsePacket ssePacket = new SsePacket(AiChatEventName.citations, JsonUtils.toJson(citations));
+            SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toJson(citations));
             Tio.bSend(channelContext, ssePacket);
             sentCitations = true;
           }
