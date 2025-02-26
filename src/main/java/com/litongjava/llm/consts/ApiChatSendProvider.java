@@ -1,4 +1,4 @@
-package com.litongjava.llm.vo;
+package com.litongjava.llm.consts;
 
 public interface ApiChatSendProvider {
   String OPENAI = "openai";
