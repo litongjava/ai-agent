@@ -179,7 +179,7 @@ public class LLmChatDispatcherService {
     if (notification != null) {
       notification.sendPredict(requestJson);
     }
-    log.info("chatRequestVo:{}", requestJson);
+    // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
       Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));

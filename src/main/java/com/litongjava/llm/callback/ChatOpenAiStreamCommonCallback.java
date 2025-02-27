@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.db.TableResult;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
@@ -37,7 +36,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
   public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, long chatId, long answerId, long start) {
     this.channelContext = channelContext;
     this.chatId = chatId;
-    this.answerId = chatId;
+    this.answerId = answerId;
     this.start = start;
   }
 
@@ -70,14 +69,14 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       StringBuffer completionContent = onResponseSuccess(channelContext, responseBody, start);
 
       if (completionContent != null && !completionContent.toString().isEmpty()) {
-        TableResult<Kv> tr = Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, chatId, completionContent.toString());
-        if (tr.getCode() != 1) {
-          log.error("Failed to save assistant answer: {}", tr);
-        } else {
-          Kv kv = Kv.by("answer_id", answerId);
-          SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
-          Tio.bSend(channelContext, packet);
+        try {
+          Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, chatId, completionContent.toString());
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
         }
+        Kv kv = Kv.by("answer_id", answerId);
+        SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
+        Tio.bSend(channelContext, packet);
       }
     }
     try {

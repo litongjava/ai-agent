@@ -46,13 +46,12 @@ public class LlmChatSessionService {
 
     TableInput ti = TableInput.create();
     ti.set("user_id", userId);
+    ti.set("chat_type", chat_type);
+    ti.set("deleted", 0);
 
     if (schoolId != null) {
       ti.set("school_id", schoolId);
     }
-    ti.set("chat_type", chat_type);
-    ti.set("deleted", 0);
-
     ti.pageNo(pageNo).pageSize(pageSize);
     ti.orderBy("create_time").asc(false);
 
