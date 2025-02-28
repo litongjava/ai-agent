@@ -56,17 +56,19 @@ public class LlmAiChatService {
 
     /**
      * inputQestion 用户输入的问题
-     * textQuestion 用户输入的问题和提示器
+     * textQuestion 用户输入的问题和提示词
      */
     List<ChatMessage> messages = apiSendVo.getMessages();
     String inputQestion = null;
+    String textQuestion = null;
     if (messages != null) {
       inputQestion = messages.get(0).getContent();
       messages.remove(0);
+      textQuestion = inputQestion;
     }
 
     apiSendVo.setInput_quesiton(inputQestion);
-    String textQuestion = null;
+    
     // save file content to history
     ChatParamVo chatParamVo = new ChatParamVo();
     String type = apiSendVo.getType();
@@ -97,10 +99,6 @@ public class LlmAiChatService {
       log.info("celebrity:{}", textQuestion);
       String systemPrompt = celebrity(channelContext, chatSendArgs);
       chatParamVo.setSystemPrompt(systemPrompt);
-    }
-    //
-    else {
-      textQuestion = inputQestion;
     }
 
     if (textQuestion != null) {
