@@ -40,8 +40,8 @@ public class LlmChatSessionService {
   public boolean exists(Long id, String userId) {
     String cacheName = AgentTableNames.llm_chat_session + "_exists";
     String key = id + "_" + userId;
-    boolean exists = EhCacheKit.get(cacheName, key);
-    if (exists) {
+    Boolean exists = EhCacheKit.getBoolean(cacheName, key);
+    if (exists != null && exists) {
       return exists;
     }
     String sql = "select count(1) from %s where id=? and user_id=? and deleted=0";
