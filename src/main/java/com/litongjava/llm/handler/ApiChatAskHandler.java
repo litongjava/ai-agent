@@ -8,6 +8,7 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.service.LlmAiChatService;
 import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.vo.ApiChatSendVo;
+import com.litongjava.llm.vo.ChatSendArgs;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.tio.boot.http.TioRequestContext;
@@ -84,13 +85,19 @@ public class ApiChatAskHandler {
     }
 
     JSONArray messages = reqVo.getJSONArray("messages");
-    if (messages == null || messages.size() < 1) {
-      response.setJson(RespBodyVo.fail("Messages array can not be empty"));
-      return response;
+    JSONObject args = reqVo.getJSONObject("args");
+    if (args == null) {
+      if (messages == null || messages.size() < 1) {
+        response.setJson(RespBodyVo.fail("Messages array can not be empty"));
+        return response;
+      }
     }
-
     ApiChatSendVo apiChatSendVo = new ApiChatSendVo();
-
+    if (args != null) {
+      ChatSendArgs javaObject = args.toJavaObject(ChatSendArgs.class);
+      apiChatSendVo.setArgs(javaObject);
+    }
+    
     if (jsonArray != null) {
       try {
         List<Long> fileIds = jsonArray.toJavaList(Long.class);
@@ -102,13 +109,17 @@ public class ApiChatAskHandler {
       }
     }
 
-    List<ChatMessage> messageList = messages.toJavaList(ChatMessage.class);
+    if(messages!=null) {
+      List<ChatMessage> messageList = messages.toJavaList(ChatMessage.class);
+      apiChatSendVo.setMessages(messageList);
+    }
+    
 
     apiChatSendVo.setProvider(provider).setModel(model).setType(type).setUser_id(userId)
         //
         .setSession_id(session_id).setSchool_id(schoolId)
         //
-        .setApp_id(appId).setChat_type(chatType).setStream(stream).setMessages(messageList);
+        .setApp_id(appId).setChat_type(chatType).setStream(stream);
 
     if (rewrite != null) {
       apiChatSendVo.setRewrite(rewrite).setPrevious_question_id(previous_question_id).setPrevious_answer_id(previous_answer_id);

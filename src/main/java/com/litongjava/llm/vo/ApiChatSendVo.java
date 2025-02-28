@@ -22,6 +22,7 @@ public class ApiChatSendVo {
   private Long app_id;
   private Long school_id;
   private Integer chat_type;
+  private ChatSendArgs args;
   private boolean stream;
   private boolean rewrite;
   private Long previous_question_id;

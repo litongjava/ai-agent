@@ -20,6 +20,7 @@ import com.litongjava.llm.utils.AgentBotQuestionUtils;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
+import com.litongjava.llm.vo.ChatSendArgs;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.web.WebPageContent;
@@ -57,50 +58,73 @@ public class LlmAiChatService {
      * inputQestion 用户输入的问题
      * textQuestion 用户输入的问题和提示器
      */
-    String inputQestion = apiSendVo.getMessages().get(0).getContent();
-    apiSendVo.getMessages().remove(0);
+    List<ChatMessage> messages = apiSendVo.getMessages();
+    String inputQestion = null;
+    if (messages != null) {
+      inputQestion = messages.get(0).getContent();
+      messages.remove(0);
+    }
+
     apiSendVo.setInput_quesiton(inputQestion);
     String textQuestion = null;
-    if (ApiChatSendType.translator.equals(apiSendVo.getType())) {
-      if (StrUtil.isNotBlank(inputQestion)) {
-        textQuestion = PromptEngine.renderToString("translator_prompt.txt", Kv.by("data", inputQestion));
-      } else {
-        return RespBodyVo.fail("input question can not be empty");
-      }
-    }
-    //
-    else {
-      textQuestion = inputQestion;
-    }
+    // save file content to history
+    ChatParamVo chatParamVo = new ChatParamVo();
+    String type = apiSendVo.getType();
     boolean stream = apiSendVo.isStream();
     Long schoolId = apiSendVo.getSchool_id();
     String userId = apiSendVo.getUser_id();
     Long sessionId = apiSendVo.getSession_id();
     Long appId = apiSendVo.getApp_id();
-    String type = apiSendVo.getType();
     List<Long> file_ids = apiSendVo.getFile_ids();
+    ChatSendArgs chatSendArgs = apiSendVo.getArgs();
+
+    if (ApiChatSendType.translator.equals(type)) {
+      if (StrUtil.isNotBlank(inputQestion)) {
+        textQuestion = PromptEngine.renderToString("translator_prompt.txt", Kv.by("data", inputQestion));
+      } else {
+        return RespBodyVo.fail("input question can not be empty");
+      }
+    } else if (ApiChatSendType.search.equals(type)) {
+      log.info("search:{}", textQuestion);
+      String systemPrompt = search(channelContext, textQuestion);
+      chatParamVo.setSystemPrompt(systemPrompt);
+
+    } else if (ApiChatSendType.celebrity.equals(type)) {
+      String name = chatSendArgs.getName();
+      String institution = chatSendArgs.getInstitution();
+      inputQestion = name + " " + institution;
+      textQuestion = inputQestion;
+      log.info("celebrity:{}", textQuestion);
+      String systemPrompt = celebrity(channelContext, chatSendArgs);
+      chatParamVo.setSystemPrompt(systemPrompt);
+    }
+    //
+    else {
+      textQuestion = inputQestion;
+    }
 
     if (textQuestion != null) {
       if (stream) {
         SsePacket packet = new SsePacket(AiChatEventName.question, textQuestion);
         Tio.bSend(channelContext, packet);
       }
-    }
-    if (textQuestion.startsWith("__echo:")) {
-      String[] split = textQuestion.split(":");
-      if (stream) {
-        SsePacket packet = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", "\r\n\r\n")));
-        Tio.bSend(channelContext, packet);
 
-        packet = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", split[1])));
-        Tio.bSend(channelContext, packet);
+      if (textQuestion.startsWith("__echo:")) {
+        String[] split = textQuestion.split(":");
+        if (stream) {
+          SsePacket packet = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", "\r\n\r\n")));
+          Tio.bSend(channelContext, packet);
 
-        packet = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", "end")));
-        Tio.bSend(channelContext, packet);
+          packet = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", split[1])));
+          Tio.bSend(channelContext, packet);
 
-        SseEmitter.closeSeeConnection(channelContext);
+          packet = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", "end")));
+          Tio.bSend(channelContext, packet);
+
+          SseEmitter.closeSeeConnection(channelContext);
+        }
+        return RespBodyVo.ok(new AiChatResponseVo(split[1]));
       }
-      return RespBodyVo.ok(new AiChatResponseVo(split[1]));
     }
 
     SchoolDict schoolDict = null;
@@ -182,8 +206,6 @@ public class LlmAiChatService {
       }
     }
 
-    // save file content to history
-    ChatParamVo chatParamVo = new ChatParamVo();
     // save to the user question to db
     long questionId = SnowflakeIdUtils.id();
     if (StrUtil.isNotEmpty(inputQestion)) {
@@ -306,33 +328,61 @@ public class LlmAiChatService {
         chatParamVo.setRewriteQuestion(textQuestion);
       }
 
-      if (ApiChatSendType.search.equals(type)) {
-        log.info("search:{}", textQuestion);
-        SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
-        List<SearxngResult> results = searchResponse.getResults();
-        List<WebPageContent> pages = new ArrayList<>();
-        StringBuffer markdown = new StringBuffer();
-        for (int i = 0; i < results.size(); i++) {
-          SearxngResult searxngResult = results.get(i);
-          String title = searxngResult.getTitle();
-          String url = searxngResult.getUrl();
-          pages.add(new WebPageContent(title, url));
-          markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
-        }
-        SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
-        Tio.send(channelContext, ssePacket);
-
-        String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
-        // 3. 使用 PromptEngine 模版引擎填充提示词
-        Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
-        String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
-        chatParamVo.setSystemPrompt(systemPrompt);
-      }
-
       dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }
 
+  }
+
+  private String celebrity(ChannelContext channelContext, ChatSendArgs chatSendArgs) {
+    String name = chatSendArgs.getName();
+    String institution = chatSendArgs.getInstitution();
+    String textQuestion = name + " " + institution;
+
+    SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
+    List<SearxngResult> results = searchResponse.getResults();
+    List<WebPageContent> pages = new ArrayList<>();
+    StringBuffer markdown = new StringBuffer();
+    for (int i = 0; i < results.size(); i++) {
+      SearxngResult searxngResult = results.get(i);
+      String title = searxngResult.getTitle();
+      String url = searxngResult.getUrl();
+      pages.add(new WebPageContent(title, url));
+      markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
+    }
+    if (channelContext != null) {
+      SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
+      Tio.send(channelContext, ssePacket);
+    }
+
+    // 3. 使用 PromptEngine 模版引擎填充提示词
+    Kv kv = Kv.by("name", name).set("institution", institution).set("info", markdown);
+    String systemPrompt = PromptEngine.renderToString("celebrity_prompt.txt", kv);
+    return systemPrompt;
+  }
+
+  private String search(ChannelContext channelContext, String textQuestion) {
+    SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
+    List<SearxngResult> results = searchResponse.getResults();
+    List<WebPageContent> pages = new ArrayList<>();
+    StringBuffer markdown = new StringBuffer();
+    for (int i = 0; i < results.size(); i++) {
+      SearxngResult searxngResult = results.get(i);
+      String title = searxngResult.getTitle();
+      String url = searxngResult.getUrl();
+      pages.add(new WebPageContent(title, url));
+      markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
+    }
+    if (channelContext != null) {
+      SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
+      Tio.send(channelContext, ssePacket);
+    }
+
+    String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+    // 3. 使用 PromptEngine 模版引擎填充提示词
+    Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
+    String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
+    return systemPrompt;
   }
 
   public String processMessageByChatModel(ApiChatSendVo vo, ChannelContext channelContext) {
