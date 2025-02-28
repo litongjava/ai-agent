@@ -9,6 +9,7 @@ import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.ehcache.EhCacheKit;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.body.RespBodyVo;
@@ -143,13 +144,28 @@ public class ChatUploadService implements StorageService {
   }
 
   public RespBodyVo file(String md5) {
-    boolean exists = Db.exists(AgentTableNames.chat_upload_file, "md5", md5);
-    UploadResultVo uploadResultVo = Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);
-
-    if (exists && uploadResultVo != null) {
-      return RespBodyVo.ok(uploadResultVo);
+    String cacheName = AgentTableNames.chat_upload_file + "_result";
+    UploadResultVo resultVo = EhCacheKit.get(cacheName, md5);
+    if (resultVo == null) {
+      resultVo = realFile(md5);
+    }
+    if (resultVo != null) {
+      EhCacheKit.put(cacheName, md5, resultVo);
+      return RespBodyVo.ok(resultVo);
     }
     return RespBodyVo.fail();
+  }
+
+  private UploadResultVo realFile(String md5) {
+    boolean exists = Db.exists(AgentTableNames.chat_upload_file, "md5", md5);
+    UploadResultVo uploadResultVo = null;
+    if (exists) {
+      uploadResultVo = Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);
+      if (uploadResultVo != null) {
+        return uploadResultVo;
+      }
+    }
+    return null;
   }
 
   public List<UploadResultVo> getFileBasicInfoByIds(List<Long> file_ids) {

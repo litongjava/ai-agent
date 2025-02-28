@@ -8,6 +8,7 @@ import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.ehcache.EhCacheKit;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.page.Page;
 import com.litongjava.table.services.ApiTable;
@@ -37,9 +38,19 @@ public class LlmChatSessionService {
   }
 
   public boolean exists(Long id, String userId) {
+    String cacheName = AgentTableNames.llm_chat_session + "_exists";
+    String key = id + "_" + userId;
+    boolean exists = EhCacheKit.get(cacheName, key);
+    if (exists) {
+      return exists;
+    }
     String sql = "select count(1) from %s where id=? and user_id=? and deleted=0";
     sql = String.format(sql, AgentTableNames.llm_chat_session);
-    return Db.existsBySql(sql, id, userId);
+    exists = Db.existsBySql(sql, id, userId);
+    if (exists) {
+      EhCacheKit.put(cacheName, key, exists);
+    }
+    return exists;
   }
 
   public List<Kv> page(int pageNo, int pageSize, String userId, Long schoolId, Integer chat_type) {
