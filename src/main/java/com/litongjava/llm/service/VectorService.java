@@ -69,7 +69,7 @@ public class VectorService {
       embeddingResponseVo.setData(lists);
       return embeddingResponseVo;
     } else {
-      EmbeddingRequestVo embeddingRequestVo = new EmbeddingRequestVo(text, model);
+      EmbeddingRequestVo embeddingRequestVo = new EmbeddingRequestVo(model, text);
       EmbeddingResponseVo embeddingResponseVo = null;
       synchronized (vectorLock) {
         embeddingResponseVo = OpenAiClient.embeddings(embeddingRequestVo);
