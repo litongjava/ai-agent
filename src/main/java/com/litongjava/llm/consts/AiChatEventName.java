@@ -9,6 +9,7 @@ public interface AiChatEventName {
   String delta = "delta";
   String reasoning = "reasoning";
   String citation = "citation";
+  String video = "video";
   String message_id = "message_id";
 
   String summary_question = "summary_question";

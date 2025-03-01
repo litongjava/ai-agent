@@ -31,6 +31,7 @@ import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
 import com.litongjava.searxng.SearxngResult;
 import com.litongjava.searxng.SearxngSearchClient;
+import com.litongjava.searxng.SearxngSearchParam;
 import com.litongjava.searxng.SearxngSearchResponse;
 import com.litongjava.template.PromptEngine;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
@@ -68,7 +69,7 @@ public class LlmAiChatService {
     }
 
     apiSendVo.setInput_quesiton(inputQestion);
-    
+
     // save file content to history
     ChatParamVo chatParamVo = new ChatParamVo();
     String type = apiSendVo.getType();
@@ -94,7 +95,7 @@ public class LlmAiChatService {
     } else if (ApiChatSendType.celebrity.equals(type)) {
       String name = chatSendArgs.getName();
       String institution = chatSendArgs.getInstitution();
-      inputQestion = name + " " + institution;
+      inputQestion = name + " at " + institution;
       textQuestion = inputQestion;
       log.info("celebrity:{}", textQuestion);
       String systemPrompt = celebrity(channelContext, chatSendArgs);
@@ -335,7 +336,7 @@ public class LlmAiChatService {
   private String celebrity(ChannelContext channelContext, ChatSendArgs chatSendArgs) {
     String name = chatSendArgs.getName();
     String institution = chatSendArgs.getInstitution();
-    String textQuestion = name + " " + institution;
+    String textQuestion = name + " at " + institution;
 
     SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
     List<SearxngResult> results = searchResponse.getResults();
@@ -348,6 +349,23 @@ public class LlmAiChatService {
       pages.add(new WebPageContent(title, url));
       markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
     }
+    if (channelContext != null) {
+      SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
+      Tio.send(channelContext, ssePacket);
+    }
+
+    SearxngSearchParam param = new SearxngSearchParam();
+    param.setFormat("json").setQ(textQuestion).setCategories("videos").setLanguage("language");
+    searchResponse = SearxngSearchClient.search(param);
+    results = searchResponse.getResults();
+    pages = new ArrayList<>();
+    for (int i = 0; i < results.size(); i++) {
+      SearxngResult searxngResult = results.get(i);
+      String title = searxngResult.getTitle();
+      String url = searxngResult.getUrl();
+      pages.add(new WebPageContent(title, url));
+    }
+
     if (channelContext != null) {
       SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
       Tio.send(channelContext, ssePacket);
