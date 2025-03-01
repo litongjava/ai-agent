@@ -355,7 +355,7 @@ public class LlmAiChatService {
     }
 
     SearxngSearchParam param = new SearxngSearchParam();
-    param.setFormat("json").setQ(textQuestion).setCategories("videos").setLanguage("language");
+    param.setFormat("json").setQ(textQuestion).setCategories("videos");
     searchResponse = SearxngSearchClient.search(param);
     results = searchResponse.getResults();
     pages = new ArrayList<>();
@@ -367,7 +367,7 @@ public class LlmAiChatService {
     }
 
     if (channelContext != null) {
-      SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
+      SsePacket ssePacket = new SsePacket(AiChatEventName.video, JsonUtils.toSkipNullJson(pages));
       Tio.send(channelContext, ssePacket);
     }
 
