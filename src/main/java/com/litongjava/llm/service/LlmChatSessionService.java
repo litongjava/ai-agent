@@ -37,7 +37,7 @@ public class LlmChatSessionService {
     }
   }
 
-  public boolean exists(Long id, String userId) {
+  public boolean exists(String userId, Long id) {
     String cacheName = AgentTableNames.llm_chat_session + "_exists";
     String key = id + "_" + userId;
     Boolean exists = EhCacheKit.getBoolean(cacheName, key);
@@ -86,5 +86,19 @@ public class LlmChatSessionService {
     String sql = "update %s set deleted=1 where id=? and user_id=?";
     sql = String.format(sql, AgentTableNames.llm_chat_session);
     return Db.updateBySql(sql, id, userId);
+  }
+
+  public boolean createIfNotExists(String userId, Long session_id, String session_type, String session_name) {
+    if (session_type != null) {
+      Row record = Row.by("id", session_id);
+      record.setTableName(AgentTableNames.llm_chat_session);
+      record.set("name", session_name);
+      record.set("user_id", userId);
+      record.set("type", session_type);
+      return Db.save(record);
+    } else {
+      return exists(userId, session_id);
+    }
+
   }
 }

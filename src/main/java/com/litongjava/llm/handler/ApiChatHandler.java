@@ -190,7 +190,7 @@ public class ApiChatHandler {
 
     String userId = TioRequestContext.getUserIdString();
 
-    boolean exists = Aop.get(LlmChatSessionService.class).exists(sessionId, userId);
+    boolean exists = Aop.get(LlmChatSessionService.class).exists(userId, sessionId);
     if (!exists) {
       return response.fail(RespBodyVo.fail("invalid session"));
     }
@@ -235,7 +235,7 @@ public class ApiChatHandler {
     }
 
     LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
-    boolean exists = llmChatSessionService.exists(session_id, userId);
+    boolean exists = llmChatSessionService.exists(userId, session_id);
     if (!exists) {
       log.info("invalid session:{},{}", session_id, userId);
       return response.fail(RespBodyVo.fail("invalid session"));

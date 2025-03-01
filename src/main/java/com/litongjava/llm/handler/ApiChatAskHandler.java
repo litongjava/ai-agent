@@ -54,6 +54,8 @@ public class ApiChatAskHandler {
     Boolean rewrite = reqVo.getBoolean("rewrite");
     Long previous_question_id = reqVo.getLong("previous_question_id");
     Long previous_answer_id = reqVo.getLong("previous_answer_id");
+    String session_type = reqVo.getString("session_type");
+    String session_name = reqVo.getString("session_name");
 
     if (stream == null) {
       stream = true;
@@ -97,7 +99,7 @@ public class ApiChatAskHandler {
       ChatSendArgs javaObject = args.toJavaObject(ChatSendArgs.class);
       apiChatSendVo.setArgs(javaObject);
     }
-    
+
     if (jsonArray != null) {
       try {
         List<Long> fileIds = jsonArray.toJavaList(Long.class);
@@ -109,11 +111,10 @@ public class ApiChatAskHandler {
       }
     }
 
-    if(messages!=null) {
+    if (messages != null) {
       List<ChatMessage> messageList = messages.toJavaList(ChatMessage.class);
       apiChatSendVo.setMessages(messageList);
     }
-    
 
     apiChatSendVo.setProvider(provider).setModel(model).setType(type).setUser_id(userId)
         //
@@ -127,7 +128,7 @@ public class ApiChatAskHandler {
     LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
 
     if (validateChatId) {
-      boolean exists = llmChatSessionService.exists(session_id, userId);
+      boolean exists = llmChatSessionService.createIfNotExists(userId, session_id, session_type, session_name);
       if (!exists) {
         log.info("seesion_id:{},userId:{}", session_id, userId);
         response.setJson(RespBodyVo.fail("Invalid chat"));
