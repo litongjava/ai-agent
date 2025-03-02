@@ -315,6 +315,10 @@ public class LlmAiChatService {
     } else {
       if (textQuestion != null && historyMessage.size() > 1) {
         StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("user_id:").append(userId).append("\n")
+            //
+            .append("chat_id").append(sessionId).append("\n");
+        
         stringBuffer.append("question:").append(textQuestion).append("\n");
         textQuestion = Aop.get(LlmRewriteQuestionService.class).rewrite(textQuestion, historyMessage);
         //
