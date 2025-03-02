@@ -30,7 +30,7 @@ public class LlmRewriteQuestionService {
 
     // 2.大模型推理
     //String content = openAiGpt(question, prompt);
-    String content = googleGemini(question, prompt);
+    String content = googleGemini(prompt);
     if (content==null || "not_needed".equalsIgnoreCase(content) || "Not needed".equalsIgnoreCase(content)) {
       return question;
     }
@@ -38,7 +38,7 @@ public class LlmRewriteQuestionService {
     return content;
   }
 
-  private String googleGemini(String question, String prompt) {
+  private String googleGemini(String prompt) {
     String content = GeminiClient.chatWithModel(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP , "user", prompt);
     return content;
   }
