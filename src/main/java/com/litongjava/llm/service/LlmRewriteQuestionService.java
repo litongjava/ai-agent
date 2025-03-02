@@ -31,7 +31,11 @@ public class LlmRewriteQuestionService {
     // 2.大模型推理
     //String content = openAiGpt(question, prompt);
     String content = googleGemini(prompt);
-    if (content==null || "not_needed".equalsIgnoreCase(content) || "Not needed".equalsIgnoreCase(content)) {
+    if (content == null) {
+      return question;
+    } else if ("not_needed".equalsIgnoreCase(content) || "not_needed\n".equalsIgnoreCase(content) || "Not needed".equalsIgnoreCase(content)) {
+      return question;
+    } else if (content.startsWith("not_needed")) {
       return question;
     }
     // 3.返回推理结果
@@ -39,7 +43,7 @@ public class LlmRewriteQuestionService {
   }
 
   private String googleGemini(String prompt) {
-    String content = GeminiClient.chatWithModel(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP , "user", prompt);
+    String content = GeminiClient.chatWithModel(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP, "user", prompt);
     return content;
   }
 
