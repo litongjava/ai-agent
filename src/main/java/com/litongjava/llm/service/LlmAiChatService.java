@@ -314,8 +314,15 @@ public class LlmAiChatService {
 
     } else {
       if (textQuestion != null && historyMessage.size() > 1) {
-
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("question:").append(textQuestion).append("\n");
         textQuestion = Aop.get(LlmRewriteQuestionService.class).rewrite(textQuestion, historyMessage);
+        //
+        stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
+        //
+        stringBuffer.append("rewrite:" + textQuestion);
+
+        AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
         log.info("rewrite question:{}", textQuestion);
 
         if (stream && channelContext != null) {

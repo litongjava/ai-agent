@@ -8,4 +8,6 @@ public interface RunningNotificationService {
   void sendLike(String msg);
 
   void sendError(String msg);
+
+  void sendRewrite(String string);
 }
