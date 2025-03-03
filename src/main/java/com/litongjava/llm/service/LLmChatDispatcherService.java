@@ -35,6 +35,7 @@ import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
+import com.litongjava.tio.utils.Threads;
 import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
@@ -190,13 +191,15 @@ public class LLmChatDispatcherService {
       } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_V3;
       }
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
-      long start = System.currentTimeMillis();
+      Threads.getTioExecutor().execute(()->{
+        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+        long start = System.currentTimeMillis();
 
-      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-      String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
-      Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
-      ChatStreamCallCan.put(sessionId, call);
+        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+        String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
+        Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
+        ChatStreamCallCan.put(sessionId, call);
+      });
       return null;
 
     } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
