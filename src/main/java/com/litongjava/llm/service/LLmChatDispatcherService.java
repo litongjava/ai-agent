@@ -2,13 +2,18 @@ package com.litongjava.llm.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
 import com.litongjava.consts.AiModelNames;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.gemini.GeminiChatRequestVo;
+import com.litongjava.gemini.GeminiClient;
+import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.kit.PgObjectUtils;
+import com.litongjava.llm.callback.ChatGeminiStreamCommonCallback;
 import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
@@ -134,21 +139,44 @@ public class LLmChatDispatcherService {
     return aiChatResponseVo;
   }
 
+  /**
+   * @param channelContext
+   * @param provider
+   * @param model
+   * @param messages
+   * @param sessionId
+   * @param answerId
+   * @return
+   */
   private AiChatResponseVo multiModel(ChannelContext channelContext, String provider, String model, List<ChatMessage> messages, Long sessionId, long answerId) {
-    //deepseek v3
-    OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_241226, messages, answerId);
+    CountDownLatch latch = new CountDownLatch(3);
     long start = System.currentTimeMillis();
-    ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-    String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-    Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
     List<Call> calls = new ArrayList<Call>();
-    calls.add(call);
+    //deepseek v3
+    TioThreadUtils.execute(() -> {
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_241226, messages, answerId);
+      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start, latch);
+      String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
+      Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+      calls.add(call);
+    });
 
     //gpt 4o
-    chatRequestVo.setModel(OpenAiModels.GPT_4O);
-    ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-    Call openAicall = OpenAiClient.chatCompletions(chatRequestVo, openAiCallback);
-    calls.add(openAicall);
+    TioThreadUtils.execute(() -> {
+      long id = SnowflakeIdUtils.id();
+      OpenAiChatRequestVo genOpenAiRequestVo = genOpenAiRequestVo(OpenAiModels.GPT_4O, messages, id);
+      ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, id, start, latch);
+      Call openAicall = OpenAiClient.chatCompletions(genOpenAiRequestVo, openAiCallback);
+      calls.add(openAicall);
+    });
+
+    TioThreadUtils.execute(() -> {
+      long id = SnowflakeIdUtils.id();
+      GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, id);
+      ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, sessionId, id, start, latch);
+      Call geminiCall = GeminiClient.stream(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
+      calls.add(geminiCall);
+    });
 
     ChatStreamCallCan.put(sessionId, calls);
     return null;
@@ -215,6 +243,23 @@ public class LLmChatDispatcherService {
       Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
     });
     return chatRequestVo;
+  }
+
+  private GeminiChatRequestVo genGeminiRequestVo(List<ChatMessage> messages, long answerId) {
+    GeminiChatRequestVo geminiChatRequestVo = new GeminiChatRequestVo();
+    geminiChatRequestVo.setChatMessages(messages);
+
+    String requestJson = JsonUtils.toSkipNullJson(geminiChatRequestVo);
+    RunningNotificationService notification = AiAgentContext.me().getNotification();
+    if (notification != null) {
+      notification.sendPredict(requestJson);
+    }
+    // log.info("chatRequestVo:{}", requestJson);
+    // save to database
+    TioThreadUtils.execute(() -> {
+      Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
+    });
+    return geminiChatRequestVo;
   }
 
 }

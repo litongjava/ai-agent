@@ -60,23 +60,8 @@ public class ApiChatAskHandler {
     if (stream == null) {
       stream = true;
     }
-
-    if (provider == null) {
-      response.setJson(RespBodyVo.fail("provider can not be empty"));
-      return response;
-    } else {
-      provider = provider.toLowerCase();
-    }
-
     if (type == null) {
       type = "general";
-    }
-
-    Integer chatType = 0;
-    try {
-      chatType = reqVo.getInteger("chat_type");
-    } catch (Exception e) {
-      e.printStackTrace();
     }
 
     if (provider == null) {
@@ -84,6 +69,13 @@ public class ApiChatAskHandler {
     }
     if (model == null) {
       model = "gpt-4o-mini";
+    }
+
+    Integer chatType = 0;
+    try {
+      chatType = reqVo.getInteger("chat_type");
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 
     JSONArray messages = reqVo.getJSONArray("messages");
