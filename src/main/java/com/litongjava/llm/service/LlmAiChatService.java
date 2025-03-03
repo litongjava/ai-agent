@@ -152,7 +152,12 @@ public class LlmAiChatService {
     }
     AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
     List<Row> histories = null;
-    if (ApiChatSendType.general.equals(apiSendVo.getType()) || ApiChatSendType.search.equals(apiSendVo.getType())) {
+    if (ApiChatSendType.general.equals(apiSendVo.getType())
+        //
+        || ApiChatSendType.search.equals(apiSendVo.getType())
+        //
+        || ApiChatSendType.compare.equals(apiSendVo.getType())
+        ) {
       try {
         histories = llmChatHistoryService.getHistory(sessionId);
       } catch (Exception e) {

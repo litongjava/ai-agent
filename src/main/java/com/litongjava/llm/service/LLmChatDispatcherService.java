@@ -15,6 +15,7 @@ import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendProvider;
+import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
@@ -59,6 +60,7 @@ public class LLmChatDispatcherService {
     String provider = apiSendVo.getProvider();
     String model = apiSendVo.getModel();
     Boolean stream = apiSendVo.isStream();
+    String type = apiSendVo.getType();
     ChannelContext channelContext = paramVo.getChannelContext();
     List<ChatMessage> history = paramVo.getHistory();
     Long sessionId = apiSendVo.getSession_id();
@@ -106,46 +108,10 @@ public class LLmChatDispatcherService {
     if (stream) {
       //SsePacket packet = new SsePacket(AiChatEventName.input, JsonUtils.toJson(history));
       //Tio.bSend(channelContext, packet);
-
-      if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
-        if (AiModelNames.DEEPSEEK_R1.equals(model)) {
-          model = SiliconFlowModels.DEEPSEEK_R1;
-        } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
-          model = SiliconFlowModels.DEEPSEEK_V3;
-        }
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
-        long start = System.currentTimeMillis();
-
-        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-        String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
-        Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
-        ChatStreamCallCan.put(sessionId, call);
-        return null;
-
-      } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
-        if (AiModelNames.DEEPSEEK_R1.equals(model)) {
-          model = VolcEngineModels.DEEPSEEK_R1_250120;
-        } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
-          model = VolcEngineModels.DEEPSEEK_V3_241226;
-        }
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
-        long start = System.currentTimeMillis();
-        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-        String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-        Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
-        ChatStreamCallCan.put(sessionId, call);
-        return null;
-      }
-      //
-      else {
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
-
-        long start = System.currentTimeMillis();
-        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-        Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
-        ChatStreamCallCan.put(sessionId, call);
-        return null;
-
+      if (ApiChatSendType.compare.equals(type)) {
+        return multiModel(channelContext, provider, model, messages, sessionId, answerId);
+      } else {
+        return singleModel(channelContext, provider, model, messages, sessionId, answerId);
       }
     } else {
       if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
@@ -166,6 +132,61 @@ public class LLmChatDispatcherService {
 
     }
     return aiChatResponseVo;
+  }
+
+  private AiChatResponseVo multiModel(ChannelContext channelContext, String provider, String model, List<ChatMessage> messages, Long sessionId, long answerId) {
+    OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+    long start = System.currentTimeMillis();
+    ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+    String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
+    Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+    List<Call> calls = new ArrayList<Call>();
+    ChatStreamCallCan.put(sessionId, calls);
+    return null;
+
+  }
+
+  private AiChatResponseVo singleModel(ChannelContext channelContext, String provider, String model, List<ChatMessage> messages, Long sessionId, long answerId) {
+    if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
+      if (AiModelNames.DEEPSEEK_R1.equals(model)) {
+        model = SiliconFlowModels.DEEPSEEK_R1;
+      } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
+        model = SiliconFlowModels.DEEPSEEK_V3;
+      }
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+      long start = System.currentTimeMillis();
+
+      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+      String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
+      Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
+      ChatStreamCallCan.put(sessionId, call);
+      return null;
+
+    } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
+      if (AiModelNames.DEEPSEEK_R1.equals(model)) {
+        model = VolcEngineModels.DEEPSEEK_R1_250120;
+      } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
+        model = VolcEngineModels.DEEPSEEK_V3_241226;
+      }
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+      long start = System.currentTimeMillis();
+      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+      String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
+      Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+      ChatStreamCallCan.put(sessionId, call);
+      return null;
+    }
+    //
+    else {
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+
+      long start = System.currentTimeMillis();
+      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+      Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
+      ChatStreamCallCan.put(sessionId, call);
+      return null;
+
+    }
   }
 
   private OpenAiChatRequestVo genOpenAiRequestVo(String model, List<ChatMessage> messages, Long answerId) {

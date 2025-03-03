@@ -6,4 +6,5 @@ public interface ApiChatSendType {
   String search = "search";
   String perplexity = "perplexity";
   String celebrity = "celebrity";
+  String compare = "compare";
 }
