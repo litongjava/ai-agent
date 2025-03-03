@@ -25,7 +25,7 @@ import com.litongjava.tio.utils.thread.TioThreadUtils;
 public class LlmChatHistoryService {
 
   public RespBodyVo getHistory(Long session_id, int pageNo, int pageSize) {
-    TableInput ti = TableInput.create().setColumns("id,role,content,liked,metadata,citations,images,create_time")
+    TableInput ti = TableInput.create().setColumns("id,role,model,content,liked,metadata,citations,images,create_time")
         //
         .setJsonFields("metadata,citations,images")
         //
@@ -68,6 +68,13 @@ public class LlmChatHistoryService {
     TableInput ti = TableInput.by("id", id).set("content", message).set("role", "assistant").set("session_id", sessionId);
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;
+  }
+
+  public void saveAssistant(long id, long chatId, String model, String message) {
+    Row row = Row.by("id", id).set("content", message).set("role", "assistant").set("model", model)
+        //
+        .set("session_id", chatId);
+    Db.save(AgentTableNames.llm_chat_history, row);
   }
 
   public void like(Long questionId, Long answerId, Boolean like, String userId) {
@@ -115,4 +122,5 @@ public class LlmChatHistoryService {
     sql = String.format(sql, AgentTableNames.llm_chat_history);
     Db.delete(sql, previous_question_id, previous_answer_id);
   }
+
 }

@@ -135,12 +135,21 @@ public class LLmChatDispatcherService {
   }
 
   private AiChatResponseVo multiModel(ChannelContext channelContext, String provider, String model, List<ChatMessage> messages, Long sessionId, long answerId) {
-    OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+    //deepseek v3
+    OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_241226, messages, answerId);
     long start = System.currentTimeMillis();
     ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
     String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
     Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
     List<Call> calls = new ArrayList<Call>();
+    calls.add(call);
+
+    //gpt 4o
+    chatRequestVo.setModel(OpenAiModels.GPT_4O);
+    ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+    Call openAicall = OpenAiClient.chatCompletions(chatRequestVo, openAiCallback);
+    calls.add(openAicall);
+
     ChatStreamCallCan.put(sessionId, calls);
     return null;
 

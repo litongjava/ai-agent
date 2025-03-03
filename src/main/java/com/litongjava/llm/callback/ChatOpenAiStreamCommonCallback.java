@@ -46,7 +46,9 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       String data = "Chat model response an unsuccessful message:" + response.body().string();
       log.error(data);
       RunningNotificationService notification = AiAgentContext.me().getNotification();
-      notification.sendError(data);
+      if (notification != null) {
+        notification.sendError(data);
+      }
       SsePacket packet = new SsePacket(AiChatEventName.error, data);
       Tio.bSend(channelContext, packet);
       try {
@@ -66,11 +68,12 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
         Tio.bSend(channelContext, ssePacket);
         return;
       }
-      StringBuffer completionContent = onResponseSuccess(channelContext, responseBody, start);
+      CallbackSuccess success = onSuccess(channelContext, responseBody, start);
 
-      if (completionContent != null && !completionContent.toString().isEmpty()) {
+      if (success != null && !success.getContent().isEmpty()) {
+        String content = success.getContent();
         try {
-          Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, chatId, completionContent.toString());
+          Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, chatId, success.getModel(), content.toString());
         } catch (Exception e) {
           log.error(e.getMessage(), e);
         }
@@ -103,7 +106,8 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
    * @return 完整内容
    * @throws IOException
    */
-  public StringBuffer onResponseSuccess(ChannelContext channelContext, ResponseBody responseBody, Long start) throws IOException {
+  public CallbackSuccess onSuccess(ChannelContext channelContext, ResponseBody responseBody, Long start) throws IOException {
+    String model = null;
     StringBuffer completionContent = new StringBuffer();
     BufferedSource source = responseBody.source();
     String line;
@@ -117,6 +121,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
         String data = line.substring(6);
         if (data.endsWith("}")) {
           OpenAiChatResponseVo chatResponse = FastJson2Utils.parse(data, OpenAiChatResponseVo.class);
+          model = chatResponse.getModel();
           List<String> citations = chatResponse.getCitations();
           if (citations != null && !sentCitations) {
             SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toJson(citations));
@@ -126,17 +131,19 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
           List<Choice> choices = chatResponse.getChoices();
           if (!choices.isEmpty()) {
             ChatResponseDelta delta = choices.get(0).getDelta();
+            String reasoning_content = delta.getReasoning_content();
+            if (reasoning_content != null && !reasoning_content.isEmpty()) {
+              Kv by = Kv.by("content", reasoning_content).set("model", model);
+              SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+              send(channelContext, ssePacket);
+            }
+
             String content = delta.getContent();
             String part = delta.getContent();
             if (part != null && !part.isEmpty()) {
               completionContent.append(part);
-              SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", content)));
-              send(channelContext, ssePacket);
-            }
-
-            String reasoning_content = delta.getReasoning_content();
-            if (reasoning_content != null && !reasoning_content.isEmpty()) {
-              SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", reasoning_content)));
+              Kv by = Kv.by("content", content).set("model", model);
+              SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));
               send(channelContext, ssePacket);
             }
           }
@@ -149,7 +156,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
     // 关闭连接
     long end = System.currentTimeMillis();
     log.info("finish llm in {} (ms)", (end - start));
-    return completionContent;
+    return new CallbackSuccess(model, completionContent.toString());
   }
 
   private void send(ChannelContext channelContext, SsePacket ssePacket) {
