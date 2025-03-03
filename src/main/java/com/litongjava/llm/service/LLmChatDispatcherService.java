@@ -154,29 +154,44 @@ public class LLmChatDispatcherService {
     long start = System.currentTimeMillis();
     List<Call> calls = new ArrayList<Call>();
     //deepseek v3
-    TioThreadUtils.execute(() -> {
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_241226, messages, answerId);
-      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start, latch);
-      String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-      Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
-      calls.add(call);
+    Threads.getTioExecutor().execute(() -> {
+      try {
+        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_241226, messages, answerId);
+        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start, latch);
+        String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
+        Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+        calls.add(call);
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+      }
+
     });
 
     //gpt 4o
-    TioThreadUtils.execute(() -> {
-      long id = SnowflakeIdUtils.id();
-      OpenAiChatRequestVo genOpenAiRequestVo = genOpenAiRequestVo(OpenAiModels.GPT_4O, messages, id);
-      ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, id, start, latch);
-      Call openAicall = OpenAiClient.chatCompletions(genOpenAiRequestVo, openAiCallback);
-      calls.add(openAicall);
+    Threads.getTioExecutor().execute(() -> {
+      try {
+        long id = SnowflakeIdUtils.id();
+        OpenAiChatRequestVo genOpenAiRequestVo = genOpenAiRequestVo(OpenAiModels.GPT_4O, messages, id);
+        ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, id, start, latch);
+        Call openAicall = OpenAiClient.chatCompletions(genOpenAiRequestVo, openAiCallback);
+        calls.add(openAicall);
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+      }
+
     });
 
-    TioThreadUtils.execute(() -> {
-      long id = SnowflakeIdUtils.id();
-      GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, id);
-      ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, sessionId, id, start, latch);
-      Call geminiCall = GeminiClient.stream(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
-      calls.add(geminiCall);
+    Threads.getTioExecutor().execute(() -> {
+      try {
+        long id = SnowflakeIdUtils.id();
+        GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, id);
+        ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, sessionId, id, start, latch);
+        Call geminiCall = GeminiClient.stream(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
+        calls.add(geminiCall);
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+      }
+
     });
 
     ChatStreamCallCan.put(sessionId, calls);
@@ -191,14 +206,20 @@ public class LLmChatDispatcherService {
       } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_V3;
       }
-      Threads.getTioExecutor().execute(()->{
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
-        long start = System.currentTimeMillis();
 
-        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-        String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
-        Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
-        ChatStreamCallCan.put(sessionId, call);
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+      Threads.getTioExecutor().execute(() -> {
+        try {
+          long start = System.currentTimeMillis();
+
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+          String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
+          Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
+          ChatStreamCallCan.put(sessionId, call);
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
+        }
+
       });
       return null;
 
@@ -209,21 +230,34 @@ public class LLmChatDispatcherService {
         model = VolcEngineModels.DEEPSEEK_V3_241226;
       }
       OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
-      long start = System.currentTimeMillis();
-      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-      String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-      Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
-      ChatStreamCallCan.put(sessionId, call);
+      Threads.getTioExecutor().execute(() -> {
+        try {
+          long start = System.currentTimeMillis();
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+          String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
+          Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+          ChatStreamCallCan.put(sessionId, call);
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
+        }
+      });
       return null;
     }
     //
     else {
       OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
-      long start = System.currentTimeMillis();
-      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
-      Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
-      ChatStreamCallCan.put(sessionId, call);
+      Threads.getTioExecutor().execute(() -> {
+        try {
+          long start = System.currentTimeMillis();
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+          Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
+          ChatStreamCallCan.put(sessionId, call);
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
+        }
+      });
+
       return null;
 
     }
