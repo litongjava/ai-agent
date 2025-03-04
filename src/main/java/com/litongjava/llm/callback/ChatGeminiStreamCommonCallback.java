@@ -150,7 +150,12 @@ public class ChatGeminiStreamCommonCallback implements Callback {
                 completionContent.append(text);
                 Kv by = Kv.by("content", text).set("model", model);
                 SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));
-                send(channelContext, ssePacket);
+                try {
+                  send(channelContext, ssePacket);
+                } catch (Exception e) {
+                  log.error(e.getMessage(), e);
+                  continueSend = false;
+                }
               }
             }
             //            String reasoning_content = delta.getReasoning_content();

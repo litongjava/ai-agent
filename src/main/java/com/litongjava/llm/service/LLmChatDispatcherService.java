@@ -151,6 +151,7 @@ public class LLmChatDispatcherService {
    */
   private AiChatResponseVo multiModel(ChannelContext channelContext, String provider, String model, List<ChatMessage> messages, Long sessionId, long answerId) {
     CountDownLatch latch = new CountDownLatch(3);
+
     long start = System.currentTimeMillis();
     List<Call> calls = new ArrayList<Call>();
     //deepseek v3

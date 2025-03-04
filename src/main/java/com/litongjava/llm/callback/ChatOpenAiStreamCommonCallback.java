@@ -42,7 +42,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
     this.answerId = answerId;
     this.start = start;
   }
-  
+
   public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, long chatId, long answerId, long start, CountDownLatch latch) {
     this.channelContext = channelContext;
     this.chatId = chatId;
@@ -166,7 +166,13 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
               completionContent.append(content);
               Kv by = Kv.by("content", content).set("model", model);
               SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));
-              send(channelContext, ssePacket);
+              try {
+                send(channelContext, ssePacket);
+              } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                continueSend = false;
+              }
+
             }
           }
         } else {
