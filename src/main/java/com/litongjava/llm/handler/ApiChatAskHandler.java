@@ -80,12 +80,6 @@ public class ApiChatAskHandler {
 
     JSONArray messages = reqVo.getJSONArray("messages");
     JSONObject args = reqVo.getJSONObject("args");
-    if (args == null) {
-      if (messages == null || messages.size() < 1) {
-        response.setJson(RespBodyVo.fail("Messages array can not be empty"));
-        return response;
-      }
-    }
     ApiChatSendVo apiChatSendVo = new ApiChatSendVo();
     if (args != null) {
       ChatSendArgs javaObject = args.toJavaObject(ChatSendArgs.class);

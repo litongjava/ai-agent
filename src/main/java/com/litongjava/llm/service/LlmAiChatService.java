@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
@@ -62,7 +61,7 @@ public class LlmAiChatService {
     List<ChatMessage> messages = apiSendVo.getMessages();
     String inputQestion = null;
     String textQuestion = null;
-    if (messages != null) {
+    if (messages != null && messages.size() > 0) {
       inputQestion = messages.get(0).getContent();
       messages.remove(0);
       textQuestion = inputQestion;
@@ -156,8 +155,7 @@ public class LlmAiChatService {
         //
         || ApiChatSendType.search.equals(apiSendVo.getType())
         //
-        || ApiChatSendType.compare.equals(apiSendVo.getType())
-        ) {
+        || ApiChatSendType.compare.equals(apiSendVo.getType())) {
       try {
         histories = llmChatHistoryService.getHistory(sessionId);
       } catch (Exception e) {
@@ -212,31 +210,29 @@ public class LlmAiChatService {
 
     // save to the user question to db
     long questionId = SnowflakeIdUtils.id();
-    if (StrUtil.isNotEmpty(inputQestion)) {
-      TableResult<Kv> ts = null;
-      List<UploadResultVo> fileInfo = null;
+
+    List<UploadResultVo> fileInfo = null;
+    try {
       if (file_ids != null) {
         fileInfo = Aop.get(ChatUploadService.class).getFileBasicInfoByIds(file_ids);
         chatParamVo.setUploadFiles(fileInfo);
-        ts = llmChatHistoryService.saveUser(questionId, sessionId, inputQestion, fileInfo);
-      } else {
-        ts = llmChatHistoryService.saveUser(questionId, sessionId, inputQestion);
-      }
 
-      if (ts.getCode() != 1) {
-        log.error("Failed to save message:{}", ts.toString());
+        llmChatHistoryService.saveUser(questionId, sessionId, inputQestion, fileInfo);
       } else {
-        if (stream) {
-          Kv kv = Kv.by("question_id", questionId);
-          SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
-          Tio.bSend(channelContext, packet);
-        }
-        aiChatResponseVo.setQuesitonId(questionId);
-        if (fileInfo != null) {
-          aiChatResponseVo.setUploadFiles(fileInfo);
-        }
+        llmChatHistoryService.saveUser(questionId, sessionId, inputQestion);
       }
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
 
+    if (stream) {
+      Kv kv = Kv.by("question_id", questionId);
+      SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
+      Tio.bSend(channelContext, packet);
+    }
+    aiChatResponseVo.setQuesitonId(questionId);
+    if (fileInfo != null) {
+      aiChatResponseVo.setUploadFiles(fileInfo);
     }
 
     if (StrUtil.isNotEmpty(textQuestion)) {
@@ -323,7 +319,7 @@ public class LlmAiChatService {
         stringBuffer.append("user_id:").append(userId).append("\n")
             //
             .append("chat_id").append(sessionId).append("\n");
-        
+
         stringBuffer.append("question:").append(textQuestion).append("\n");
         textQuestion = Aop.get(LlmRewriteQuestionService.class).rewrite(textQuestion, historyMessage);
         //

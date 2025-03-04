@@ -37,6 +37,7 @@ import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.utils.Threads;
 import com.litongjava.tio.utils.environment.EnvUtils;
+import com.litongjava.tio.utils.hutool.StrUtil;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
@@ -108,7 +109,9 @@ public class LLmChatDispatcherService {
     if (systemPrompt != null) {
       messages.add(new ChatMessage("system", systemPrompt));
     }
-    messages.add(new ChatMessage("user", textQuestion));
+    if (StrUtil.isNotBlank(textQuestion)) {
+      messages.add(new ChatMessage("user", textQuestion));
+    }
 
     long answerId = SnowflakeIdUtils.id();
     if (stream) {
