@@ -13,5 +13,6 @@ public interface AgentTableNames {
   String chat_upload_file = "chat_upload_file";
 
   String linkedin_profile_cache = "linkedin_profile_cache";
+  String social_media_accounts_cache = "social_media_accounts_cache";
 
 }

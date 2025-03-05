@@ -20,6 +20,7 @@ public interface AiChatEventName {
   String error = "error";
   String paragraph = "paragraph";
   String documents = "documents";
-  
+
   String linkedin = "linkedin";
+  String social_media = "social_media";
 }

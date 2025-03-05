@@ -1,0 +1,11 @@
+<instruction>
+Extract all Social Media information from the data eg LinkedIn,Facebook,Instgram,etc.
+Output the results in JSON array format and only output json text.
+For example:
+{"social_media":[{"url":"https://www.linkedin.com/in/nicolaushilleary","name":"Nicolaus Hilleary","platform":"LinkedIn"},{"url":"https://www.facebook.com/nicolaus.hilleary/","name":"Nicolaus Hilleary","platform":"Facebook"},{"url":"https://www.linkedin.com/company/collegbot","name":"CollegeBot.AI","platform":"LinkedIn"}]}
+</instruction>
+
+<data>
+question:#(question)
+search info:#(data)
+</data>

@@ -53,6 +53,7 @@ public class LlmAiChatService {
 
   LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
   LinkedInService linkedInService = Aop.get(LinkedInService.class);
+  SocialMediaService socialMediaService = Aop.get(SocialMediaService.class);
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
 
@@ -362,20 +363,39 @@ public class LlmAiChatService {
     List<SearxngResult> results = searchResponse.getResults();
     List<WebPageContent> pages = new ArrayList<>();
     StringBuffer markdown = new StringBuffer();
+    StringBuffer sources = new StringBuffer();
     for (int i = 0; i < results.size(); i++) {
       SearxngResult searxngResult = results.get(i);
       String title = searxngResult.getTitle();
       String url = searxngResult.getUrl();
       pages.add(new WebPageContent(title, url));
+
       markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
+      String content = searxngResult.getContent();
+      sources.append("source " + (i + 1) + ":").append(title).append(" ").append("url:").append(url).append(" ")
+          //
+          .append("content:").append(content).append("\r\n");
     }
+
     if (channelContext != null) {
       SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
       Tio.send(channelContext, ssePacket);
     }
 
     if (channelContext != null) {
-      Kv by = Kv.by("content", "Second let me search video with " + textQuestion + ". ");
+      Kv by = Kv.by("content", "Second let me extra social media account with " + textQuestion + ".");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
+
+    String soicalMediaAccounts = socialMediaService.extraSoicalMedia(textQuestion, sources.toString());
+    if (channelContext != null) {
+      SsePacket ssePacket = new SsePacket(AiChatEventName.social_media, soicalMediaAccounts);
+      Tio.send(channelContext, ssePacket);
+    }
+
+    if (channelContext != null) {
+      Kv by = Kv.by("content", "Third let me search video with " + textQuestion + ". ");
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
@@ -397,7 +417,7 @@ public class LlmAiChatService {
     }
 
     if (channelContext != null) {
-      Kv by = Kv.by("content", "Third let me search linkedin with " + name + " " + institution + ". ");
+      Kv by = Kv.by("content", "Forth let me search linkedin with " + name + " " + institution + ". ");
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
@@ -407,7 +427,7 @@ public class LlmAiChatService {
     if (personResults != null && personResults.size() > 0) {
       String url = personResults.get(0).getUrl();
       if (channelContext != null) {
-        Kv by = Kv.by("content", "Forth let me read linkedin profile " + url + ". ");
+        Kv by = Kv.by("content", "Fith let me read linkedin profile " + url + ". ");
         SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
         Tio.send(channelContext, ssePacket);
       }
@@ -427,7 +447,7 @@ public class LlmAiChatService {
     }
 
     if (channelContext != null) {
-      Kv by = Kv.by("content", "Then let me summary all information. ");
+      Kv by = Kv.by("content", "Then let me summary all information and generate user information. ");
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
