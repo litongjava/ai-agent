@@ -21,8 +21,8 @@ public class LinkedInService {
     }
 
     PGobject pgObject = Db.queryColumnByField(AgentTableNames.linkedin_profile_cache, "profile_data", "source", url);
-    profile = pgObject.getValue();
-    if (profile != null) {
+    if (pgObject != null && pgObject.getValue() != null) {
+      profile = pgObject.getValue();
       EhCacheKit.put(cacheName, url, profile);
       return profile;
     }

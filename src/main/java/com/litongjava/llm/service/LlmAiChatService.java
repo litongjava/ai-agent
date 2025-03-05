@@ -397,7 +397,7 @@ public class LlmAiChatService {
     }
 
     if (channelContext != null) {
-      Kv by = Kv.by("content", "Third let me search linkedin with" + name + " " + institution + ". ");
+      Kv by = Kv.by("content", "Third let me search linkedin with " + name + " " + institution + ". ");
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
@@ -411,11 +411,19 @@ public class LlmAiChatService {
         SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
         Tio.send(channelContext, ssePacket);
       }
-      profile = linkedInService.profileScraper(url);
-      if (profile != null) {
-        SsePacket ssePacket = new SsePacket(AiChatEventName.linkedin, profile);
+      try {
+        profile = linkedInService.profileScraper(url);
+        if (profile != null) {
+          SsePacket ssePacket = new SsePacket(AiChatEventName.linkedin, profile);
+          Tio.send(channelContext, ssePacket);
+        }
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+        Kv by = Kv.by("content", "unfortunate Failed to read linkedin profile " + url + ". ");
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
         Tio.send(channelContext, ssePacket);
       }
+
     }
 
     if (channelContext != null) {
