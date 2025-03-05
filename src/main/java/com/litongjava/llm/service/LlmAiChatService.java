@@ -28,6 +28,7 @@ import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
+import com.litongjava.searxng.LinkedinSearch;
 import com.litongjava.searxng.SearxngResult;
 import com.litongjava.searxng.SearxngSearchClient;
 import com.litongjava.searxng.SearxngSearchParam;
@@ -51,6 +52,7 @@ import okhttp3.Call;
 public class LlmAiChatService {
 
   LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
+  LinkedInService linkedInService = Aop.get(LinkedInService.class);
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
 
@@ -350,6 +352,12 @@ public class LlmAiChatService {
     String institution = chatSendArgs.getInstitution();
     String textQuestion = name + " at " + institution;
 
+    if (channelContext != null) {
+      Kv by = Kv.by("content", "First let me search google with " + textQuestion + ". ");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
+
     SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
     List<SearxngResult> results = searchResponse.getResults();
     List<WebPageContent> pages = new ArrayList<>();
@@ -366,6 +374,11 @@ public class LlmAiChatService {
       Tio.send(channelContext, ssePacket);
     }
 
+    if (channelContext != null) {
+      Kv by = Kv.by("content", "Second let me search video with " + textQuestion + ". ");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
     SearxngSearchParam param = new SearxngSearchParam();
     param.setFormat("json").setQ(textQuestion).setCategories("videos");
     searchResponse = SearxngSearchClient.search(param);
@@ -383,8 +396,35 @@ public class LlmAiChatService {
       Tio.send(channelContext, ssePacket);
     }
 
+    if (channelContext != null) {
+      Kv by = Kv.by("content", "Third let me search linkedin " + textQuestion + ". ");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
+    SearxngSearchResponse person = LinkedinSearch.person(name, institution);
+    String profile = null;
+    List<SearxngResult> personResults = person.getResults();
+    if (personResults != null && personResults.size() > 0) {
+      String url = personResults.get(0).getUrl();
+      if (channelContext != null) {
+        Kv by = Kv.by("content", "Forth let me read linkedin profile " + url + ". ");
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+      profile = linkedInService.profileScraper(url);
+      if (profile != null) {
+        SsePacket ssePacket = new SsePacket(AiChatEventName.linkedin, profile);
+        Tio.send(channelContext, ssePacket);
+      }
+    }
+
+    if (channelContext != null) {
+      Kv by = Kv.by("content", "Then let me summary all information. ");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
     // 3. 使用 PromptEngine 模版引擎填充提示词
-    Kv kv = Kv.by("name", name).set("institution", institution).set("info", markdown);
+    Kv kv = Kv.by("name", name).set("institution", institution).set("info", markdown).set("profile", profile);
     String systemPrompt = PromptEngine.renderToString("celebrity_prompt.txt", kv);
     return systemPrompt;
   }

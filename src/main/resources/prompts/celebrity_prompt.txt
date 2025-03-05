@@ -1,88 +1,43 @@
 <instruction>
-1. Retrieve the user's personality traits based on the provided name or identifier.
-2. Use relevant emojis to represent the personality in the **Classmate Personality** section.
-3. Write a brief description of the user's personality in one paragraph.
-4. Gather the user's academic information, including background, studies, or achievements.
-5. Use relevant emojis to represent the academic information in the **Academic Information** section.
-6. Write a paragraph summarizing the user's academic details.
-7. Collect information about the user's technical skills, expertise, or experience in their field.
-8. Use relevant emojis to represent the technical ability in the **Technical Ability** section.
-9. Write a paragraph showcasing the user's technical skills.
-10. If social media information is available, include it in the specified format.
-11. Ensure the output is **formatted in Markdown** for better readability.
-12. Do not include any XML tags in the final output.
+1. Write a brief description of the user's "About" in one paragraph.
+2. Gather the user's academic information, including background, studies, or achievements.
+3. Write a paragraph summarizing the user's academic details.
+4. Write a paragraph showcasing the user's interests.
+5. Ensure the output is **formatted in Markdown** for better readability.
+6. Do not include any XML tags in the final output.
 </instruction>
 
 <output>
-**Classmate Personality**  
-✨😊🔥  
-personality_description..
+🔎 **About**
+The content here should mainly come from linkedin. If the linkedin content is not detailed enough, you can use the existing information to continue to supplement it.
 
-
-**Academic Information**  
-📚🎓💡  
+📂 **Academic Information**
 academic_information...
 
 
-**Technical Ability**  
-💻🚀🔧  
-technical_ability...
-
-
-**Social Media**  
-
-{{#if instagram_username}}
-- **Instagram:** [@{{instagram_username}}](https://instagram.com/{{instagram_username}})  
-{{/if}}
-
-{{#if twitter_username}}
-- **X (Twitter):** [@{{twitter_username}}](https://twitter.com/{{twitter_username}})  
-{{/if}}
-
-{{#if facebook_username}}
-- **Facebook:** [{{facebook_full_name}}](https://facebook.com/{{facebook_username}})  
-{{/if}}
-
-{{#if tiktok_username}}
-- **TikTok:** [@{{tiktok_username}}](https://tiktok.com/@{{tiktok_username}})  
-{{/if}}
-
-{{#if youtube_username}}
-- **YouTube:** [{{youtube_full_name}}](https://youtube.com/@{{youtube_username}})  
-{{/if}}
+☀️ **Interests**
+interests_information...
 </output>
 
 <example>
 **Input:**  
-User Name or Identifier: **John Doe**
+User Name or Identifier: **Nicolaus Hilleary**
 
 **Output:**  
-**Classmate Personality**
-✨😊🔥  
-John is an outgoing and friendly individual who loves to engage with others and make new friends.
+🔎 **About**
+I am currently a Business Administration student at San Jose State University with a concentration in Entrepreneurship. Working to build AI teaching assistants for college classrooms and enhance the way students learn. I have past and current experience in business planning, marketing, product research, and sales. I help run the SJSU Entrepreneurship Club and am always open to talk to anyone interested in EdTech or startups.
+
+📂 **Academic Information**
+Nicolaus is a San José State University freshman pursuing a BS in Business Administration (Entrepreneurship concentration). A 2024 Silicon Valley Innovation Challenge winner, he secured $500K+ venture funding for AI-driven educational tools while balancing academics as a midfielder on SJSU’s lacrosse team (DII WCLL).
 
 
-**Academic Information** 
-📚🎓💡  
-John is currently pursuing a degree in Computer Science and has consistently achieved high grades throughout his studies.
-
-
-**Technical Ability**
-💻🚀🔧  
-John has strong programming skills in Python and Java and has completed several projects in web development.
-
-
-**Social Media**  
-
-- **Instagram:** [@john_doe](https://instagram.com/john_doe)  
-- **X (Twitter):** [@john_doe](https://twitter.com/john_doe)  
-- **Facebook:** [John Doe](https://facebook.com/johndoe)  
-- **TikTok:** [@john_doe](https://tiktok.com/@john_doe)  
-- **YouTube:** [John Doe](https://youtube.com/@johndoe)  
+☀️ **Interests**
+Nicolaus is involved in multiple clubs, having started the PM Club focusing on product management. Along with this, he is also the Head of Startups at the IDEAS Entrepreneurship Club. Previously, he founded the Semper Fi Society and was involved until 2024. He is passionate about entrepreneurship and working with like-minded individuals.
 </example>
 
 <data>
 name:#(nane)
 institution:#(institution)
 search info:#(info)
+linkedin profile:#(profile)
 </data>
