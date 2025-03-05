@@ -397,7 +397,7 @@ public class LlmAiChatService {
     }
 
     if (channelContext != null) {
-      Kv by = Kv.by("content", "Third let me search linkedin " + textQuestion + ". ");
+      Kv by = Kv.by("content", "Third let me search linkedin with" + name + " " + institution + ". ");
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
