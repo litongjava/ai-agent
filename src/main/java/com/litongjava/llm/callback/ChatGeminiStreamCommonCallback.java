@@ -51,13 +51,14 @@ public class ChatGeminiStreamCommonCallback implements Callback {
   @Override
   public void onResponse(Call call, Response response) throws IOException {
     if (!response.isSuccessful()) {
-      String data = "Chat model response an unsuccessful message:" + response.body().string();
+      String errorBody = response.body().string();
+      String data = "Chat model response an unsuccessful message:" + errorBody;
       log.error(data);
       RunningNotificationService notification = AiAgentContext.me().getNotification();
       if (notification != null) {
         notification.sendError(data);
       }
-      SsePacket packet = new SsePacket(AiChatEventName.error, data);
+      SsePacket packet = new SsePacket(AiChatEventName.error, errorBody);
       Tio.bSend(channelContext, packet);
       try {
         ChatStreamCallCan.remove(apiChatSendVo.getSession_id());

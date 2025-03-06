@@ -57,7 +57,8 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
   @Override
   public void onResponse(Call call, Response response) throws IOException {
     if (!response.isSuccessful()) {
-      String data = "Chat model response an unsuccessful message:" + response.body().string();
+      String errorBody = response.body().string();
+      String data = "Chat model response an unsuccessful message:" + errorBody;
       log.error(data);
       RunningNotificationService notification = AiAgentContext.me().getNotification();
       if (notification != null) {

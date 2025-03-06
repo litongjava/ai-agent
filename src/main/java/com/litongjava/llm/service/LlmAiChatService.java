@@ -90,10 +90,11 @@ public class LlmAiChatService {
         return RespBodyVo.fail("input question can not be empty");
       }
     } else if (ApiChatSendType.search.equals(type)) {
-      log.info("search:{}", textQuestion);
-      String systemPrompt = search(channelContext, textQuestion);
-      chatParamVo.setSystemPrompt(systemPrompt);
-
+      if(StrUtil.isNotBlank(textQuestion)) {
+        log.info("search:{}", textQuestion);
+        String systemPrompt = search(channelContext, textQuestion);
+        chatParamVo.setSystemPrompt(systemPrompt);
+      }
     } else if (ApiChatSendType.celebrity.equals(type)) {
       String name = chatSendArgs.getName();
       String institution = chatSendArgs.getInstitution();
