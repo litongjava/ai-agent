@@ -104,7 +104,12 @@ public class LlmAiChatService {
       textQuestion = inputQestion;
       log.info("celebrity:{}", textQuestion);
       String systemPrompt = celebrity(channelContext, chatSendArgs);
-      chatParamVo.setSystemPrompt(systemPrompt);
+      if (systemPrompt == null) {
+        if (channelContext != null) {
+          SseEmitter.closeChunkConnection(channelContext);
+        }
+        return RespBodyVo.fail("Failed to search celebrity");
+      }
     }
 
     if (textQuestion != null) {
@@ -364,6 +369,37 @@ public class LlmAiChatService {
 
     SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
     List<SearxngResult> results = searchResponse.getResults();
+    if (results != null && results.size() < 1) {
+      Kv by = Kv.by("content", "unfortunate Failed to search.I will try again a 3 seconds. ");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      searchResponse = SearxngSearchClient.search(textQuestion);
+      results = searchResponse.getResults();
+
+      if (results != null && results.size() < 1) {
+        by = Kv.by("content", "unfortunate Failed to search.I will try again a 3 seconds. ");
+        ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        searchResponse = SearxngSearchClient.search(textQuestion);
+        results = searchResponse.getResults();
+      }
+    }
+    if (results != null && results.size() < 1) {
+      Kv by = Kv.by("content", "unfortunate Failed to search.Please try again later. ");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+      return null;
+    }
     List<WebPageContent> pages = new ArrayList<>();
     StringBuffer markdown = new StringBuffer();
     StringBuffer sources = new StringBuffer();
