@@ -38,6 +38,9 @@ public class LinkedInService {
       if (profile.startsWith("[")) {
         try {
           profile = FastJson2Utils.parseArray(profile).toJSONString();
+          EhCacheKit.put(cacheName, url, profile);
+          Row row = Row.by("id", SnowflakeIdUtils.id()).set("source", url).set("profile_data", PgObjectUtils.json(profile));
+          Db.save(AgentTableNames.linkedin_profile_cache, row);
         } catch (Exception e) {
           log.error("Failed to parse:{},{}", profile, e.getMessage(), e);
         }
@@ -49,9 +52,6 @@ public class LinkedInService {
         }
       }
 
-      EhCacheKit.put(cacheName, url, profile);
-      Row row = Row.by("id", SnowflakeIdUtils.id()).set("source", url).set("profile_data", PgObjectUtils.json(profile));
-      Db.save(AgentTableNames.linkedin_profile_cache, row);
       return profile;
     }
     return null;
@@ -78,6 +78,9 @@ public class LinkedInService {
         try {
           JSONArray parseArray = FastJson2Utils.parseArray(profile);
           profile = parseArray.toJSONString();
+          EhCacheKit.put(cacheName, url, profile);
+          Row row = Row.by("id", SnowflakeIdUtils.id()).set("source", url).set("data", PgObjectUtils.json(profile));
+          Db.save(AgentTableNames.linkedin_profile_posts_cache, row);
         } catch (Exception e) {
           log.error("Failed to parse:{},{}", profile, e.getMessage(), e);
 
@@ -90,9 +93,6 @@ public class LinkedInService {
           log.error("Failed to parse:{},{}", profile, e.getMessage(), e);
         }
       }
-      EhCacheKit.put(cacheName, url, profile);
-      Row row = Row.by("id", SnowflakeIdUtils.id()).set("source", url).set("data", PgObjectUtils.json(profile));
-      Db.save(AgentTableNames.linkedin_profile_posts_cache, row);
       return profile;
     }
     return null;

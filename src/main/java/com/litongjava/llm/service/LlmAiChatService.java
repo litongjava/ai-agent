@@ -104,6 +104,7 @@ public class LlmAiChatService {
       textQuestion = inputQestion;
       log.info("celebrity:{}", textQuestion);
       String systemPrompt = celebrity(channelContext, chatSendArgs);
+      chatParamVo.setSystemPrompt(systemPrompt);
       if (systemPrompt == null) {
         if (channelContext != null) {
           SseEmitter.closeChunkConnection(channelContext);
