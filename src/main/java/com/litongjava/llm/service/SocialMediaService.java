@@ -28,8 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SocialMediaService {
-  public String extraSoicalMedia(String question, String searchInfo) {
+  public String extraSoicalMedia(String name, String institution, String searchInfo) {
     String cacheName = "soical_media_accounts_data";
+    String question = name + " at " + institution;
     String content = EhCacheKit.getString(cacheName, question);
     if (content != null) {
       return content;
@@ -41,7 +42,8 @@ public class SocialMediaService {
       return content;
     }
 
-    String renderToString = PromptEngine.renderToString("extra_soical_media_prompt.txt", Kv.by("data", searchInfo).set("question", question));
+    Kv set = Kv.by("data", searchInfo).set("name", name).set("institution", institution);
+    String renderToString = PromptEngine.renderToString("extra_soical_media_prompt.txt", set);
     log.info("prompt:{}", renderToString);
     ChatMessage chatMessage = new ChatMessage("user", renderToString);
     List<ChatMessage> messages = new ArrayList<>();

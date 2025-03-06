@@ -428,7 +428,7 @@ public class LlmAiChatService {
       Tio.send(channelContext, ssePacket);
     }
 
-    String soicalMediaAccounts = socialMediaService.extraSoicalMedia(textQuestion, sources.toString());
+    String soicalMediaAccounts = socialMediaService.extraSoicalMedia(name, institution, sources.toString());
     if (channelContext != null) {
       SsePacket ssePacket = new SsePacket(AiChatEventName.social_media, soicalMediaAccounts);
       Tio.send(channelContext, ssePacket);

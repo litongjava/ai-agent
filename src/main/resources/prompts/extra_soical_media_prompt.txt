@@ -7,6 +7,7 @@ For example:
 </instruction>
 
 <data>
-question:#(question)
+name:#(name)
+institution:#(institution)
 search info:#(data)
 </data>
