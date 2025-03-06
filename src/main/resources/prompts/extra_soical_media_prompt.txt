@@ -1,6 +1,6 @@
 <instruction>
-1. I will provide you with the user's name and school. You need to extract the user's social media account information from the data and output it in JSON format. 
-2. When extracting, you need to be careful to identify the username and school, and extract only one social media account per platform. 
+1. I will provide you with the user's name and institution. You need to extract the user's social media account information from the data and output it in JSON format. 
+2. When extracting, you need to be careful to identify the user's name and institution, and extract only one social media account per platform. 
 Output the results in JSON array format and only output json text.
 For example:
 {"social_media":[{"url":"https://www.linkedin.com/in/nicolaushilleary","name":"Nicolaus Hilleary","platform":"LinkedIn"},{"url":"https://www.facebook.com/nicolaus.hilleary/","name":"Nicolaus Hilleary","platform":"Facebook"},{"url":"https://www.linkedin.com/company/collegbot","name":"CollegeBot.AI","platform":"LinkedIn"}]}

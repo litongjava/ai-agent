@@ -2,13 +2,14 @@ package com.litongjava.llm.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import org.postgresql.util.PGobject;
 
+import com.google.common.util.concurrent.Striped;
 import com.jfinal.kit.Kv;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
-import com.litongjava.ehcache.EhCacheKit;
 import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.openai.chat.ChatMessage;
@@ -28,41 +29,48 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SocialMediaService {
+  private static final Striped<Lock> stripedLocks = Striped.lock(256);
+
   public String extraSoicalMedia(String name, String institution, String searchInfo) {
-    String cacheName = "soical_media_accounts_data";
-    String question = name + " at " + institution;
-    String content = EhCacheKit.getString(cacheName, question);
-    if (content != null) {
-      return content;
-    }
-    PGobject pgobject = Db.queryColumnByField(AgentTableNames.social_media_accounts_cache, "data", "name", question);
-    if (pgobject != null && pgobject.getValue() != null) {
-      content = pgobject.getValue();
-      EhCacheKit.put(cacheName, question, content);
-      return content;
-    }
+    String lowerCaseName = name.toLowerCase();
+    institution = institution.toUpperCase();
+    String key = name + " at " + institution;
+    Lock lock = stripedLocks.get(key);
+    lock.lock();
+    try {
+      String sql = "select data from %s where name=? and institution=?";
+      sql = String.format(sql, AgentTableNames.social_media_accounts);
+      PGobject pgobject = Db.queryPGobject(sql, lowerCaseName, institution);
+      String content = null;
+      if (pgobject != null && pgobject.getValue() != null) {
+        content = pgobject.getValue();
+        return content;
+      }
 
-    Kv set = Kv.by("data", searchInfo).set("name", name).set("institution", institution);
-    String renderToString = PromptEngine.renderToString("extra_soical_media_prompt.txt", set);
-    log.info("prompt:{}", renderToString);
-    ChatMessage chatMessage = new ChatMessage("user", renderToString);
-    List<ChatMessage> messages = new ArrayList<>();
-    messages.add(chatMessage);
-    OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo();
-    chatRequestVo.setStream(false);
-    chatRequestVo.setResponse_format(ChatResponseFormatType.json_object);
-    chatRequestVo.setChatMessages(messages);
+      Kv set = Kv.by("data", searchInfo).set("name", name).set("institution", institution);
+      String renderToString = PromptEngine.renderToString("extra_soical_media_prompt.txt", set);
+      log.info("prompt:{}", renderToString);
+      ChatMessage chatMessage = new ChatMessage("user", renderToString);
+      List<ChatMessage> messages = new ArrayList<>();
+      messages.add(chatMessage);
+      OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo();
+      chatRequestVo.setStream(false);
+      chatRequestVo.setResponse_format(ChatResponseFormatType.json_object);
+      chatRequestVo.setChatMessages(messages);
 
-    OpenAiChatResponseVo chat = useDeepseek(chatRequestVo);
-    content = chat.getChoices().get(0).getMessage().getContent();
-    if (content.startsWith("```json")) {
-      content = content.substring(7, content.length() - 3);
+      OpenAiChatResponseVo chat = useDeepseek(chatRequestVo);
+      content = chat.getChoices().get(0).getMessage().getContent();
+      if (content.startsWith("```json")) {
+        content = content.substring(7, content.length() - 3);
+      }
+      content = FastJson2Utils.parseObject(content).toJSONString();
+      PGobject json = PgObjectUtils.json(content);
+      Row row = Row.by("id", SnowflakeIdUtils.id()).set("name", lowerCaseName).set("institution", institution).set("data", json);
+      Db.save(AgentTableNames.social_media_accounts, row);
+      return content;
+    } finally {
+      lock.unlock();
     }
-    content = FastJson2Utils.parseObject(content).toJSONString();
-    Row row = Row.by("id", SnowflakeIdUtils.id()).set("name", question).set("data", PgObjectUtils.json(content));
-    Db.save(AgentTableNames.social_media_accounts_cache, row);
-    EhCacheKit.put(cacheName, question, content);
-    return content;
   }
 
   private OpenAiChatResponseVo useDeepseek(OpenAiChatRequestVo chatRequestVo) {
