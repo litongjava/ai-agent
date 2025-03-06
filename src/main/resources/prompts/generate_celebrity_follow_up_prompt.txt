@@ -1,11 +1,12 @@
 <instruction>
-Based on the provided description of an individual, create two follow-up questions that explore further into their professional achievements and future initiatives. 
-The questions should focus on how they plan to expand their impact and explore new applications for their innovations. 
-Include relevant emojis with each question to emphasize the theme.
+Generate a list of two questions related to the person who is discussed in the conversation and must contain the name.  
+The questions are supposed to be on the youth gossip side.
+The question should be less than 10 words.
+Use emojis relevant to each question. 
 Your output should be in json format: 
-{"questions":["question1","question2"]}
-
+{"questions":["What are xxx's interests?","How to be friends with ***?"]}
 </instruction>
+
 <data>
 #(data)
 </data>
