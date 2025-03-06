@@ -10,6 +10,7 @@ import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.http.response.ResponseVo;
 import com.litongjava.tio.utils.hutool.StrUtil;
+import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
 public class LinkedInService {
@@ -30,9 +31,36 @@ public class LinkedInService {
     ResponseVo responseVo = ApiFyClient.linkedinProfileScraper(url);
     if (responseVo.isOk()) {
       profile = responseVo.getBodyString();
+      profile = FastJson2Utils.parseArray(profile).toJSONString();
       EhCacheKit.put(cacheName, url, profile);
       Row row = Row.by("id", SnowflakeIdUtils.id()).set("source", url).set("profile_data", PgObjectUtils.json(profile));
       Db.save(AgentTableNames.linkedin_profile_cache, row);
+      return profile;
+    }
+    return null;
+  }
+  
+  public String profilePostsScraper(String url) {
+    String cacheName = "linkedin_profile_posts_scraper";
+    String profile = EhCacheKit.getString(cacheName, url);
+    if (StrUtil.isNotBlank(profile)) {
+      return profile;
+    }
+
+    PGobject pgObject = Db.queryColumnByField(AgentTableNames.linkedin_profile_posts_cache, "data", "source", url);
+    if (pgObject != null && pgObject.getValue() != null) {
+      profile = pgObject.getValue();
+      EhCacheKit.put(cacheName, url, profile);
+      return profile;
+    }
+
+    ResponseVo responseVo = ApiFyClient.linkedinProfilePostsScraper(url);
+    if (responseVo.isOk()) {
+      profile = responseVo.getBodyString();
+      profile = FastJson2Utils.parseArray(profile).toJSONString();
+      EhCacheKit.put(cacheName, url, profile);
+      Row row = Row.by("id", SnowflakeIdUtils.id()).set("source", url).set("data", PgObjectUtils.json(profile));
+      Db.save(AgentTableNames.linkedin_profile_posts_cache, row);
       return profile;
     }
     return null;

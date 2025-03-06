@@ -444,6 +444,25 @@ public class LlmAiChatService {
         Tio.send(channelContext, ssePacket);
       }
 
+      if (channelContext != null) {
+        Kv by = Kv.by("content", "Sixth let me read linkedin posts " + url + ". ");
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+
+      try {
+        String profilePosts = linkedInService.profilePostsScraper(url);
+        if (profilePosts != null) {
+          SsePacket ssePacket = new SsePacket(AiChatEventName.linkedin_posts, profilePosts);
+          Tio.send(channelContext, ssePacket);
+        }
+      } catch (Exception e) {
+        log.error(e.getMessage(), e);
+        Kv by = Kv.by("content", "unfortunate Failed to read linkedin profile posts " + url + ". ");
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+
     }
 
     if (channelContext != null) {
@@ -498,7 +517,7 @@ public class LlmAiChatService {
       Tio.bSend(channelContext, packet);
 
       chatRequestVo.setStream(true);
-      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, sessionId, answerId, start);
+      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, vo, answerId, start);
       Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
       log.info("add call:{}", sessionId);
       ChatStreamCallCan.put(sessionId, call);

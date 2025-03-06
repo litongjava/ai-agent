@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CallbackSuccess {
+public class ChatCallbackVo {
   private String model;
   private String content;
 }

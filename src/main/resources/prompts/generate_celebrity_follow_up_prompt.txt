@@ -1,0 +1,12 @@
+<instruction>
+Based on the provided description of an individual, create two follow-up questions that explore further into their professional achievements and future initiatives. 
+The questions should focus on how they plan to expand their impact and explore new applications for their innovations. 
+Include relevant emojis with each question to emphasize the theme.
+Your output should be in json format: 
+{"questions":["question1","question2"]}
+
+</instruction>
+<data>
+#(data)
+</data>
+

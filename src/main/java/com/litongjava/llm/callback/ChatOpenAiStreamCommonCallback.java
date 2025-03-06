@@ -9,8 +9,10 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AiChatEventName;
+import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.RunningNotificationService;
+import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.openai.chat.ChatResponseDelta;
 import com.litongjava.openai.chat.Choice;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
@@ -32,20 +34,21 @@ import okio.BufferedSource;
 public class ChatOpenAiStreamCommonCallback implements Callback {
   private boolean continueSend = true;
   private ChannelContext channelContext;
-  private long chatId, answerId, start;
-
+  private long answerId, start;
+  private ApiChatSendVo apiChatSendVo;
   private CountDownLatch latch;
+  private ChatCallbackVo callbackVo;
 
-  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, long chatId, long answerId, long start) {
+  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start) {
     this.channelContext = channelContext;
-    this.chatId = chatId;
+    this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
     this.start = start;
   }
 
-  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, long chatId, long answerId, long start, CountDownLatch latch) {
+  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start, CountDownLatch latch) {
     this.channelContext = channelContext;
-    this.chatId = chatId;
+    this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
     this.start = start;
     this.latch = latch;
@@ -63,7 +66,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       SsePacket packet = new SsePacket(AiChatEventName.error, data);
       Tio.bSend(channelContext, packet);
       try {
-        ChatStreamCallCan.remove(chatId);
+        ChatStreamCallCan.remove(apiChatSendVo.getSchool_id());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -80,12 +83,13 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
         Tio.bSend(channelContext, ssePacket);
         return;
       }
-      CallbackSuccess success = onSuccess(channelContext, responseBody, start);
+      ChatCallbackVo success = onSuccess(channelContext, responseBody, start);
+      this.callbackVo = success;
 
       if (success != null && !success.getContent().isEmpty()) {
         String content = success.getContent();
         try {
-          Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, chatId, success.getModel(), content.toString());
+          Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, apiChatSendVo.getSession_id(), success.getModel(), content.toString());
         } catch (Exception e) {
           log.error(e.getMessage(), e);
         }
@@ -95,19 +99,22 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       }
     }
     try {
-      ChatStreamCallCan.remove(chatId);
+      ChatStreamCallCan.remove(apiChatSendVo.getSession_id());
     } catch (Exception e) {
       e.printStackTrace();
     }
     close();
   }
 
+  //关闭连接
   private void close() {
     if (latch == null) {
+      Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, callbackVo);
       SseEmitter.closeSeeConnection(channelContext);
     } else {
       latch.countDown();
       if (latch.getCount() == 0) {
+        Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, callbackVo);
         SseEmitter.closeSeeConnection(channelContext);
       }
     }
@@ -117,7 +124,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
   public void onFailure(Call call, IOException e) {
     SsePacket packet = new SsePacket(AiChatEventName.progress, "error: " + e.getMessage());
     Tio.bSend(channelContext, packet);
-    ChatStreamCallCan.remove(chatId);
+    ChatStreamCallCan.remove(apiChatSendVo.getSession_id());
     close();
   }
 
@@ -129,7 +136,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
    * @return 完整内容
    * @throws IOException
    */
-  public CallbackSuccess onSuccess(ChannelContext channelContext, ResponseBody responseBody, Long start) throws IOException {
+  public ChatCallbackVo onSuccess(ChannelContext channelContext, ResponseBody responseBody, Long start) throws IOException {
     String model = null;
     StringBuffer completionContent = new StringBuffer();
     BufferedSource source = responseBody.source();
@@ -175,16 +182,13 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
 
             }
           }
-        } else {
-          log.info("Data does not end with }:{}", line);
         }
       }
     }
 
-    // 关闭连接
     long end = System.currentTimeMillis();
-    log.info("finish llm in {} (ms)", (end - start));
-    return new CallbackSuccess(model, completionContent.toString());
+    log.info("finish llm in {} {} {}(ms)", apiChatSendVo.getSession_id(), answerId, (end - start));
+    return new ChatCallbackVo(model, completionContent.toString());
   }
 
   private void send(ChannelContext channelContext, SsePacket ssePacket) {
