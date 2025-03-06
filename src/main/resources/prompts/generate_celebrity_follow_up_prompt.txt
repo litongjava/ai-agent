@@ -10,4 +10,3 @@ Your output should be in json format:
 <data>
 #(data)
 </data>
-

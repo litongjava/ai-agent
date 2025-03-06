@@ -5,6 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.jfinal.kit.Kv;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
@@ -28,7 +30,6 @@ import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
-import com.litongjava.searxng.LinkedinSearch;
 import com.litongjava.searxng.SearxngResult;
 import com.litongjava.searxng.SearxngSearchClient;
 import com.litongjava.searxng.SearxngSearchParam;
@@ -41,6 +42,7 @@ import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.http.server.util.SseEmitter;
 import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.hutool.StrUtil;
+import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
@@ -90,7 +92,7 @@ public class LlmAiChatService {
         return RespBodyVo.fail("input question can not be empty");
       }
     } else if (ApiChatSendType.search.equals(type)) {
-      if(StrUtil.isNotBlank(textQuestion)) {
+      if (StrUtil.isNotBlank(textQuestion)) {
         log.info("search:{}", textQuestion);
         String systemPrompt = search(channelContext, textQuestion);
         chatParamVo.setSystemPrompt(systemPrompt);
@@ -422,11 +424,29 @@ public class LlmAiChatService {
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
-    SearxngSearchResponse person = LinkedinSearch.person(name, institution);
+    //SearxngSearchResponse person = LinkedinSearch.person(name, institution);
+    //List<SearxngResult> personResults = person.getResults();
+    //if (personResults != null && personResults.size() > 0) {
+    //String url = personResults.get(0).getUrl();
+
     String profile = null;
-    List<SearxngResult> personResults = person.getResults();
-    if (personResults != null && personResults.size() > 0) {
-      String url = personResults.get(0).getUrl();
+    String url = null;
+    try {
+      JSONArray social_media = FastJson2Utils.parseObject(soicalMediaAccounts).getJSONArray("social_media");
+      for (int i = 0; i < social_media.size(); i++) {
+        JSONObject jsonObject = social_media.getJSONObject(i);
+        if ("LinkedIn".equals(jsonObject.getString("platform"))) {
+          url = jsonObject.getString("url");
+        }
+      }
+    } catch (Exception e) {
+      Kv by = Kv.by("content", "unfortunate Failed to find linkedin url. ");
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+      log.error(e.getMessage(), e);
+    }
+
+    if (StrUtil.isNotBlank(url)) {
       if (channelContext != null) {
         Kv by = Kv.by("content", "Fith let me read linkedin profile " + url + ". ");
         SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
@@ -463,7 +483,6 @@ public class LlmAiChatService {
         SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
         Tio.send(channelContext, ssePacket);
       }
-
     }
 
     if (channelContext != null) {
