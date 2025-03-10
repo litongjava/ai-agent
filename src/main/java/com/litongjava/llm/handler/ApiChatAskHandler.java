@@ -44,6 +44,9 @@ public class ApiChatAskHandler {
       }
     }
     Long schoolId = reqVo.getLong("school_id");
+    if (schoolId == null) {
+      schoolId = reqVo.getLong("schoolId");
+    }
     String type = reqVo.getString("type");
     boolean validateChatId = reqVo.getBooleanValue("validate_session_id", true);
     Boolean stream = reqVo.getBoolean("stream");
