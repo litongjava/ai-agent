@@ -24,6 +24,7 @@ import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.llm.vo.ChatSendArgs;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
+import com.litongjava.model.http.response.ResponseVo;
 import com.litongjava.model.web.WebPageContent;
 import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
@@ -56,9 +57,9 @@ public class LlmAiChatService {
   LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
   LinkedInService linkedInService = Aop.get(LinkedInService.class);
   SocialMediaService socialMediaService = Aop.get(SocialMediaService.class);
+  WebPageService webPageService = Aop.get(WebPageService.class);
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
-
     /**
      * inputQestion 用户输入的问题
      * textQuestion 用户输入的问题和提示词
@@ -85,31 +86,40 @@ public class LlmAiChatService {
     List<Long> file_ids = apiSendVo.getFile_ids();
     ChatSendArgs chatSendArgs = apiSendVo.getArgs();
 
+    SchoolDict schoolDict = null;
+
+    // 1.查询学校
+    if (schoolId != null) {
+      try {
+        schoolDict = Aop.get(SchoolDictDao.class).getSchoolById(schoolId.longValue());
+      } catch (Exception e) {
+        e.printStackTrace();
+
+        String error = e.getMessage();
+        if (stream) {
+          SsePacket ssePacket = new SsePacket(AiChatEventName.error, error.getBytes());
+          Tio.bSend(channelContext, ssePacket);
+          SseEmitter.closeSeeConnection(channelContext);
+        }
+        return RespBodyVo.fail(error);
+      }
+    }
+
+    // 2.问题预处理
     if (ApiChatSendType.translator.equals(type)) {
       if (StrUtil.isNotBlank(inputQestion)) {
         textQuestion = PromptEngine.renderToString("translator_prompt.txt", Kv.by("data", inputQestion));
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
-    } else if (ApiChatSendType.search.equals(type)) {
-      if (StrUtil.isNotBlank(textQuestion)) {
-        log.info("search:{}", textQuestion);
-        String systemPrompt = search(channelContext, textQuestion);
-        chatParamVo.setSystemPrompt(systemPrompt);
-      }
     } else if (ApiChatSendType.celebrity.equals(type)) {
       String name = chatSendArgs.getName();
       String institution = chatSendArgs.getInstitution();
       inputQestion = name + " at " + institution;
       textQuestion = inputQestion;
-      log.info("celebrity:{}", textQuestion);
-      String systemPrompt = celebrity(channelContext, chatSendArgs);
-      chatParamVo.setSystemPrompt(systemPrompt);
-      if (systemPrompt == null) {
-        if (channelContext != null) {
-          SseEmitter.closeChunkConnection(channelContext);
-        }
-        return RespBodyVo.fail("Failed to search celebrity");
+    } else if (ApiChatSendType.perplexity.equals(type)) {
+      if (schoolDict != null) {
+        textQuestion += (" at " + schoolDict.getFull_name());
       }
     }
 
@@ -137,37 +147,17 @@ public class LlmAiChatService {
       }
     }
 
-    SchoolDict schoolDict = null;
-
-    if (schoolId != null) {
-      try {
-        schoolDict = Aop.get(SchoolDictDao.class).getNameById(schoolId.longValue());
-      } catch (Exception e) {
-        e.printStackTrace();
-
-        String error = e.getMessage();
-        if (stream) {
-          SsePacket ssePacket = new SsePacket(AiChatEventName.error, error.getBytes());
-          Tio.bSend(channelContext, ssePacket);
-          SseEmitter.closeSeeConnection(channelContext);
-        }
-        return RespBodyVo.fail(error);
-      }
-    }
-
+    // 3.查询历史
     LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
     if (apiSendVo.isRewrite()) {
       Long previous_question_id = apiSendVo.getPrevious_question_id();
       Long previous_answer_id = apiSendVo.getPrevious_answer_id();
       llmChatHistoryService.remove(previous_question_id, previous_answer_id);
     }
+
     AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
     List<Row> histories = null;
-    if (ApiChatSendType.general.equals(apiSendVo.getType())
-        //
-        || ApiChatSendType.search.equals(apiSendVo.getType())
-        //
-        || ApiChatSendType.compare.equals(apiSendVo.getType())) {
+    if (!ApiChatSendType.translator.equals(type)) {
       try {
         histories = llmChatHistoryService.getHistory(sessionId);
       } catch (Exception e) {
@@ -181,19 +171,37 @@ public class LlmAiChatService {
         return RespBodyVo.fail(error);
       }
     }
-    int size = 0;
-    if (histories != null) {
-      size = histories.size();
+
+    if (histories.size() > 20) {
+      String message = "Dear user, your conversation count has exceeded the maximum length for multiple rounds of conversation. "
+          //
+          + "Please start a new session. Your new question might be:" + textQuestion;
+
+      long answerId = SnowflakeIdUtils.id();
+      aiChatResponseVo.setAnswerId(answerId);
+
+      llmChatHistoryService.saveAssistant(answerId, sessionId, message);
+      Kv kv = Kv.by("answer_id", answerId);
+      if (stream) {
+        SsePacket ssePacket = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(Kv.by("content", message)));
+        Tio.bSend(channelContext, ssePacket);
+        SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
+        Tio.send(channelContext, packet);
+        SseEmitter.closeSeeConnection(channelContext);
+      }
+      aiChatResponseVo.setContent(message);
+      return RespBodyVo.ok(message);
     }
 
     if (stream) {
-      SsePacket ssePacket = new SsePacket(AiChatEventName.progress, ("The number of history records to be queried:" + size).getBytes());
+      SsePacket ssePacket = new SsePacket(AiChatEventName.progress, ("The number of history records to be queried:" + histories.size()).getBytes());
       Tio.bSend(channelContext, ssePacket);
     }
 
+    // 4.处理历史记录,拼接历史消息
     boolean isFirstQuestion = false;
     List<ChatMessage> historyMessage = new ArrayList<>();
-    if (histories == null || size < 1) {
+    if (histories == null || histories.size() < 1) {
       isFirstQuestion = true;
     } else {
       for (Row record : histories) {
@@ -220,9 +228,9 @@ public class LlmAiChatService {
       }
     }
 
+    // 5.记录问题
     // save to the user question to db
     long questionId = SnowflakeIdUtils.id();
-
     List<UploadResultVo> fileInfo = null;
     try {
       if (file_ids != null) {
@@ -247,6 +255,7 @@ public class LlmAiChatService {
       aiChatResponseVo.setUploadFiles(fileInfo);
     }
 
+    // 6.发送问题通知
     if (StrUtil.isNotEmpty(textQuestion)) {
       StringBuffer stringBuffer = new StringBuffer();
 
@@ -255,7 +264,7 @@ public class LlmAiChatService {
           .append("userId:").append(userId).append("\n")//
           .append("schooL id:").append(schoolId).append("\n");
       if (schoolDict != null) {
-        stringBuffer.append("schooL name:").append(schoolDict.getFullName()).append("\n");
+        stringBuffer.append("schooL name:").append(schoolDict.getFull_name()).append("\n");
       }
       //
       stringBuffer.append("user question:").append(textQuestion).append("\n")
@@ -284,34 +293,69 @@ public class LlmAiChatService {
         });
       }
     }
-    if (size > 20) {
-      String message = "Dear user, your conversation count has exceeded the maximum length for multiple rounds of conversation. "
+    // 7.重写问题
+    boolean isRewriteQuesiton = false;
+    if (textQuestion != null) {
+      if (textQuestion.length() > 76) {
+        isRewriteQuesiton = true;
+      } else if (historyMessage.size() > 1) {
+        isRewriteQuesiton = true;
+      }
+    }
+    if (isRewriteQuesiton) {
+      LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
+      if (ApiChatSendType.advise.equals(type)) {
+        textQuestion = llmRewriteQuestionService.rewriteSearchQuesiton(textQuestion, historyMessage);
+      } else {
+        textQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
+      }
+      StringBuffer stringBuffer = new StringBuffer();
+      stringBuffer.append("user_id:").append(userId).append("\n")
           //
-          + "Please start a new session. Your new question might be:" + textQuestion;
+          .append("chat_id").append(sessionId).append("\n");
+      stringBuffer.append("question:").append(textQuestion).append("\n");
+      //
+      stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
+      //
+      stringBuffer.append("rewrite:" + textQuestion);
 
-      long answerId = SnowflakeIdUtils.id();
-      aiChatResponseVo.setAnswerId(answerId);
+      AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
+      log.info("rewrite question:{}", textQuestion);
 
-      llmChatHistoryService.saveAssistant(answerId, sessionId, message);
-      Kv kv = Kv.by("answer_id", answerId);
-      if (stream) {
-        SsePacket ssePacket = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(Kv.by("content", message)));
-        Tio.bSend(channelContext, ssePacket);
-        SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
-        Tio.send(channelContext, packet);
-        SseEmitter.closeSeeConnection(channelContext);
+      if (stream && channelContext != null) {
+        Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
+        SsePacket packet = new SsePacket(AiChatEventName.rewrite, JsonUtils.toJson(kv));
+        Tio.bSend(channelContext, packet);
       }
-      aiChatResponseVo.setContent(message);
-      return RespBodyVo.ok(message);
+      aiChatResponseVo.setRewrite(textQuestion);
+      chatParamVo.setRewriteQuestion(textQuestion);
     }
-    if (apiSendVo.getType().equals(ApiChatSendType.general)) {
-      if (isFirstQuestion && textQuestion != null) {
-        if (schoolDict != null) {
-          textQuestion += " at " + schoolDict.getFullName();
+
+    // 8.判断类型
+    if (ApiChatSendType.search.equals(type)) {
+      if (StrUtil.isNotBlank(textQuestion)) {
+        log.info("search:{}", textQuestion);
+        String systemPrompt = search(channelContext, textQuestion);
+        chatParamVo.setSystemPrompt(systemPrompt);
+      }
+    } else if (ApiChatSendType.advise.equals(type)) {
+      if (StrUtil.isNotBlank(textQuestion)) {
+        String systemPrompt = advise(channelContext, textQuestion, schoolDict);
+        chatParamVo.setSystemPrompt(systemPrompt);
+      }
+    } else if (ApiChatSendType.celebrity.equals(type)) {
+      log.info("celebrity:{}", textQuestion);
+      String systemPrompt = celebrity(channelContext, chatSendArgs);
+      chatParamVo.setSystemPrompt(systemPrompt);
+      if (systemPrompt == null) {
+        if (channelContext != null) {
+          SseEmitter.closeChunkConnection(channelContext);
         }
+        return RespBodyVo.fail("Failed to search celebrity");
       }
     }
 
+    //9.处理问题
     chatParamVo.setFirstQuestion(isFirstQuestion).setTextQuestion(textQuestion)
         //
         .setHistory(historyMessage).setChannelContext(channelContext);
@@ -324,43 +368,17 @@ public class LlmAiChatService {
       String answer = processMessageByChatModel(apiSendVo, channelContext);
       aiChatResponseVo.setContent(answer);
       return RespBodyVo.ok(aiChatResponseVo);
-
     } else {
-      if (textQuestion != null && historyMessage.size() > 1) {
-        StringBuffer stringBuffer = new StringBuffer();
-        stringBuffer.append("user_id:").append(userId).append("\n")
-            //
-            .append("chat_id").append(sessionId).append("\n");
-
-        stringBuffer.append("question:").append(textQuestion).append("\n");
-        textQuestion = Aop.get(LlmRewriteQuestionService.class).rewrite(textQuestion, historyMessage);
-        //
-        stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
-        //
-        stringBuffer.append("rewrite:" + textQuestion);
-
-        AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
-        log.info("rewrite question:{}", textQuestion);
-
-        if (stream && channelContext != null) {
-          Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
-          SsePacket packet = new SsePacket(AiChatEventName.rewrite, JsonUtils.toJson(kv));
-          Tio.bSend(channelContext, packet);
-        }
-        aiChatResponseVo.setRewrite(textQuestion);
-        chatParamVo.setRewriteQuestion(textQuestion);
-      }
-
       dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }
-
   }
 
   private String celebrity(ChannelContext channelContext, ChatSendArgs chatSendArgs) {
     String name = chatSendArgs.getName();
     String institution = chatSendArgs.getInstitution();
-    String textQuestion = name + " at " + institution;
+    //必须要添加两个institution,添加后搜索更准,但是不知道原理是什么?猜测是搜索引擎提高了权重
+    String textQuestion = name + " (" + institution + ")" + " at " + institution;
 
     if (channelContext != null) {
       Kv by = Kv.by("content", "First let me search google with " + textQuestion + ". ");
@@ -474,6 +492,7 @@ public class LlmAiChatService {
         JSONObject jsonObject = social_media.getJSONObject(i);
         if ("LinkedIn".equals(jsonObject.getString("platform"))) {
           url = jsonObject.getString("url");
+          break;
         }
       }
     } catch (Exception e) {
@@ -554,6 +573,92 @@ public class LlmAiChatService {
     // 3. 使用 PromptEngine 模版引擎填充提示词
     Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
     String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
+    return systemPrompt;
+  }
+
+  private String advise(ChannelContext channelContext, String textQuestion, SchoolDict schoolDict) {
+    String full_name = schoolDict.getFull_name();
+    String domain_name = schoolDict.getDomain_name();
+    if (channelContext != null) {
+      String message = "First your are from %s let me search %s. ";
+      message = String.format(message, full_name, domain_name);
+      Kv by = Kv.by("content", message);
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
+    textQuestion = "site:" + domain_name + " " + textQuestion;
+    log.info(textQuestion);
+    SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
+    List<SearxngResult> results = searchResponse.getResults();
+    log.info("found page size:{}", results.size());
+
+    List<WebPageContent> pages = new ArrayList<>();
+    StringBuffer markdown = new StringBuffer();
+    if (results.size() > 0) {
+      if (channelContext != null) {
+        String message = "Second I found %d web pages. let me read top 5 pages. ";
+        message = String.format(message, results.size());
+        Kv by = Kv.by("content", message);
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+    } else {
+      String message = "Failed to search please try again later. ";
+      Kv by = Kv.by("content", message);
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
+    int max = 5;
+    if (results.size() < 5) {
+      max = results.size();
+    }
+
+    for (int i = 0; i < max; i++) {
+      SearxngResult searxngResult = results.get(i);
+      String title = searxngResult.getTitle();
+      String url = searxngResult.getUrl();
+      if (channelContext != null) {
+        String message = "Read %s. ";
+        message = String.format(message, url);
+        Kv by = Kv.by("content", message);
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+
+      pages.add(new WebPageContent(title, url));
+
+      ResponseVo responseVo = webPageService.get(url);
+      if (responseVo == null) {
+        if (channelContext != null) {
+          String message = "Failed to read %s. ";
+          message = String.format(message, url);
+          Kv by = Kv.by("content", message);
+          SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+        }
+        markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
+      } else {
+        if (responseVo.isOk()) {
+          markdown.append("source " + (i + 1) + " " + responseVo.getBodyString());
+        } else {
+          markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
+        }
+      }
+
+    }
+
+    if (channelContext != null) {
+      SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
+      Tio.send(channelContext, ssePacket);
+    }
+
+    String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+    // 3. 使用 PromptEngine 模版引擎填充提示词
+    Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
+    String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
+    if (EnvUtils.isDev()) {
+      log.info(systemPrompt);
+    }
     return systemPrompt;
   }
 

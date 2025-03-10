@@ -59,15 +59,15 @@ public class SearchPromptService {
         Tio.bSend(channelContext, packet);
       }
     }
-    SchoolDict schoolDict = Aop.get(SchoolDictDao.class).getNameById(schoolId);
+    SchoolDict schoolDict = Aop.get(SchoolDictDao.class).getSchoolById(schoolId);
 
     log.info("school:{},{}", schoolId, schoolDict);
     if (schoolDict == null) {
       params.put("botName", "Spartan Assistant");
       params.put("schoolName", "San Jose State University (SJSU)");
     } else {
-      params.put("botName", schoolDict.getBotName());
-      params.put("schoolName", schoolDict.getFullName());
+      params.put("botName", schoolDict.getBot_name());
+      params.put("schoolName", schoolDict.getFull_name());
     }
 
     // 渲染模版

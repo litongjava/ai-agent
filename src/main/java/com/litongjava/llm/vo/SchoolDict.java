@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SchoolDict {
   private Long id;
-  private String fullName;
+  private String full_name;
   private String abbr_name;
-  private String botName;
+  private String bot_name;
+  private String domain_name;
 }

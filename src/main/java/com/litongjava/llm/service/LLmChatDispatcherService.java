@@ -286,7 +286,8 @@ public class LLmChatDispatcherService {
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
-      Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
+      String sanitizedJson = requestJson.replaceAll("\u0000", "");
+      Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(sanitizedJson)));
     });
     return chatRequestVo;
   }

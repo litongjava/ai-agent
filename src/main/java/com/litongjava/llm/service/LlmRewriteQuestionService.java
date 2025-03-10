@@ -18,17 +18,36 @@ import com.litongjava.template.PromptEngine;
 
 public class LlmRewriteQuestionService {
 
-  public String rewrite(String question, List<ChatMessage> messages) {
+  public String rewriteSearchQuesiton(String question, List<ChatMessage> messages) {
+    // 1.渲染模版
+    Template template = PromptEngine.getTemplate("search_rewrite_question_prompt.txt");
 
+    Map<String, Object> values = new HashMap<>();
+    values.put("query", question);
+    if (messages != null && messages.size() > 0) {
+      values.put("table", toMarkdown(messages));
+    }
+    String prompt = template.renderToString(values);
+    return predict(question, prompt);
+  }
+
+  public String rewrite(String question, List<ChatMessage> messages) {
     // 1.渲染模版
     Template template = PromptEngine.getTemplate("rewrite_question_prompt.txt");
 
     Map<String, Object> values = new HashMap<>();
-    values.put("table", toMarkdown(messages));
     values.put("query", question);
+    if (messages != null && messages.size() > 0) {
+      values.put("table", toMarkdown(messages));
+    }
     String prompt = template.renderToString(values);
 
-    // 2.大模型推理
+    return predict(question, prompt);
+  }
+
+  //2.大模型推理
+  private String predict(String question, String prompt) {
+
     //String content = openAiGpt(question, prompt);
     String content = googleGemini(prompt);
     if (content == null) {
