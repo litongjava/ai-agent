@@ -5,7 +5,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import com.litongjava.db.activerecord.Db;
+import com.litongjava.db.activerecord.Row;
+import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.http.response.ResponseVo;
+import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,13 +26,22 @@ public class WebPageService {
    */
   public ResponseVo get(String url) {
     if (!url.endsWith(".pdf")) {
+      String sql = "SELECT text FROM %s WHERE url = ?";
+      sql = String.format(sql, AgentTableNames.web_page_cache);
+      String result = Db.queryStr(sql, url);
+      if (result != null) {
+        return ResponseVo.ok(result);
+      }
       try {
         Connection connect = Jsoup.connect(url);
         connect.userAgent(userAgent);
         Document document = connect.get();
         Element bodyElement = document.body();
         //String bodyHtml = bodyElement.html(); // 获取body标签内的HTML内容
-        String result = bodyElement.text(); // 获取body标签内的纯文本内容
+        result = bodyElement.text(); // 获取body标签内的纯文本内容
+        Row newRow = new Row();
+        newRow.set("id", SnowflakeIdUtils.id()).set("url", url).set("text", result);
+        Db.save(AgentTableNames.web_page_cache, newRow);
         // 转换为 Markdown 格式
         //String markdown = MarkdownUtils.safeToMd(bodyHtml);
         return ResponseVo.ok(result);

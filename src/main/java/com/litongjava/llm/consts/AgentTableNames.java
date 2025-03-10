@@ -14,7 +14,8 @@ public interface AgentTableNames {
 
   String linkedin_profile_cache = "linkedin_profile_cache";
   String linkedin_profile_posts_cache = "linkedin_profile_posts_cache";
-  
+
   String social_media_accounts = "social_media_accounts";
+  String web_page_cache = "web_page_cache";
 
 }
