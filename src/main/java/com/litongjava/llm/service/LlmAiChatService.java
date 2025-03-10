@@ -621,7 +621,7 @@ public class LlmAiChatService {
     StringBuffer markdown = new StringBuffer();
     if (results.size() > 0) {
       if (channelContext != null) {
-        String message = "Third I found %d web pages. let me read top 3 pages. ";
+        String message = "Third I found %d web pages. let me read top 4 pages. ";
         message = String.format(message, results.size());
         Kv by = Kv.by("content", message);
         SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
@@ -633,7 +633,7 @@ public class LlmAiChatService {
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
-    int max = 3;
+    int max = 4;
     if (results.size() < max) {
       max = results.size();
     }
