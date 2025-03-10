@@ -74,6 +74,9 @@ public class ApiChatHandler {
     if (bodyString == null) {
       name = request.getParam("name");
       schoolIdString = request.getParam("school_id");
+      if (schoolIdString == null) {
+        schoolIdString = request.getParam("schoolId");
+      }
       chatType = request.getInt("chat_type");
       type = request.getString("type");
       appId = request.getLong("app_id");
@@ -84,6 +87,9 @@ public class ApiChatHandler {
       JSONObject parseObject = FastJson2Utils.parseObject(bodyString);
       name = parseObject.getString("name");
       schoolIdString = parseObject.getString("school_id");
+      if (schoolIdString == null) {
+        schoolIdString = parseObject.getString("schoolId");
+      }
       chatType = parseObject.getInteger("chat_type");
       type = parseObject.getString("type");
       appId = parseObject.getLong("app_id");
