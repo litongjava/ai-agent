@@ -9,6 +9,9 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.jfinal.kit.Kv;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.google.search.GoogleCustomSearchClient;
+import com.litongjava.google.search.GoogleCustomSearchResponse;
+import com.litongjava.google.search.SearchResultItem;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
@@ -58,6 +61,7 @@ public class LlmAiChatService {
   LinkedInService linkedInService = Aop.get(LinkedInService.class);
   SocialMediaService socialMediaService = Aop.get(SocialMediaService.class);
   WebPageService webPageService = Aop.get(WebPageService.class);
+  LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
     /**
@@ -303,32 +307,29 @@ public class LlmAiChatService {
       }
     }
     if (isRewriteQuesiton) {
-      LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
-      if (ApiChatSendType.advise.equals(type)) {
-        textQuestion = llmRewriteQuestionService.rewriteSearchQuesiton(textQuestion, historyMessage);
-      } else {
+      if (!ApiChatSendType.advise.equals(type)) {
         textQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
-      }
-      StringBuffer stringBuffer = new StringBuffer();
-      stringBuffer.append("user_id:").append(userId).append("\n")
-          //
-          .append("chat_id").append(sessionId).append("\n");
-      stringBuffer.append("question:").append(textQuestion).append("\n");
-      //
-      stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
-      //
-      stringBuffer.append("rewrite:" + textQuestion);
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("user_id:").append(userId).append("\n")
+            //
+            .append("chat_id").append(sessionId).append("\n");
+        stringBuffer.append("question:").append(textQuestion).append("\n");
+        //
+        stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
+        //
+        stringBuffer.append("rewrite:" + textQuestion);
 
-      AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
-      log.info("rewrite question:{}", textQuestion);
+        AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
+        log.info("rewrite question:{}", textQuestion);
 
-      if (stream && channelContext != null) {
-        Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
-        SsePacket packet = new SsePacket(AiChatEventName.rewrite, JsonUtils.toJson(kv));
-        Tio.bSend(channelContext, packet);
+        if (stream && channelContext != null) {
+          Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
+          SsePacket packet = new SsePacket(AiChatEventName.rewrite, JsonUtils.toJson(kv));
+          Tio.bSend(channelContext, packet);
+        }
+        aiChatResponseVo.setRewrite(textQuestion);
+        chatParamVo.setRewriteQuestion(textQuestion);
       }
-      aiChatResponseVo.setRewrite(textQuestion);
-      chatParamVo.setRewriteQuestion(textQuestion);
     }
 
     // 8.判断类型
@@ -340,7 +341,7 @@ public class LlmAiChatService {
       }
     } else if (ApiChatSendType.advise.equals(type)) {
       if (StrUtil.isNotBlank(textQuestion)) {
-        String systemPrompt = advise(channelContext, textQuestion, schoolDict);
+        String systemPrompt = advise(channelContext, textQuestion, historyMessage, schoolDict);
         chatParamVo.setSystemPrompt(systemPrompt);
       }
     } else if (ApiChatSendType.celebrity.equals(type)) {
@@ -576,7 +577,7 @@ public class LlmAiChatService {
     return systemPrompt;
   }
 
-  private String advise(ChannelContext channelContext, String textQuestion, SchoolDict schoolDict) {
+  private String advise(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict) {
     String full_name = schoolDict.getFull_name();
     String domain_name = schoolDict.getDomain_name();
     if (channelContext != null) {
@@ -586,17 +587,41 @@ public class LlmAiChatService {
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
+
     textQuestion = "site:" + domain_name + " " + textQuestion;
-    log.info(textQuestion);
-    SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
-    List<SearxngResult> results = searchResponse.getResults();
+    log.info("quesiotn:{}", textQuestion);
+    textQuestion = llmRewriteQuestionService.rewriteSearchQuesiton(textQuestion, historyMessage);
+    log.info("rewtie quesiton:{}", textQuestion);
+
+    if (channelContext != null) {
+      String message = "Second rewrite your question to %s. ";
+      message = String.format(message, textQuestion);
+      Kv by = Kv.by("content", message);
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
+    StringBuffer markdown = useGoogle(channelContext, textQuestion);
+
+    String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+    // 3. 使用 PromptEngine 模版引擎填充提示词
+    Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
+    String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
+    if (EnvUtils.isDev()) {
+      log.info(systemPrompt);
+    }
+    return systemPrompt;
+  }
+
+  private StringBuffer useGoogle(ChannelContext channelContext, String textQuestion) {
+    GoogleCustomSearchResponse searchResponse = GoogleCustomSearchClient.search(textQuestion);
+    List<SearchResultItem> results = searchResponse.getItems();
     log.info("found page size:{}", results.size());
 
     List<WebPageContent> pages = new ArrayList<>();
     StringBuffer markdown = new StringBuffer();
     if (results.size() > 0) {
       if (channelContext != null) {
-        String message = "Second I found %d web pages. let me read top 5 pages. ";
+        String message = "Third I found %d web pages. let me read top 3 pages. ";
         message = String.format(message, results.size());
         Kv by = Kv.by("content", message);
         SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
@@ -608,8 +633,74 @@ public class LlmAiChatService {
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
-    int max = 5;
-    if (results.size() < 5) {
+    int max = 3;
+    if (results.size() < max) {
+      max = results.size();
+    }
+
+    for (int i = 0; i < max; i++) {
+      SearchResultItem result = results.get(i);
+      String title = result.getTitle();
+      String url = result.getLink();
+      if (channelContext != null) {
+        String message = "Read %s. ";
+        message = String.format(message, url);
+        Kv by = Kv.by("content", message);
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+
+      pages.add(new WebPageContent(title, url));
+
+      ResponseVo responseVo = webPageService.get(url);
+      if (responseVo == null) {
+        if (channelContext != null) {
+          String message = "Failed to read %s. ";
+          message = String.format(message, url);
+          Kv by = Kv.by("content", message);
+          SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+        }
+        markdown.append("source " + (i + 1) + " " + result.getSnippet());
+      } else {
+        if (responseVo.isOk()) {
+          markdown.append("source " + (i + 1) + " " + responseVo.getBodyString());
+        } else {
+          markdown.append("source " + (i + 1) + " " + result.getSnippet());
+        }
+      }
+    }
+
+    if (channelContext != null) {
+      SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
+      Tio.send(channelContext, ssePacket);
+    }
+    return markdown;
+  }
+
+  private StringBuffer useSearchNg(ChannelContext channelContext, String textQuestion) {
+    SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
+    List<SearxngResult> results = searchResponse.getResults();
+    log.info("found page size:{}", results.size());
+
+    List<WebPageContent> pages = new ArrayList<>();
+    StringBuffer markdown = new StringBuffer();
+    if (results.size() > 0) {
+      if (channelContext != null) {
+        String message = "Third I found %d web pages. let me read top 3 pages. ";
+        message = String.format(message, results.size());
+        Kv by = Kv.by("content", message);
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+    } else {
+      String message = "Failed to search please try again later. ";
+      Kv by = Kv.by("content", message);
+      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+      Tio.send(channelContext, ssePacket);
+    }
+    int max = 3;
+    if (results.size() < max) {
       max = results.size();
     }
 
@@ -644,22 +735,13 @@ public class LlmAiChatService {
           markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
         }
       }
-
     }
 
     if (channelContext != null) {
       SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
       Tio.send(channelContext, ssePacket);
     }
-
-    String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
-    // 3. 使用 PromptEngine 模版引擎填充提示词
-    Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
-    String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
-    if (EnvUtils.isDev()) {
-      log.info(systemPrompt);
-    }
-    return systemPrompt;
+    return markdown;
   }
 
   public String processMessageByChatModel(ApiChatSendVo vo, ChannelContext channelContext) {
