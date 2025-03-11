@@ -47,6 +47,13 @@ public class ChatGeminiStreamCommonCallback implements Callback {
     this.start = start;
     this.latch = latch;
   }
+  
+  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start) {
+    this.channelContext = channelContext;
+    this.apiChatSendVo = apiChatSendVo;
+    this.answerId = answerId;
+    this.start = start;
+  }
 
   @Override
   public void onResponse(Call call, Response response) throws IOException {

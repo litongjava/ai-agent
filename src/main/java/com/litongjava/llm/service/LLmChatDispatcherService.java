@@ -251,6 +251,19 @@ public class LLmChatDispatcherService {
         }
       });
       return null;
+    } else if (provider.equals(ApiChatSendProvider.GOOGLE)) {
+      Threads.getTioExecutor().execute(() -> {
+        try {
+          long start = System.currentTimeMillis();
+          GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
+          ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start);
+          Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
+          ChatStreamCallCan.put(sessionId, geminiCall);
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
+        }
+      });
+      return null;
     }
     //
     else {

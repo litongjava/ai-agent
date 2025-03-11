@@ -58,7 +58,7 @@ public class SocialMediaService {
       chatRequestVo.setResponse_format(ChatResponseFormatType.json_object);
       chatRequestVo.setChatMessages(messages);
 
-      OpenAiChatResponseVo chat = useDeepseek(chatRequestVo);
+      OpenAiChatResponseVo chat = useOpenAi(chatRequestVo);
       content = chat.getChoices().get(0).getMessage().getContent();
       if (content.startsWith("```json")) {
         content = content.substring(7, content.length() - 3);

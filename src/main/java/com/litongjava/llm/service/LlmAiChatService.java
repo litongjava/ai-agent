@@ -83,6 +83,7 @@ public class LlmAiChatService {
     ChatParamVo chatParamVo = new ChatParamVo();
     String type = apiSendVo.getType();
     boolean stream = apiSendVo.isStream();
+    String model = apiSendVo.getModel();
     Long schoolId = apiSendVo.getSchool_id();
     String userId = apiSendVo.getUser_id();
     Long sessionId = apiSendVo.getSession_id();
@@ -341,7 +342,7 @@ public class LlmAiChatService {
       }
     } else if (ApiChatSendType.advise.equals(type)) {
       if (StrUtil.isNotBlank(textQuestion)) {
-        String systemPrompt = advise(channelContext, textQuestion, historyMessage, schoolDict);
+        String systemPrompt = advise(channelContext, textQuestion, historyMessage, schoolDict, model);
         chatParamVo.setSystemPrompt(systemPrompt);
       }
     } else if (ApiChatSendType.celebrity.equals(type)) {
@@ -577,7 +578,7 @@ public class LlmAiChatService {
     return systemPrompt;
   }
 
-  private String advise(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict) {
+  private String advise(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
     String full_name = schoolDict.getFull_name();
     String domain_name = schoolDict.getDomain_name();
     if (channelContext != null) {
@@ -600,7 +601,7 @@ public class LlmAiChatService {
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
-    StringBuffer markdown = useGoogle(channelContext, textQuestion);
+    StringBuffer markdown = useGoogle(channelContext, textQuestion, model);
 
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     // 3. 使用 PromptEngine 模版引擎填充提示词
@@ -612,17 +613,22 @@ public class LlmAiChatService {
     return systemPrompt;
   }
 
-  private StringBuffer useGoogle(ChannelContext channelContext, String textQuestion) {
+  private StringBuffer useGoogle(ChannelContext channelContext, String textQuestion, String model) {
     GoogleCustomSearchResponse searchResponse = GoogleCustomSearchClient.search(textQuestion);
     List<SearchResultItem> results = searchResponse.getItems();
     log.info("found page size:{}", results.size());
+
+    int max = 4;
+    if (model.startsWith("gemini")) {
+      max = 5;
+    }
 
     List<WebPageContent> pages = new ArrayList<>();
     StringBuffer markdown = new StringBuffer();
     if (results.size() > 0) {
       if (channelContext != null) {
-        String message = "Third I found %d web pages. let me read top 4 pages. ";
-        message = String.format(message, results.size());
+        String message = "Third I found %d web pages. let me read top %d pages. ";
+        message = String.format(message, results.size(), max);
         Kv by = Kv.by("content", message);
         SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
         Tio.send(channelContext, ssePacket);
@@ -633,7 +639,7 @@ public class LlmAiChatService {
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
       Tio.send(channelContext, ssePacket);
     }
-    int max = 4;
+
     if (results.size() < max) {
       max = results.size();
     }

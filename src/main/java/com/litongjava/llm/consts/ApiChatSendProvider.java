@@ -5,4 +5,5 @@ public interface ApiChatSendProvider {
   String GEMINI = "gemini";
   String SILICONFLOW = "siliconflow";
   String VOLCENGINE = "volcengine";
+  String GOOGLE = "google";
 }
