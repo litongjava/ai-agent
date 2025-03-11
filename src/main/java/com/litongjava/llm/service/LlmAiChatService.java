@@ -298,39 +298,31 @@ public class LlmAiChatService {
         });
       }
     }
-    // 7.重写问题
-    boolean isRewriteQuesiton = false;
-    if (textQuestion != null) {
-      if (textQuestion.length() > 76) {
-        isRewriteQuesiton = true;
-      } else if (historyMessage.size() > 1) {
-        isRewriteQuesiton = true;
-      }
-    }
-    if (isRewriteQuesiton) {
-      if (!ApiChatSendType.advise.equals(type)) {
-        textQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
-        StringBuffer stringBuffer = new StringBuffer();
-        stringBuffer.append("user_id:").append(userId).append("\n")
-            //
-            .append("chat_id").append(sessionId).append("\n");
-        stringBuffer.append("question:").append(textQuestion).append("\n");
-        //
-        stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
-        //
-        stringBuffer.append("rewrite:" + textQuestion);
+    // 7.重写问题后发送数据
+    //    if (!ApiChatSendType.advise.equals(type)) {
+    //      //关闭问题重写
+    //      textQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
+    //      aiChatResponseVo.setRewrite(textQuestion);
+    //      chatParamVo.setRewriteQuestion(textQuestion);
+    //    }
 
-        AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
-        log.info("rewrite question:{}", textQuestion);
+    StringBuffer stringBuffer = new StringBuffer();
+    stringBuffer.append("user_id:").append(userId).append("\n")
+        //
+        .append("chat_id").append(sessionId).append("\n");
+    stringBuffer.append("question:").append(textQuestion).append("\n");
+    //
+    stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
+    //
+    stringBuffer.append("rewrite:" + textQuestion);
 
-        if (stream && channelContext != null) {
-          Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
-          SsePacket packet = new SsePacket(AiChatEventName.rewrite, JsonUtils.toJson(kv));
-          Tio.bSend(channelContext, packet);
-        }
-        aiChatResponseVo.setRewrite(textQuestion);
-        chatParamVo.setRewriteQuestion(textQuestion);
-      }
+    AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
+    log.info("rewrite question:{}", textQuestion);
+
+    if (stream && channelContext != null) {
+      Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
+      SsePacket packet = new SsePacket(AiChatEventName.rewrite, JsonUtils.toJson(kv));
+      Tio.bSend(channelContext, packet);
     }
 
     // 8.判断类型
