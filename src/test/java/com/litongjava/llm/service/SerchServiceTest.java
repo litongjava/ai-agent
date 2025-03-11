@@ -8,7 +8,7 @@ public class SerchServiceTest {
 
   @Test
   public void test() {
-    String search = Aop.get(SerchService.class).search("KaiZhao SJSU");
+    String search = Aop.get(SearchService.class).search("KaiZhao SJSU");
     System.out.println(search);
   }
 

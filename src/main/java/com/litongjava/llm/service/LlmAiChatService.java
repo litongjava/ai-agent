@@ -298,10 +298,11 @@ public class LlmAiChatService {
         });
       }
     }
+    String rewriteQuestion = null;
     // 7.重写问题后发送数据
     //    if (!ApiChatSendType.advise.equals(type)) {
     //      //关闭问题重写
-    //      textQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
+    //      rewriteQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
     //      aiChatResponseVo.setRewrite(textQuestion);
     //      chatParamVo.setRewriteQuestion(textQuestion);
     //    }
@@ -314,10 +315,12 @@ public class LlmAiChatService {
     //
     stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
     //
-    stringBuffer.append("rewrite:" + textQuestion);
+    //    if (rewriteQuestion != null) {
+    //      stringBuffer.append("rewrite:" + rewriteQuestion);
+    // log.info("rewrite question:{}", textQuestion);
+    //    }
 
     AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
-    log.info("rewrite question:{}", textQuestion);
 
     if (stream && channelContext != null) {
       Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);
@@ -389,8 +392,15 @@ public class LlmAiChatService {
       Tio.send(channelContext, ssePacket);
     }
 
-    SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
+    SearxngSearchResponse searchResponse = Aop.get(SearchService.class).searchapi(textQuestion);
     List<SearxngResult> results = searchResponse.getResults();
+
+    //SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
+    //SearxngSearchResponse searchResponse2 = Aop.get(SearchService.class).google("site:linkedin.com/in/ " + name + " at " + institution);
+    //    List<SearxngResult> results2 = searchResponse2.getResults();
+    //    for (SearxngResult searxngResult : results2) {
+    //      results.add(searxngResult);
+    //    }
     if (results != null && results.size() < 1) {
       Kv by = Kv.by("content", "unfortunate Failed to search.I will try again a 3 seconds. ");
       SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
