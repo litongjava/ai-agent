@@ -355,6 +355,9 @@ public class LlmAiChatService {
         }
         return RespBodyVo.fail("Failed to search celebrity");
       }
+    } else {
+      String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
+      chatParamVo.setSystemPrompt(systemPrompt);
     }
 
     //9.处理问题
@@ -374,6 +377,12 @@ public class LlmAiChatService {
       dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }
+  }
+
+  private String general(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
+    String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+    Kv kv = Kv.by("date", isoTimeStr);
+    return PromptEngine.renderToString("general_prompt.txt", kv);
   }
 
   private String celebrity(ChannelContext channelContext, ChatSendArgs chatSendArgs) {
