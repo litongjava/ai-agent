@@ -56,6 +56,7 @@ import okhttp3.Call;
 
 @Slf4j
 public class LlmAiChatService {
+  String defaultFallBackMessage = "Dear user, your conversation count has exceeded the maximum length for multiple rounds of conversation. Please start a new session.";
 
   LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
   LinkedInService linkedInService = Aop.get(LinkedInService.class);
@@ -177,10 +178,8 @@ public class LlmAiChatService {
       }
     }
 
-    if (histories.size() > 20) {
-      String message = "Dear user, your conversation count has exceeded the maximum length for multiple rounds of conversation. "
-          //
-          + "Please start a new session. Your new question might be:" + textQuestion;
+    if (histories.size() > 30) {
+      String message = defaultFallBackMessage + " Your new question might be:" + textQuestion;
 
       long answerId = SnowflakeIdUtils.id();
       aiChatResponseVo.setAnswerId(answerId);
@@ -188,7 +187,7 @@ public class LlmAiChatService {
       llmChatHistoryService.saveAssistant(answerId, sessionId, message);
       Kv kv = Kv.by("answer_id", answerId);
       if (stream) {
-        SsePacket ssePacket = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(Kv.by("content", message)));
+        SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", message)));
         Tio.bSend(channelContext, ssePacket);
         SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
         Tio.send(channelContext, packet);
