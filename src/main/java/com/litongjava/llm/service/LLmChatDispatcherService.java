@@ -106,7 +106,7 @@ public class LLmChatDispatcherService {
       }
     }
     if (systemPrompt != null) {
-      messages.add(new ChatMessage("system", systemPrompt));
+      messages.add(0, new ChatMessage("system", systemPrompt));
     }
     if (StrUtil.isNotBlank(textQuestion)) {
       messages.add(new ChatMessage("user", textQuestion));
