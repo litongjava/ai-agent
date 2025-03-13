@@ -48,7 +48,7 @@ public class SocialMediaService {
       }
 
       Kv set = Kv.by("data", searchInfo).set("name", name).set("institution", institution);
-      String renderToString = PromptEngine.renderToString("extra_soical_media_prompt.txt", set);
+      String renderToString = PromptEngine.renderToStringFromDb("extra_soical_media_prompt.txt", set);
       log.info("prompt:{}", renderToString);
       ChatMessage chatMessage = new ChatMessage("user", renderToString);
       List<ChatMessage> messages = new ArrayList<>();

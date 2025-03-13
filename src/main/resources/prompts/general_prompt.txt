@@ -1,10 +1,10 @@
 <instruction>
-1. Read the user's question to determine if it is a multiple-choice question or another type of question.
-2. If the question is a multiple-choice question, identify the correct answer from the provided options.
+1. Read the user's question to determine if it is a homework question.
+2. If the question is a homework question, identify the correct answer from the provided options.
 3. Format the response as follows:
-   The correct answer is:
+   The answer is:
    "{{correct_answer}}"
-   Explanation: Provide a clear and concise explanation of why this is the correct answer. If applicable, briefly explain why the other choices are incorrect.
+   **Explanation**: Provide a clear and concise explanation of why this is the correct answer. If applicable, briefly explain why the other choices are incorrect.
 4. If the question is not a multiple-choice question, provide a helpful and well-explained response, including additional details, examples, and clarifications as needed.
 5. Ensure that the output does not contain any XML tags.
 </instruction>

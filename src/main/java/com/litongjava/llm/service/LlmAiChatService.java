@@ -114,7 +114,7 @@ public class LlmAiChatService {
     // 2.问题预处理
     if (ApiChatSendType.translator.equals(type)) {
       if (StrUtil.isNotBlank(inputQestion)) {
-        textQuestion = PromptEngine.renderToString("translator_prompt.txt", Kv.by("data", inputQestion));
+        textQuestion = PromptEngine.renderToStringFromDb("translator_prompt.txt", Kv.by("data", inputQestion));
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
@@ -376,7 +376,7 @@ public class LlmAiChatService {
   private String general(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
-    return PromptEngine.renderToString("general_prompt.txt", kv);
+    return PromptEngine.renderToStringFromDb("general_prompt.txt", kv);
   }
 
   private String celebrity(ChannelContext channelContext, ChatSendArgs chatSendArgs) {
@@ -560,7 +560,7 @@ public class LlmAiChatService {
     }
     // 3. 使用 PromptEngine 模版引擎填充提示词
     Kv kv = Kv.by("name", name).set("institution", institution).set("info", markdown).set("profile", profile);
-    String systemPrompt = PromptEngine.renderToString("celebrity_prompt.txt", kv);
+    String systemPrompt = PromptEngine.renderToStringFromDb("celebrity_prompt.txt", kv);
     return systemPrompt;
   }
 
@@ -584,7 +584,7 @@ public class LlmAiChatService {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     // 3. 使用 PromptEngine 模版引擎填充提示词
     Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
-    String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
+    String systemPrompt = PromptEngine.renderToStringFromDb("ai_search_prompt.txt", kv);
     return systemPrompt;
   }
 
@@ -616,7 +616,7 @@ public class LlmAiChatService {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     // 3. 使用 PromptEngine 模版引擎填充提示词
     Kv kv = Kv.by("date", isoTimeStr).set("context", markdown);
-    String systemPrompt = PromptEngine.renderToString("WebSearchResponsePrompt.txt", kv);
+    String systemPrompt = PromptEngine.renderToStringFromDb("ai_search_prompt.txt", kv);
     if (EnvUtils.isDev()) {
       log.info(systemPrompt);
     }

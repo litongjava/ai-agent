@@ -35,7 +35,7 @@ public class FollowUpQuestionService {
       messages.add(new ChatMessage("user", input_quesiton));
       messages.add(new ChatMessage("assistant", answer));
       String json = JsonUtils.toJson(messages);
-      String prompt = PromptEngine.renderToString("generate_celebrity_follow_up_prompt.txt", Kv.by("data", json));
+      String prompt = PromptEngine.renderToStringFromDb("generate_celebrity_follow_up_prompt.txt", Kv.by("data", json));
 
       ChatMessage chatMessage = new ChatMessage("user", prompt);
 
