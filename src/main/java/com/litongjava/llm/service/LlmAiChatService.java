@@ -25,12 +25,12 @@ import com.litongjava.llm.utils.AgentBotQuestionUtils;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
-import com.litongjava.llm.vo.ChatSendArgs;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.http.response.ResponseVo;
 import com.litongjava.model.web.WebPageContent;
 import com.litongjava.openai.chat.ChatMessage;
+import com.litongjava.openai.chat.ChatSendArgs;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
@@ -64,6 +64,7 @@ public class LlmAiChatService {
   private SocialMediaService socialMediaService = Aop.get(SocialMediaService.class);
   private WebPageService webPageService = Aop.get(WebPageService.class);
   private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
+  private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
   private boolean enableRwrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
@@ -158,7 +159,6 @@ public class LlmAiChatService {
     }
 
     // 3.查询历史
-    LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
     if (apiSendVo.isRewrite()) {
       Long previous_question_id = apiSendVo.getPrevious_question_id();
       Long previous_answer_id = apiSendVo.getPrevious_answer_id();
@@ -217,11 +217,16 @@ public class LlmAiChatService {
         if (AgentMessageType.TEXT.equals(messageType)) {
           String role = record.getStr("role");
           String content = record.getStr("content");
-          historyMessage.add(new ChatMessage(role, content));
+          String args = record.getString("args");
+          if (args != null) {
+            ChatSendArgs historyArgs = JsonUtils.parse(args, ChatSendArgs.class);
+            historyMessage.add(new ChatMessage(role, content, historyArgs));
+          } else {
+            historyMessage.add(new ChatMessage(role, content));
+          }
         } else if (AgentMessageType.FILE.equals(messageType)) {
           String role = record.getStr("role");
           String content = record.getStr("content");
-
           String str = record.getStr("metadata");
           List<UploadResultVo> uploadVos = JsonUtils.parseArray(str, UploadResultVo.class);
           for (UploadResultVo uploadResult : uploadVos) {
@@ -231,7 +236,6 @@ public class LlmAiChatService {
           if (StrUtil.notBlank(content)) {
             historyMessage.add(new ChatMessage(role, content));
           }
-
         }
       }
     }

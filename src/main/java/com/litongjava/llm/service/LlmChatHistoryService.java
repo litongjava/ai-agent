@@ -14,9 +14,9 @@ import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
-import com.litongjava.llm.vo.ChatSendArgs;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
+import com.litongjava.openai.chat.ChatSendArgs;
 import com.litongjava.openai.chat.MessageRole;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
@@ -46,7 +46,7 @@ public class LlmChatHistoryService {
   }
 
   public List<Row> getHistory(Long sessionId) {
-    String sql = "select role,type,content,metadata,create_time from %s where session_id =? order by create_time";
+    String sql = "select role,type,content,metadata,args,create_time from %s where session_id =? order by create_time";
     sql = String.format(sql, AgentTableNames.llm_chat_history);
     return Db.find(sql, sessionId);
   }

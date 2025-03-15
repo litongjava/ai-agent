@@ -3,6 +3,7 @@ package com.litongjava.llm.vo;
 import java.util.List;
 
 import com.litongjava.openai.chat.ChatMessage;
+import com.litongjava.openai.chat.ChatSendArgs;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
