@@ -4,7 +4,9 @@ import java.util.List;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.service.LlmAiChatService;
 import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.vo.ApiChatSendVo;
@@ -67,11 +69,20 @@ public class ApiChatAskHandler {
       type = "general";
     }
 
-    if (provider == null) {
-      provider = "openai";
-    }
-    if (model == null) {
-      model = "gpt-4o-mini";
+    if (ApiChatSendType.youtube.equals(type)) {
+      if (provider == null) {
+        provider = "google";
+      }
+      if (model == null) {
+        model = GoogleGeminiModels.GEMINI_2_0_FLASH;
+      }
+    } else {
+      if (provider == null) {
+        provider = "openai";
+      }
+      if (model == null) {
+        model = "gpt-4o-mini";
+      }
     }
 
     Integer chatType = 0;

@@ -14,6 +14,7 @@ import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
+import com.litongjava.llm.vo.ChatSendArgs;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
 import com.litongjava.openai.chat.MessageRole;
@@ -62,6 +63,18 @@ public class LlmChatHistoryService {
     ti.setJsonFields("metadata");
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;
+  }
+
+  public void saveUser(long questionId, Long sessionId, String inputQestion, List<UploadResultVo> fileInfo, ChatSendArgs chatSendArgs) {
+    Row ti = Row.by("id", questionId).set("session_id", sessionId).set("content", inputQestion).set("role", "user");
+    if (fileInfo != null) {
+      ti.set("type", AgentMessageType.FILE).set("metadata", PgObjectUtils.json(fileInfo));
+
+    }
+    if (chatSendArgs != null) {
+      ti.set("args", PgObjectUtils.json(chatSendArgs));
+    }
+    Db.save(AgentTableNames.llm_chat_history, ti);
   }
 
   public TableResult<Kv> saveAssistant(Long id, Long sessionId, String message) {

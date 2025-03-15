@@ -9,6 +9,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.jfinal.kit.Kv;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.google.search.GoogleCustomSearchClient;
 import com.litongjava.google.search.GoogleCustomSearchResponse;
 import com.litongjava.google.search.SearchResultItem;
@@ -58,11 +59,12 @@ import okhttp3.Call;
 public class LlmAiChatService {
   String defaultFallBackMessage = "Dear user, your conversation count has exceeded the maximum length for multiple rounds of conversation. Please start a new session.";
 
-  LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
-  LinkedInService linkedInService = Aop.get(LinkedInService.class);
-  SocialMediaService socialMediaService = Aop.get(SocialMediaService.class);
-  WebPageService webPageService = Aop.get(WebPageService.class);
-  LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
+  private LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
+  private LinkedInService linkedInService = Aop.get(LinkedInService.class);
+  private SocialMediaService socialMediaService = Aop.get(SocialMediaService.class);
+  private WebPageService webPageService = Aop.get(WebPageService.class);
+  private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
+  private boolean enableRwrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
     /**
@@ -118,11 +120,13 @@ public class LlmAiChatService {
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
+
     } else if (ApiChatSendType.celebrity.equals(type)) {
       String name = chatSendArgs.getName();
       String institution = chatSendArgs.getInstitution();
       inputQestion = name + " at " + institution;
       textQuestion = inputQestion;
+
     } else if (ApiChatSendType.perplexity.equals(type)) {
       if (schoolDict != null) {
         textQuestion += (" at " + schoolDict.getFull_name());
@@ -240,11 +244,8 @@ public class LlmAiChatService {
       if (file_ids != null) {
         fileInfo = Aop.get(ChatUploadService.class).getFileBasicInfoByIds(file_ids);
         chatParamVo.setUploadFiles(fileInfo);
-
-        llmChatHistoryService.saveUser(questionId, sessionId, inputQestion, fileInfo);
-      } else {
-        llmChatHistoryService.saveUser(questionId, sessionId, inputQestion);
       }
+      llmChatHistoryService.saveUser(questionId, sessionId, inputQestion, fileInfo, chatSendArgs);
     } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
@@ -263,19 +264,20 @@ public class LlmAiChatService {
     if (StrUtil.isNotEmpty(textQuestion)) {
       StringBuffer stringBuffer = new StringBuffer();
 
-      stringBuffer.append("app env:").append(EnvUtils.getStr("app.env")).append("\n")
-          //
-          .append("userId:").append(userId).append("\n")//
-          .append("schooL id:").append(schoolId).append("\n");
+      stringBuffer.append("app env:").append(EnvUtils.getStr("app.env")).append("\n").append("userId:").append(userId).append("\n").append("schooL id:").append(schoolId).append("\n");
+
       if (schoolDict != null) {
         stringBuffer.append("schooL name:").append(schoolDict.getFull_name()).append("\n");
       }
       //
-      stringBuffer.append("user question:").append(textQuestion).append("\n")
-          //
-          .append("type:").append(type);
+      stringBuffer.append("user question:").append(textQuestion).append("\n").append("type:").append(type).append("\n");
+
       if (appId != null) {
-        stringBuffer.append("app id:").append(appId);
+        stringBuffer.append("app id:").append(appId).append("\n");
+      }
+
+      if (chatSendArgs != null) {
+        stringBuffer.append("args:").append(JsonUtils.toSkipNullJson(chatSendArgs)).append("\n");
       }
 
       log.info("question:{}", stringBuffer.toString());
@@ -297,27 +299,33 @@ public class LlmAiChatService {
         });
       }
     }
+
     String rewriteQuestion = null;
-    // 7.重写问题后发送数据
-    //    if (!ApiChatSendType.advise.equals(type)) {
-    //      //关闭问题重写
-    //      rewriteQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
-    //      aiChatResponseVo.setRewrite(textQuestion);
-    //      chatParamVo.setRewriteQuestion(textQuestion);
-    //    }
+    if (enableRwrite) {
+      // 7.重写问题后发送数据
+      if (!ApiChatSendType.advise.equals(type)) {
+        //关闭问题重写
+        rewriteQuestion = llmRewriteQuestionService.rewrite(textQuestion, historyMessage);
+        aiChatResponseVo.setRewrite(textQuestion);
+        chatParamVo.setRewriteQuestion(textQuestion);
+      }
+    }
 
     StringBuffer stringBuffer = new StringBuffer();
     stringBuffer.append("user_id:").append(userId).append("\n")
         //
         .append("chat_id").append(sessionId).append("\n");
-    stringBuffer.append("question:").append(textQuestion).append("\n");
+
+    if (StrUtil.isNotBlank(textQuestion)) {
+      stringBuffer.append("question:").append(textQuestion).append("\n");
+    }
+    if (StrUtil.isNotBlank(rewriteQuestion)) {
+      stringBuffer.append("writed:").append(rewriteQuestion).append("\n");
+    }
+
+    stringBuffer.append("args:").append(JsonUtils.toSkipNullJson(chatSendArgs)).append("\n");
     //
     stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
-    //
-    //    if (rewriteQuestion != null) {
-    //      stringBuffer.append("rewrite:" + rewriteQuestion);
-    // log.info("rewrite question:{}", textQuestion);
-    //    }
 
     AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
 
@@ -349,6 +357,15 @@ public class LlmAiChatService {
         }
         return RespBodyVo.fail("Failed to search celebrity");
       }
+    } else if (ApiChatSendType.tutor.equals(type)) {
+      String systemPrompt = tutor(channelContext, textQuestion, historyMessage, schoolDict, model);
+      chatParamVo.setSystemPrompt(systemPrompt);
+    } else if (ApiChatSendType.tutor.equals(type)) {
+      if (StrUtil.isNotBlank(model)) {
+        apiSendVo.setProvider("google");
+        apiSendVo.setModel(GoogleGeminiModels.GEMINI_2_0_FLASH);
+      }
+
     } else {
       String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
       chatParamVo.setSystemPrompt(systemPrompt);
@@ -371,6 +388,12 @@ public class LlmAiChatService {
       dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }
+  }
+
+  private String tutor(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
+    String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+    Kv kv = Kv.by("date", isoTimeStr);
+    return PromptEngine.renderToStringFromDb("tutor_prompt.txt", kv);
   }
 
   private String general(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
@@ -788,6 +811,5 @@ public class LlmAiChatService {
       String content = chatCompletions.getChoices().get(0).getMessage().getContent();
       return content;
     }
-
   }
 }

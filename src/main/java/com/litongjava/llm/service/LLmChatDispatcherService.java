@@ -1,6 +1,7 @@
 package com.litongjava.llm.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -10,6 +11,10 @@ import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GeminiChatRequestVo;
 import com.litongjava.gemini.GeminiClient;
+import com.litongjava.gemini.GeminiContentVo;
+import com.litongjava.gemini.GeminiFileDataVo;
+import com.litongjava.gemini.GeminiPartVo;
+import com.litongjava.gemini.GeminiSystemInstructionVo;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.kit.PgObjectUtils;
@@ -24,6 +29,7 @@ import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
+import com.litongjava.llm.vo.ChatSendArgs;
 import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
@@ -79,7 +85,7 @@ public class LLmChatDispatcherService {
       textQuestion = rewrite_quesiton;
     }
 
-    // 发送搜索进度
+    // 发送进度
     if (stream && channelContext != null) {
       Kv kv = Kv.by("content", "- " + provider + "\r\n");
       SsePacket packet = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(kv));
@@ -89,27 +95,28 @@ public class LLmChatDispatcherService {
     if (messages == null) {
       messages = new ArrayList<>();
     }
-    // 添加初始提示词
-    //    if (intent) {
-    //      String initPrompt = Aop.get(SearchPromptService.class).index(schoolId, textQuestion, stream, channelContext);
-    //      messages.add(0, new ChatMessage("system", initPrompt));
-    //    }
+
+    //添加系统消息
+    if (systemPrompt != null) {
+      messages.add(new ChatMessage("system", systemPrompt));
+    }
 
     //添加历史
     if (history != null) {
-      messages.addAll(0, history);
+      messages.addAll(history);
     }
+
     // 添加用户问题
     if (uploadFiles != null) {
       for (UploadResultVo uploadResultVo : uploadFiles) {
         messages.add(new ChatMessage("user", "upload a " + uploadResultVo.getName() + " content is:" + uploadResultVo.getContent()));
       }
     }
-    if (systemPrompt != null) {
-      messages.add(0, new ChatMessage("system", systemPrompt));
-    }
-    if (StrUtil.isNotBlank(textQuestion)) {
-      messages.add(new ChatMessage("user", textQuestion));
+
+    if (!ApiChatSendType.youtube.equals(type)) {
+      if (StrUtil.isNotBlank(textQuestion)) {
+        messages.add(new ChatMessage("user", textQuestion));
+      }
     }
 
     apiSendVo.setMessages(messages);
@@ -120,7 +127,7 @@ public class LLmChatDispatcherService {
       if (ApiChatSendType.compare.equals(type)) {
         return multiModel(channelContext, apiSendVo, answerId);
       } else {
-        return singleModel(channelContext, apiSendVo, answerId);
+        return singleModel(channelContext, apiSendVo, answerId, textQuestion);
       }
     } else {
       if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
@@ -204,10 +211,12 @@ public class LLmChatDispatcherService {
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId) {
+  private AiChatResponseVo singleModel(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, String textQuestion) {
     Long sessionId = apiChatSendVo.getSession_id();
     String provider = apiChatSendVo.getProvider();
     String model = apiChatSendVo.getModel();
+    String type = apiChatSendVo.getType();
+    ChatSendArgs args = apiChatSendVo.getArgs();
     List<ChatMessage> messages = apiChatSendVo.getMessages();
     if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
       if (AiModelNames.DEEPSEEK_R1.equals(model)) {
@@ -252,18 +261,35 @@ public class LLmChatDispatcherService {
       });
       return null;
     } else if (provider.equals(ApiChatSendProvider.GOOGLE)) {
-      Threads.getTioExecutor().execute(() -> {
-        try {
-          long start = System.currentTimeMillis();
-          GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
-          ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start);
-          Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
-          ChatStreamCallCan.put(sessionId, geminiCall);
-        } catch (Exception e) {
-          log.error(e.getMessage(), e);
-        }
-      });
-      return null;
+      if (ApiChatSendType.youtube.equals(type)) {
+        Threads.getTioExecutor().execute(() -> {
+          try {
+            long start = System.currentTimeMillis();
+            GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId, textQuestion, args);
+            ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start);
+            Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
+            ChatStreamCallCan.put(sessionId, geminiCall);
+          } catch (Exception e) {
+            log.error(e.getMessage(), e);
+          }
+        });
+
+        return null;
+      } else {
+        Threads.getTioExecutor().execute(() -> {
+          try {
+            long start = System.currentTimeMillis();
+            GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
+            ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start);
+            Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
+            ChatStreamCallCan.put(sessionId, geminiCall);
+          } catch (Exception e) {
+            log.error(e.getMessage(), e);
+          }
+        });
+        return null;
+      }
+
     }
     //
     else {
@@ -320,6 +346,57 @@ public class LLmChatDispatcherService {
       Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
     });
     return geminiChatRequestVo;
+  }
+
+  private GeminiChatRequestVo genGeminiRequestVo(List<ChatMessage> messages, long answerId, String textQuestion, ChatSendArgs args) {
+    GeminiChatRequestVo geminiChatRequestVo = new GeminiChatRequestVo();
+
+    List<GeminiContentVo> contents = new ArrayList<>(messages.size());
+    for (ChatMessage chatMessage : messages) {
+      String role = chatMessage.getRole();
+      String content = chatMessage.getContent();
+
+      if (role.equals("assistant")) {
+        role = "model";
+      } else if (role.equals("system")) {
+
+        GeminiPartVo part = new GeminiPartVo(content);
+        GeminiSystemInstructionVo geminiSystemInstructionVo = new GeminiSystemInstructionVo(part);
+        geminiChatRequestVo.setSystem_instruction(geminiSystemInstructionVo);
+        continue;
+      }
+      GeminiPartVo part = new GeminiPartVo(content);
+      GeminiContentVo vo = new GeminiContentVo(role, Collections.singletonList(part));
+      contents.add(vo);
+    }
+
+    List<GeminiPartVo> parts = new ArrayList<>();
+    if(args!=null && args.getUrl()!=null) {
+      String url = args.getUrl();
+      GeminiFileDataVo geminiFileDataVo = new GeminiFileDataVo("video/*",url);
+      GeminiPartVo videoPart = new GeminiPartVo(geminiFileDataVo);
+      parts.add(videoPart);
+    }
+    
+    GeminiPartVo questionPart = new GeminiPartVo(textQuestion);
+    parts.add(questionPart);
+    GeminiContentVo vo = new GeminiContentVo("user", parts);
+    contents.add(vo);
+
+    geminiChatRequestVo.setContents(contents);
+
+    String requestJson = JsonUtils.toSkipNullJson(geminiChatRequestVo);
+    RunningNotificationService notification = AiAgentContext.me().getNotification();
+    if (notification != null) {
+      notification.sendPredict(requestJson);
+    }
+    // log.info("chatRequestVo:{}", requestJson);
+    // save to database
+    TioThreadUtils.execute(() -> {
+      Db.save(AgentTableNames.llm_chat_completion_input, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
+    });
+    return geminiChatRequestVo;
+
   }
 
 }

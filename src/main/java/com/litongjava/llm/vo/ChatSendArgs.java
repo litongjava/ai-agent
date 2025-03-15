@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class ChatSendArgs {
   private String name;
   private String institution;
+  private String url;
 }

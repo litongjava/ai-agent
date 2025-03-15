@@ -8,4 +8,6 @@ public interface ApiChatSendType {
   String celebrity = "celebrity";
   String compare = "compare";
   String advise = "advise";
+  String tutor = "tutor";
+  String youtube = "youtube";
 }
