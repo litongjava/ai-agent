@@ -18,4 +18,6 @@ public interface AgentTableNames {
   String social_media_accounts = "social_media_accounts";
   String web_page_cache = "web_page_cache";
 
+  String youtube_video_subtitle = "youtube_video_subtitle";
+
 }
