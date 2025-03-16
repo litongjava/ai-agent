@@ -103,17 +103,19 @@ public class LLmChatDispatcherService {
       }
     }
 
-    if (ApiChatSendType.youtube.equals(type)) {
-      if (args != null && args.getUrl() != null) {
-        history.add(new ChatMessage("user", textQuestion, args));
-      } else {
-        history.add(new ChatMessage("user", textQuestion));
-      }
-    } else {
-      if (StrUtil.isNotBlank(textQuestion)) {
-        history.add(new ChatMessage("user", textQuestion));
-      }
-    }
+    history.add(new ChatMessage("user", textQuestion));
+    
+//    if (ApiChatSendType.youtube.equals(type)) {
+//      if (args != null && args.getUrl() != null) {
+//        history.add(new ChatMessage("user", textQuestion, args));
+//      } else {
+//        history.add(new ChatMessage("user", textQuestion));
+//      }
+//    } else {
+//      if (StrUtil.isNotBlank(textQuestion)) {
+//        history.add(new ChatMessage("user", textQuestion));
+//      }
+//    }
 
     apiSendVo.setMessages(history);
     long answerId = SnowflakeIdUtils.id();

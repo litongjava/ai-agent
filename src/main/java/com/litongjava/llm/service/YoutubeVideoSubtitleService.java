@@ -50,7 +50,7 @@ public class YoutubeVideoSubtitleService {
         String startStr = VideoTimeUtils.formatTime(offset);
         String endStr = VideoTimeUtils.formatTime(endTime);
         String text = subTitleContent.getText();
-        stringBuffer.append(startStr).append("-").append(endStr).append(" ").append(text).append("\r\n");
+        stringBuffer.append(startStr).append("-").append(endStr).append(" ").append(text).append("  \r\n");
       }
       textSubTitle = stringBuffer.toString();
       Row row = Row.by("id", SnowflakeIdUtils.id()).set("video_id", videoId).set("text_subtitle", stringBuffer.toString())
