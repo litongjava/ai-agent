@@ -396,7 +396,7 @@ public class LlmAiChatService {
       if (channelContext != null) {
         if (chatSendArgs != null && chatSendArgs.getUrl() != null) {
           String url = chatSendArgs.getUrl();
-          message = "First, let me get the YouTube video sub title. It will take a few minutes " + url + ".";
+          message = "First, let me get the YouTube video sub title. It will take a few minutes " + url + ".  ";
 
           Kv by = Kv.by("content", message);
           SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
@@ -405,7 +405,7 @@ public class LlmAiChatService {
           String videoId = YouTubeIdUtil.extractVideoId(url);
           String subTitle = youtubeVideoSubtitleService.get(videoId);
           if (subTitle == null) {
-            message = "Sorry, No transcript is available for this video, let me downlaod video.  It will take a few minutes.";
+            message = "Sorry, No transcript is available for this video, let me downlaod video.  It will take a few minutes.  ";
             by = Kv.by("content", message);
             ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
             Tio.send(channelContext, ssePacket);
