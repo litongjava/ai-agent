@@ -52,6 +52,7 @@ import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
+import com.litongjava.utils.YouTubeIdUtil;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
@@ -66,6 +67,7 @@ public class LlmAiChatService {
   private WebPageService webPageService = Aop.get(WebPageService.class);
   private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
   private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
+  private YoutubeVideoSubtitleService youtubeVideoSubtitleService = Aop.get(YoutubeVideoSubtitleService.class);
   private boolean enableRwrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
@@ -226,7 +228,12 @@ public class LlmAiChatService {
           String args = record.getString("args");
           if (args != null) {
             ChatSendArgs historyArgs = JsonUtils.parse(args, ChatSendArgs.class);
-            historyMessage.add(new ChatMessage(role, content, historyArgs));
+
+            String url = historyArgs.getUrl();
+            String extractVideoId = YouTubeIdUtil.extractVideoId(url);
+            String subTitle = youtubeVideoSubtitleService.get(extractVideoId);
+            historyMessage.add(new ChatMessage(role, subTitle));
+            historyMessage.add(new ChatMessage(role, content));
           } else {
             historyMessage.add(new ChatMessage(role, content));
           }
@@ -384,6 +391,35 @@ public class LlmAiChatService {
         String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
         chatParamVo.setSystemPrompt(systemPrompt);
       }
+
+      String message = null;
+      if (channelContext != null) {
+        if (chatSendArgs != null && chatSendArgs.getUrl() != null) {
+          String url = chatSendArgs.getUrl();
+          message = "First, let me download the YouTube video. It will take a few minutes " + url + ".";
+
+          Kv by = Kv.by("content", message);
+          SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+
+          String videoId = YouTubeIdUtil.extractVideoId(message);
+          String subTitle = youtubeVideoSubtitleService.get(videoId);
+
+          by = Kv.by("content", subTitle);
+          ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+
+          historyMessage.add(0, new ChatMessage("user", subTitle));
+
+        } else {
+          message = "First, let me review the YouTube video. It will take a few minutes .";
+          Kv by = Kv.by("content", message);
+          SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+        }
+
+      }
+
     } else {
       String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
       chatParamVo.setSystemPrompt(systemPrompt);

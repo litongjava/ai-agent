@@ -211,8 +211,7 @@ public class LLmChatDispatcherService {
     Long sessionId = apiChatSendVo.getSession_id();
     String provider = apiChatSendVo.getProvider();
     String model = apiChatSendVo.getModel();
-    String type = apiChatSendVo.getType();
-    ChatSendArgs args = apiChatSendVo.getArgs();
+
     List<ChatMessage> messages = apiChatSendVo.getMessages();
     if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
       if (AiModelNames.DEEPSEEK_R1.equals(model)) {
@@ -257,47 +256,19 @@ public class LLmChatDispatcherService {
       });
       return null;
     } else if (provider.equals(ApiChatSendProvider.GOOGLE)) {
-      if (ApiChatSendType.youtube.equals(type)) {
-        if (channelContext != null) {
-          String message = null;
-          if (args != null && args.getUrl() != null) {
-            String url = args.getUrl();
-            message = "First, let me download the YouTube video. It will take a few minutes " + url + ".";
-          } else {
-            message = "First, let me review the YouTube video. It will take a few minutes .";
-          }
 
-          Kv by = Kv.by("content", message);
-          SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-          Tio.send(channelContext, ssePacket);
+      Threads.getTioExecutor().execute(() -> {
+        try {
+          long start = System.currentTimeMillis();
+          GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
+          ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start);
+          Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
+          ChatStreamCallCan.put(sessionId, geminiCall);
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
         }
-        Threads.getTioExecutor().execute(() -> {
-          try {
-            long start = System.currentTimeMillis();
-            GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
-            ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start);
-            Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
-            ChatStreamCallCan.put(sessionId, geminiCall);
-          } catch (Exception e) {
-            log.error(e.getMessage(), e);
-          }
-        });
-
-        return null;
-      } else {
-        Threads.getTioExecutor().execute(() -> {
-          try {
-            long start = System.currentTimeMillis();
-            GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
-            ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start);
-            Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
-            ChatStreamCallCan.put(sessionId, geminiCall);
-          } catch (Exception e) {
-            log.error(e.getMessage(), e);
-          }
-        });
-        return null;
-      }
+      });
+      return null;
 
     }
     //
