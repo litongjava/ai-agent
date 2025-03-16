@@ -231,8 +231,14 @@ public class LlmAiChatService {
 
             String url = historyArgs.getUrl();
             String extractVideoId = YouTubeIdUtil.extractVideoId(url);
-            String subTitle = youtubeVideoSubtitleService.get(extractVideoId);
-            historyMessage.add(new ChatMessage(role, subTitle));
+            if (extractVideoId != null) {
+              String subTitle = youtubeVideoSubtitleService.get(extractVideoId);
+              if(subTitle!=null) {
+                historyMessage.add(new ChatMessage(role, subTitle));
+                
+              }
+            }
+
             historyMessage.add(new ChatMessage(role, content));
           } else {
             historyMessage.add(new ChatMessage(role, content));

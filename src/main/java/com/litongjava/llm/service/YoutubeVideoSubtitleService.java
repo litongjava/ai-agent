@@ -12,6 +12,7 @@ import com.litongjava.model.http.response.ResponseVo;
 import com.litongjava.supadata.SubTitleContent;
 import com.litongjava.supadata.SubTitleResponse;
 import com.litongjava.supadata.SupadataClient;
+import com.litongjava.tio.utils.hutool.StrUtil;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.video.VideoTimeUtils;
@@ -20,6 +21,9 @@ public class YoutubeVideoSubtitleService {
   public static final Striped<Lock> locks = Striped.lock(1024);
 
   public String get(String videoId) {
+    if(StrUtil.isBlank(videoId)) {
+      return null;
+    }
     Lock lock = locks.get(videoId);
     lock.lock();
     try {

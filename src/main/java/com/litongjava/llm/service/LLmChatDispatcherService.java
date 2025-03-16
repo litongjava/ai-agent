@@ -320,6 +320,9 @@ public class LLmChatDispatcherService {
     for (ChatMessage chatMessage : messages) {
       String role = chatMessage.getRole();
       String content = chatMessage.getContent();
+      if(StrUtil.isBlank(content)) {
+        continue;
+      }
       ChatSendArgs args = chatMessage.getArgs();
 
       if (args != null) {
