@@ -134,6 +134,10 @@ public class LlmAiChatService {
       if (schoolDict != null) {
         textQuestion += (" at " + schoolDict.getFull_name());
       }
+    } else if (ApiChatSendType.youtube.equals(type)) {
+      if (ApiChatSendCmd.summary.equals(cmd)) {
+        textQuestion = "summary the video content";
+      }
     }
 
     if (textQuestion != null) {
@@ -376,7 +380,7 @@ public class LlmAiChatService {
       if (ApiChatSendCmd.summary.equals(cmd)) {
         String systemPrompt = PromptEngine.renderToStringFromDb("youtube_summary_prompt.txt");
         chatParamVo.setSystemPrompt(systemPrompt);
-      }else {
+      } else {
         String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
         chatParamVo.setSystemPrompt(systemPrompt);
       }
