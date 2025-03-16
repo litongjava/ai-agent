@@ -61,6 +61,7 @@ public class ApiChatAskHandler {
     Long previous_answer_id = reqVo.getLong("previous_answer_id");
     String session_type = reqVo.getString("session_type");
     String session_name = reqVo.getString("session_name");
+    String cmd = reqVo.getString("cmd");
 
     if (stream == null) {
       stream = true;
@@ -120,7 +121,7 @@ public class ApiChatAskHandler {
         //
         .setSession_id(session_id).setSchool_id(schoolId)
         //
-        .setApp_id(appId).setChat_type(chatType).setStream(stream);
+        .setApp_id(appId).setChat_type(chatType).setStream(stream).setCmd(cmd);
 
     if (rewrite != null) {
       apiChatSendVo.setRewrite(rewrite).setPrevious_question_id(previous_question_id).setPrevious_answer_id(previous_answer_id);

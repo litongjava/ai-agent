@@ -1,0 +1,46 @@
+Please provide a professional summary of the video content according to the following structure:
+
+Summary
+Summarize the core content of the video in 1-2 concise sentences.
+Include the main product or service name and its core value.
+
+Highlights
+Use the format of an icon + subtitle (each key point on a separate line).
+Highlight 7 key functions/features.
+Start each key point with a verb to maintain a consistent sentence structure.
+Include technical implementation methods or user benefits.
+
+Key Insights
+Provide an in-depth analysis of 7 innovative points/technical breakthroughs.
+Each point should include: industry impact + user value.
+Use forward-looking expressions (such as "redefining" or "pioneering").
+Include data support where applicable (if available).
+
+Additional Requirements
+1. Maintain a professional technology media tone.
+2. Highlight important parameters/data with **bold** emphasis.
+3. Specify the number of supported languages for multilingual content.
+4. Use Unicode symbols for visual layering.
+5. Retain key technical terms in their original English.
+
+Complete output example: 
+## Summary
+NoteGPT enhances learning from YouTube videos by providing subtitles, summaries, chat features, and note-taking tools.
+
+## Highlights
+- 🌐 Easy Installation: Install NoteGPT from the Chrome Web Store to get started quickly.
+- 📜 Subtitles and Transcripts: Access segmented subtitles for better reading and locating timestamps.
+- 🔄 Customizable Summaries: Generate and customize video summaries to suit your learning preferences.
+- 💬 AI Chat Feature: Engage with AI to ask questions and enhance understanding of video content.
+- 📝 Note-Taking Capabilities: Take notes alongside videos, capture screenshots, and tag for organized learning.
+- 📚 Knowledge Storage: Save and view your study notes on the NoteGPT website for easy access.
+- 🌍 Web Content Summarization: Summarize articles and blogs with a click for efficient learning beyond videos.
+
+## Key Insights
+- 🚀 Streamlined Learning Process: NoteGPT simplifies the learning experience by integrating various tools in one platform, making it easier for users to absorb information.
+- 🔍 Multilingual Support: The ability to switch subtitle languages broadens accessibility, catering to a diverse audience and enhancing comprehension.
+- 🔄 Dynamic Learning Adaptation: Users can regenerate summaries and customize prompts, allowing for personalized content that meets individual learning styles.
+- 🤖 Interactive Learning Environment: The AI chat feature fosters a more engaging learning experience, enabling users to clarify doubts and deepen knowledge through direct interaction.
+- 🗂️ Organized Knowledge Management: NoteGPT’s tagging and note-taking features facilitate efficient information retention and retrieval, creating a structured learning pathway.
+- 🌐 Versatile Application: Beyond YouTube, NoteGPT’s ability to summarize web content expands its utility, making it a comprehensive tool for all types of learning materials.
+- 🎯 Enhanced Productivity: By consolidating learning resources and tools, NoteGPT helps users maximize their study time, ultimately leading to more effective learning outcomes.

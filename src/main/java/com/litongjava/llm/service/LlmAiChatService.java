@@ -19,6 +19,7 @@ import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AiChatEventName;
+import com.litongjava.llm.consts.ApiChatSendCmd;
 import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.utils.AgentBotQuestionUtils;
@@ -93,6 +94,7 @@ public class LlmAiChatService {
     Long sessionId = apiSendVo.getSession_id();
     Long appId = apiSendVo.getApp_id();
     List<Long> file_ids = apiSendVo.getFile_ids();
+    String cmd = apiSendVo.getCmd();
     ChatSendArgs chatSendArgs = apiSendVo.getArgs();
 
     SchoolDict schoolDict = null;
@@ -370,6 +372,14 @@ public class LlmAiChatService {
         apiSendVo.setModel(GoogleGeminiModels.GEMINI_2_0_FLASH);
       }
 
+    } else if (ApiChatSendType.youtube.equals(type)) {
+      if (ApiChatSendCmd.summary.equals(cmd)) {
+        String systemPrompt = PromptEngine.renderToStringFromDb("youtube_summary_prompt.txt");
+        chatParamVo.setSystemPrompt(systemPrompt);
+      }else {
+        String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
+        chatParamVo.setSystemPrompt(systemPrompt);
+      }
     } else {
       String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
       chatParamVo.setSystemPrompt(systemPrompt);
