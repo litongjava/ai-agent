@@ -20,7 +20,7 @@ public class PdfUtils {
       PDFTextStripper stripper = new PDFTextStripper();
       stripper.setSortByPosition(true); // 按页面布局排序
       stripper.setAddMoreFormatting(true); // 保留更多格式信息
-      return stripper.getText(document);
+      return stripper.getText(document).replace("\u0000", "");
     }
   }
 }
