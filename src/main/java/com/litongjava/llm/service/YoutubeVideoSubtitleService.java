@@ -38,6 +38,9 @@ public class YoutubeVideoSubtitleService {
       }
 
       List<SubTitleContent> content = subTitle.getContent();
+      if (content == null) {
+        return null;
+      }
       StringBuffer stringBuffer = new StringBuffer();
       for (SubTitleContent subTitleContent : content) {
         long offset = subTitleContent.getOffset();
@@ -50,12 +53,39 @@ public class YoutubeVideoSubtitleService {
         stringBuffer.append(startStr).append("-").append(endStr).append(" ").append(text).append("\r\n");
       }
       textSubTitle = stringBuffer.toString();
-      Row.by("id", SnowflakeIdUtils.id()).set("video_id", videoId).set("text_subtitle", stringBuffer.toString())
+      Row row = Row.by("id", SnowflakeIdUtils.id()).set("video_id", videoId).set("text_subtitle", stringBuffer.toString())
           //
           .set("supadata_subtitle", PgObjectUtils.json(responseVo.getBodyString()));
+      Db.save(AgentTableNames.youtube_video_subtitle, row);
       return textSubTitle;
     } finally {
       lock.unlock();
     }
+  }
+
+  public String transcriptWithGemini(String url, String videoId) {
+    Lock lock = locks.get(videoId);
+    lock.lock();
+    try {
+      String sql = "select text_subtitle from %s where video_id=?";
+      sql = String.format(sql, AgentTableNames.youtube_video_subtitle);
+      String textSubTitle = Db.queryStr(sql, videoId);
+      if (textSubTitle != null) {
+        return textSubTitle;
+      }
+      textSubTitle = transcriptWithGemini(url);
+      if (textSubTitle == null) {
+        return null;
+      }
+      Row.by("id", SnowflakeIdUtils.id()).set("video_id", videoId).set("text_subtitle", textSubTitle);
+      return textSubTitle;
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  private String transcriptWithGemini(String url) {
+
+    return null;
   }
 }
