@@ -140,6 +140,11 @@ public class LlmAiChatService {
       if (ApiChatSendCmd.summary.equals(cmd)) {
         textQuestion = "summary the video content";
       }
+
+    } else if (ApiChatSendType.general.equals(type)) {
+      if (ApiChatSendCmd.summary.equals(cmd)) {
+        textQuestion = "summary the web pages";
+      }
     }
 
     if (textQuestion != null) {
@@ -230,16 +235,29 @@ public class LlmAiChatService {
             ChatSendArgs historyArgs = JsonUtils.parse(args, ChatSendArgs.class);
 
             String url = historyArgs.getUrl();
-            String extractVideoId = YouTubeIdUtil.extractVideoId(url);
-            if (extractVideoId != null) {
-              String subTitle = youtubeVideoSubtitleService.get(extractVideoId);
-              if(subTitle!=null) {
-                historyMessage.add(new ChatMessage(role, subTitle));
-                
+            if (StrUtil.isNotBlank(url)) {
+              if (ApiChatSendType.youtube.equals(historyArgs.getType())) {
+                String extractVideoId = YouTubeIdUtil.extractVideoId(url);
+                if (extractVideoId != null) {
+                  String subTitle = youtubeVideoSubtitleService.get(extractVideoId);
+                  if (subTitle != null) {
+                    historyMessage.add(new ChatMessage(role, subTitle));
+
+                  }
+                }
+              }
+            }
+            String[] urls = historyArgs.getUrls();
+            if (urls != null && urls.length > 0) {
+              if (ApiChatSendType.general.equals(historyArgs.getType())) {
+                String htmlContent = webPageService.readHtmlPage(urls);
+                historyMessage.add(new ChatMessage(role, htmlContent));
               }
             }
 
-            historyMessage.add(new ChatMessage(role, content));
+            if (StrUtil.isNotBlank(content)) {
+              historyMessage.add(new ChatMessage(role, content));
+            }
           } else {
             historyMessage.add(new ChatMessage(role, content));
           }
@@ -394,56 +412,49 @@ public class LlmAiChatService {
         String systemPrompt = PromptEngine.renderToStringFromDb("youtube_summary_prompt.txt");
         chatParamVo.setSystemPrompt(systemPrompt);
       } else {
-        String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
+        String systemPrompt = generalPrompt();
+        chatParamVo.setSystemPrompt(systemPrompt);
+      }
+      youtube(channelContext, chatSendArgs, historyMessage);
+    } else {
+      if (ApiChatSendCmd.summary.equals(cmd)) {
+        String systemPrompt = PromptEngine.renderToString("general_summary_prompt.txt");
+        chatParamVo.setSystemPrompt(systemPrompt);
+      } else {
+        String systemPrompt = generalPrompt();
         chatParamVo.setSystemPrompt(systemPrompt);
       }
 
-      String message = null;
-      if (channelContext != null) {
-        if (chatSendArgs != null && chatSendArgs.getUrl() != null) {
-          String url = chatSendArgs.getUrl();
-          message = "First, let me get the YouTube video sub title. It will take a few minutes " + url + ".  ";
+      if (chatSendArgs != null && chatSendArgs.getUrls() != null) {
+        String message = null;
 
-          Kv by = Kv.by("content", message);
-          SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-          Tio.send(channelContext, ssePacket);
-
-          String videoId = YouTubeIdUtil.extractVideoId(url);
-          String subTitle = youtubeVideoSubtitleService.get(videoId);
-          if (subTitle == null) {
-            message = "Sorry, No transcript is available for this video, let me downlaod video.  It will take a few minutes.  ";
-            by = Kv.by("content", message);
-            ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-            Tio.send(channelContext, ssePacket);
-
-            subTitle = youtubeVideoSubtitleService.transcriptWithGemini(url, videoId);
-          }
-
-          if (subTitle != null) {
-            by = Kv.by("content", subTitle);
-            ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-            Tio.send(channelContext, ssePacket);
-
-            historyMessage.add(0, new ChatMessage("user", subTitle));
-          } else {
-            message = "Sorry, No transcript is available for this video, please try again later.";
-            by = Kv.by("content", message);
-            ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-            Tio.send(channelContext, ssePacket);
-          }
-
-        } else {
-          message = "First, let me review the YouTube video. It will take a few minutes .";
+        String[] urls = chatSendArgs.getUrls();
+        if (channelContext != null) {
+          message = "First, user submit %d links. let me read them.  ";
+          message = String.format(message, urls.length);
           Kv by = Kv.by("content", message);
           SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
           Tio.send(channelContext, ssePacket);
         }
 
-      }
+        for (String url : urls) {
+          ResponseVo responseVo = webPageService.get(url);
+          if (responseVo.isOk()) {
+            StringBuffer htmlContent = new StringBuffer();
+            htmlContent.append("source:").append(url).append(" content:").append(responseVo.getBodyString()).append("  ");
+            String string = htmlContent.toString();
 
-    } else {
-      String systemPrompt = general(channelContext, textQuestion, historyMessage, schoolDict, model);
-      chatParamVo.setSystemPrompt(systemPrompt);
+            message = "Read result:" + string;
+            Tio.send(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+            historyMessage.add(new ChatMessage("user", string));
+
+          } else {
+            message = "Sorry, No web page content is available of %s, please try again later.";
+            message = String.format(message, url);
+            Tio.send(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+          }
+        }
+      }
     }
 
     //9.处理问题
@@ -451,7 +462,7 @@ public class LlmAiChatService {
         //
         .setHistory(historyMessage).setChannelContext(channelContext);
 
-    if (textQuestion != null && textQuestion.startsWith("4o:")) {
+    if (textQuestion != null && textQuestion.startsWith("4o:")){
       if (stream) {
         SsePacket packet = new SsePacket(AiChatEventName.progress, "The user specifies that the gpt4o model is used for message processing");
         Tio.bSend(channelContext, packet);
@@ -465,13 +476,57 @@ public class LlmAiChatService {
     }
   }
 
+  private void youtube(ChannelContext channelContext, ChatSendArgs chatSendArgs, List<ChatMessage> historyMessage) {
+    String message = null;
+    if (channelContext != null) {
+      if (chatSendArgs != null && chatSendArgs.getUrl() != null) {
+        String url = chatSendArgs.getUrl();
+        message = "First, let me get the YouTube video sub title. It will take a few minutes " + url + ".  ";
+
+        Kv by = Kv.by("content", message);
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+
+        String videoId = YouTubeIdUtil.extractVideoId(url);
+        String subTitle = youtubeVideoSubtitleService.get(videoId);
+        if (subTitle == null) {
+          message = "Sorry, No transcript is available for this video, let me downlaod video.  It will take a few minutes.  ";
+          by = Kv.by("content", message);
+          ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+
+          subTitle = youtubeVideoSubtitleService.transcriptWithGemini(url, videoId);
+        }
+
+        if (subTitle != null) {
+          by = Kv.by("content", subTitle);
+          ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+
+          historyMessage.add(0, new ChatMessage("user", subTitle));
+        } else {
+          message = "Sorry, No transcript is available for this video, please try again later.";
+          by = Kv.by("content", message);
+          ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+          Tio.send(channelContext, ssePacket);
+        }
+
+      } else {
+        message = "First, let me review the YouTube video. It will take a few minutes .";
+        Kv by = Kv.by("content", message);
+        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
+    }
+  }
+
   private String tutor(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
     return PromptEngine.renderToStringFromDb("tutor_prompt.txt", kv);
   }
 
-  private String general(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
+  private String generalPrompt() {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
     return PromptEngine.renderToStringFromDb("general_prompt.txt", kv);

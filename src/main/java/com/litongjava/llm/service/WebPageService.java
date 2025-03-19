@@ -80,4 +80,15 @@ public class WebPageService {
     // 如果无法提取，返回原始 HTML
     return html;
   }
+
+  public String readHtmlPage(String[] urls) {
+    StringBuffer stringBuffer = new StringBuffer();
+    for (String url : urls) {
+      ResponseVo responseVo = get(url);
+      if (responseVo.isOk()) {
+        stringBuffer.append("source:").append(url).append(" content:").append(responseVo.getBodyString());
+      }
+    }
+    return stringBuffer.toString();
+  }
 }

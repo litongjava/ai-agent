@@ -25,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ApiChatAskHandler {
+  private LlmAiChatService llmAiChatService = Aop.get(LlmAiChatService.class);
+  
   public HttpResponse send(HttpRequest httpRequest) {
     HttpResponse response = TioRequestContext.getResponse();
     CORSUtils.enableCORS(response);
@@ -98,6 +100,7 @@ public class ApiChatAskHandler {
     ApiChatSendVo apiChatSendVo = new ApiChatSendVo();
     if (args != null) {
       ChatSendArgs javaObject = args.toJavaObject(ChatSendArgs.class);
+      javaObject.setType(type);
       apiChatSendVo.setArgs(javaObject);
     }
 
@@ -142,12 +145,13 @@ public class ApiChatAskHandler {
       channelContext = httpRequest.getChannelContext();
       // 设置sse请求头
       response.addServerSentEventsHeader();
-      // 发送http响应包,告诉客户端保持连接
+      // 发送http响应头,告诉客户端保持连接
       Tio.bSend(channelContext, response);
       response.setSend(false);
     }
 
-    RespBodyVo RespBodyVo = Aop.get(LlmAiChatService.class).index(channelContext, apiChatSendVo);
+    
+    RespBodyVo RespBodyVo = llmAiChatService.index(channelContext, apiChatSendVo);
     if (!stream) {
       response.setJson(RespBodyVo);
     }

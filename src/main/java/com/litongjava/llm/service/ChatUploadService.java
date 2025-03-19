@@ -14,7 +14,7 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.table.services.ApiTable;
-import com.litongjava.tio.boot.admin.costants.TioBootAdminTableNames;
+import com.litongjava.tio.boot.admin.costants.AdminTableNames;
 import com.litongjava.tio.boot.admin.dao.SystemUploadFileDao;
 import com.litongjava.tio.boot.admin.services.StorageService;
 import com.litongjava.tio.boot.admin.services.SystemUploadFileService;
@@ -116,7 +116,7 @@ public class ChatUploadService implements StorageService {
         //
         .set("target_name", targetName).set("file_id", etag);
 
-    TableResult<Kv> save = ApiTable.save(TioBootAdminTableNames.tio_boot_admin_system_upload_file, kv);
+    TableResult<Kv> save = ApiTable.save(AdminTableNames.tio_boot_admin_system_upload_file, kv);
     String downloadUrl = getUrl(AwsS3Utils.bucketName, targetName);
 
     return new UploadResultVo(save.getData().getLong("id"), originFilename, Long.valueOf(size), downloadUrl, md5);

@@ -93,7 +93,7 @@ public class LLmChatDispatcherService {
     }
     //添加系统消息
     if (systemPrompt != null) {
-      history.add(new ChatMessage("system", systemPrompt));
+      history.add(0, new ChatMessage("system", systemPrompt));
     }
 
     // 添加用户问题
@@ -104,18 +104,18 @@ public class LLmChatDispatcherService {
     }
 
     history.add(new ChatMessage("user", textQuestion));
-    
-//    if (ApiChatSendType.youtube.equals(type)) {
-//      if (args != null && args.getUrl() != null) {
-//        history.add(new ChatMessage("user", textQuestion, args));
-//      } else {
-//        history.add(new ChatMessage("user", textQuestion));
-//      }
-//    } else {
-//      if (StrUtil.isNotBlank(textQuestion)) {
-//        history.add(new ChatMessage("user", textQuestion));
-//      }
-//    }
+
+    //    if (ApiChatSendType.youtube.equals(type)) {
+    //      if (args != null && args.getUrl() != null) {
+    //        history.add(new ChatMessage("user", textQuestion, args));
+    //      } else {
+    //        history.add(new ChatMessage("user", textQuestion));
+    //      }
+    //    } else {
+    //      if (StrUtil.isNotBlank(textQuestion)) {
+    //        history.add(new ChatMessage("user", textQuestion));
+    //      }
+    //    }
 
     apiSendVo.setMessages(history);
     long answerId = SnowflakeIdUtils.id();
@@ -320,7 +320,7 @@ public class LLmChatDispatcherService {
     for (ChatMessage chatMessage : messages) {
       String role = chatMessage.getRole();
       String content = chatMessage.getContent();
-      if(StrUtil.isBlank(content)) {
+      if (StrUtil.isBlank(content)) {
         continue;
       }
       ChatSendArgs args = chatMessage.getArgs();
