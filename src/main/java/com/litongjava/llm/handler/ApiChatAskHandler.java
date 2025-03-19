@@ -12,7 +12,7 @@ import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatSendArgs;
+import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
@@ -99,7 +99,7 @@ public class ApiChatAskHandler {
     JSONObject args = reqVo.getJSONObject("args");
     ApiChatSendVo apiChatSendVo = new ApiChatSendVo();
     if (args != null) {
-      ChatSendArgs javaObject = args.toJavaObject(ChatSendArgs.class);
+      ChatMessageArgs javaObject = args.toJavaObject(ChatMessageArgs.class);
       javaObject.setType(type);
       apiChatSendVo.setArgs(javaObject);
     }

@@ -30,7 +30,7 @@ import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatSendArgs;
+import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
@@ -80,7 +80,7 @@ public class LLmChatDispatcherService {
     String textQuestion = paramVo.getTextQuestion();
     List<UploadResultVo> uploadFiles = paramVo.getUploadFiles();
     String systemPrompt = paramVo.getSystemPrompt();
-    ChatSendArgs args = apiSendVo.getArgs();
+    ChatMessageArgs args = apiSendVo.getArgs();
     if (rewrite_quesiton != null) {
       textQuestion = rewrite_quesiton;
     }
@@ -323,7 +323,7 @@ public class LLmChatDispatcherService {
       if (StrUtil.isBlank(content)) {
         continue;
       }
-      ChatSendArgs args = chatMessage.getArgs();
+      ChatMessageArgs args = chatMessage.getArgs();
 
       if (args != null) {
         List<GeminiPartVo> parts = new ArrayList<>();

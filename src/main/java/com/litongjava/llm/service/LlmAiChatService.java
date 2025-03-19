@@ -31,7 +31,7 @@ import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.http.response.ResponseVo;
 import com.litongjava.model.web.WebPageContent;
 import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatSendArgs;
+import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
@@ -97,7 +97,7 @@ public class LlmAiChatService {
     Long appId = apiSendVo.getApp_id();
     List<Long> file_ids = apiSendVo.getFile_ids();
     String cmd = apiSendVo.getCmd();
-    ChatSendArgs chatSendArgs = apiSendVo.getArgs();
+    ChatMessageArgs chatSendArgs = apiSendVo.getArgs();
 
     SchoolDict schoolDict = null;
 
@@ -232,7 +232,7 @@ public class LlmAiChatService {
           String content = record.getStr("content");
           String args = record.getString("args");
           if (args != null) {
-            ChatSendArgs historyArgs = JsonUtils.parse(args, ChatSendArgs.class);
+            ChatMessageArgs historyArgs = JsonUtils.parse(args, ChatMessageArgs.class);
 
             String url = historyArgs.getUrl();
             if (StrUtil.isNotBlank(url)) {
@@ -476,7 +476,7 @@ public class LlmAiChatService {
     }
   }
 
-  private void youtube(ChannelContext channelContext, ChatSendArgs chatSendArgs, List<ChatMessage> historyMessage) {
+  private void youtube(ChannelContext channelContext, ChatMessageArgs chatSendArgs, List<ChatMessage> historyMessage) {
     String message = null;
     if (channelContext != null) {
       if (chatSendArgs != null && chatSendArgs.getUrl() != null) {
@@ -532,7 +532,7 @@ public class LlmAiChatService {
     return PromptEngine.renderToStringFromDb("general_prompt.txt", kv);
   }
 
-  private String celebrity(ChannelContext channelContext, ChatSendArgs chatSendArgs) {
+  private String celebrity(ChannelContext channelContext, ChatMessageArgs chatSendArgs) {
     String name = chatSendArgs.getName();
     String institution = chatSendArgs.getInstitution();
     //必须要添加两个institution,添加后搜索更准,但是不知道原理是什么?猜测是搜索引擎提高了权重

@@ -3,7 +3,7 @@ package com.litongjava.llm.vo;
 import java.util.List;
 
 import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatSendArgs;
+import com.litongjava.openai.chat.ChatMessageArgs;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +24,7 @@ public class ApiChatSendVo {
   private Long school_id;
   private Integer chat_type;
   private String cmd;
-  private ChatSendArgs args;
+  private ChatMessageArgs args;
   private boolean stream;
   private boolean rewrite;
   private Long previous_question_id;

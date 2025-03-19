@@ -16,7 +16,7 @@ import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
-import com.litongjava.openai.chat.ChatSendArgs;
+import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.openai.chat.MessageRole;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
@@ -65,7 +65,7 @@ public class LlmChatHistoryService {
     return ts;
   }
 
-  public void saveUser(long questionId, Long sessionId, String inputQestion, List<UploadResultVo> fileInfo, ChatSendArgs chatSendArgs) {
+  public void saveUser(long questionId, Long sessionId, String inputQestion, List<UploadResultVo> fileInfo, ChatMessageArgs chatSendArgs) {
     Row ti = Row.by("id", questionId).set("session_id", sessionId).set("content", inputQestion).set("role", "user");
     if (fileInfo != null) {
       ti.set("type", AgentMessageType.FILE).set("metadata", PgObjectUtils.json(fileInfo));
