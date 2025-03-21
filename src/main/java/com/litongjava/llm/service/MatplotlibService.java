@@ -46,18 +46,22 @@ public class MatplotlibService {
     if (toolVo.getName().equals("execute_python")) {
       String code = toolVo.getContent();
       ProcessResult result = LinuxClient.executePythonCode(code);
-      List<String> images = result.getImages();
-      List<String> imageUrls = new ArrayList<>(images.size());
-      if (images != null) {
-        String imageBase64Code = result.getImages().get(0);
-        ImageVo decodeImage = Base64Utils.decodeImage(imageBase64Code);
-        UploadFile uploadFile = new UploadFile("matplotlib." + decodeImage.getExtension(), decodeImage.getData());
-        UploadResultVo resultVo = Aop.get(AwsS3StorageService.class).uploadFile("matplotlib", uploadFile);
-        String url = resultVo.getUrl();
-        imageUrls.add(url);
+      if(result!=null) {
+        List<String> images = result.getImages();
+        if (images != null) {
+          List<String> imageUrls = new ArrayList<>(images.size());
+          for (String imageBase64Code : images) {
+            ImageVo decodeImage = Base64Utils.decodeImage(imageBase64Code);
+            UploadFile uploadFile = new UploadFile("matplotlib." + decodeImage.getExtension(), decodeImage.getData());
+            UploadResultVo resultVo = Aop.get(AwsS3StorageService.class).uploadFile("matplotlib", uploadFile);
+            String url = resultVo.getUrl();
+            imageUrls.add(url);
+          }
+          result.setImages(imageUrls);
+        }
+        return result;
       }
-      result.setImages(imageUrls);
-      return result;
+ 
     }
     return null;
   }
