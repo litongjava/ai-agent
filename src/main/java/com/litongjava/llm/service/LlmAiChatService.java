@@ -52,7 +52,7 @@ import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
-import com.litongjava.utils.YouTubeIdUtil;
+import com.litongjava.tio.utils.youtube.YouTubeIdUtil;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
@@ -434,7 +434,7 @@ public class LlmAiChatService {
           message = String.format(message, urls.length);
           Kv by = Kv.by("content", message);
           SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-          Tio.send(channelContext, ssePacket);
+          Tio.bSend(channelContext, ssePacket);
         }
 
         for (String url : urls) {
@@ -445,13 +445,13 @@ public class LlmAiChatService {
             String string = htmlContent.toString();
 
             message = "Read result:" + string;
-            Tio.send(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+            Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
             historyMessage.add(new ChatMessage("user", string));
 
           } else {
             message = "Sorry, No web page content is available of %s, please try again later.";
             message = String.format(message, url);
-            Tio.send(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+            Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
           }
         }
       }

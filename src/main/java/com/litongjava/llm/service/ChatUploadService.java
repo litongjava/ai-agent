@@ -37,7 +37,7 @@ public class ChatUploadService implements StorageService {
     if (StrKit.isBlank(category)) {
       category = "default";
     }
-    UploadResultVo uploadResultVo = uploadBytes(category, uploadFile);
+    UploadResultVo uploadResultVo = uploadFile(category, uploadFile);
     Long id = uploadResultVo.getId();
     if (!Db.exists(AgentTableNames.chat_upload_file, "id", id)) {
       try {
@@ -57,7 +57,7 @@ public class ChatUploadService implements StorageService {
     return RespBodyVo.ok(uploadResultVo);
   }
 
-  public UploadResultVo uploadBytes(String category, UploadFile uploadFile) {
+  public UploadResultVo uploadFile(String category, UploadFile uploadFile) {
     // 上传文件
     long id = SnowflakeIdUtils.id();
     String suffix = FilenameUtils.getSuffix(uploadFile.getName());
@@ -65,7 +65,7 @@ public class ChatUploadService implements StorageService {
 
     String targetName = category + "/" + newFilename;
 
-    return uploadBytes(id, targetName, uploadFile, suffix);
+    return uploadFile(id, targetName, uploadFile, suffix);
   }
 
   /**
@@ -77,7 +77,7 @@ public class ChatUploadService implements StorageService {
    * @param suffix
    * @return
    */
-  public UploadResultVo uploadBytes(long id, String targetName, UploadFile uploadFile, String suffix) {
+  public UploadResultVo uploadFile(long id, String targetName, UploadFile uploadFile, String suffix) {
     String originFilename = uploadFile.getName();
     long size = uploadFile.getSize();
 
