@@ -1,6 +1,7 @@
 package com.litongjava.llm.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -14,8 +15,8 @@ import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
-import com.litongjava.linux.ProcessResult;
 import com.litongjava.linux.LinuxClient;
+import com.litongjava.linux.ProcessResult;
 import com.litongjava.llm.utils.ResponseXmlTagUtils;
 import com.litongjava.llm.vo.ToolVo;
 import com.litongjava.template.PromptEngine;
@@ -29,8 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class MatplotlibService {
-
-  private AwsS3StorageService awsS3StorageService = Aop.get(AwsS3StorageService.class);
 
   public ProcessResult generateMatplot(String answer) {
     String text = generateCode(answer);
@@ -48,12 +47,12 @@ public class MatplotlibService {
       String code = toolVo.getContent();
       ProcessResult result = LinuxClient.executePythonCode(code);
       List<String> images = result.getImages();
-      List<String> imageUrls = result.getImages();
+      List<String> imageUrls = new ArrayList<>(images.size());
       if (images != null) {
         String imageBase64Code = result.getImages().get(0);
         ImageVo decodeImage = Base64Utils.decodeImage(imageBase64Code);
         UploadFile uploadFile = new UploadFile("matplotlib." + decodeImage.getExtension(), decodeImage.getData());
-        UploadResultVo resultVo = awsS3StorageService.uploadFile("matplotlib", uploadFile);
+        UploadResultVo resultVo = Aop.get(AwsS3StorageService.class).uploadFile("matplotlib", uploadFile);
         String url = resultVo.getUrl();
         imageUrls.add(url);
       }

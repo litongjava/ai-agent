@@ -96,22 +96,18 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
 
       if (success != null && !success.getContent().isEmpty()) {
         String content = success.getContent();
-        if (latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
-
-          ProcessResult codeResult = matplotlibService.generateMatplot(content);
-
-          if (codeResult != null) {
-            String json = JsonUtils.toJson(codeResult);
-            SsePacket packet = new SsePacket(AiChatEventName.code_result, json);
-            Tio.bSend(channelContext, packet);
-          }
-
+        if (latch == null || latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
           try {
+            ProcessResult codeResult = matplotlibService.generateMatplot(content);
+            if (codeResult != null) {
+              String json = JsonUtils.toJson(codeResult);
+              SsePacket packet = new SsePacket(AiChatEventName.code_result, json);
+              Tio.bSend(channelContext, packet);
+            }
             llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), success.getModel(), content.toString(), codeResult);
           } catch (Exception e) {
             log.error(e.getMessage(), e);
           }
-
         } else {
           try {
             llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), success.getModel(), content.toString());
