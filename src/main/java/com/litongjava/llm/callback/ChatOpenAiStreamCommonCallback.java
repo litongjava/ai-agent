@@ -6,11 +6,14 @@ import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.linux.ProcessResult;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AiChatEventName;
+import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
+import com.litongjava.llm.service.MatplotlibService;
 import com.litongjava.llm.service.RunningNotificationService;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.openai.chat.ChatResponseDelta;
@@ -32,6 +35,10 @@ import okio.BufferedSource;
 
 @Slf4j
 public class ChatOpenAiStreamCommonCallback implements Callback {
+
+  LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
+  MatplotlibService matplotlibService = Aop.get(MatplotlibService.class);
+
   private boolean continueSend = true;
   private ChannelContext channelContext;
   private long answerId, start;
@@ -89,11 +96,30 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
 
       if (success != null && !success.getContent().isEmpty()) {
         String content = success.getContent();
-        try {
-          Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, apiChatSendVo.getSession_id(), success.getModel(), content.toString());
-        } catch (Exception e) {
-          log.error(e.getMessage(), e);
+        if (latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
+
+          ProcessResult codeResult = matplotlibService.generateMatplot(content);
+
+          if (codeResult != null) {
+            String json = JsonUtils.toJson(codeResult);
+            SsePacket packet = new SsePacket(AiChatEventName.code_result, json);
+            Tio.bSend(channelContext, packet);
+          }
+
+          try {
+            llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), success.getModel(), content.toString(), codeResult);
+          } catch (Exception e) {
+            log.error(e.getMessage(), e);
+          }
+
+        } else {
+          try {
+            llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), success.getModel(), content.toString());
+          } catch (Exception e) {
+            log.error(e.getMessage(), e);
+          }
         }
+
         Kv kv = Kv.by("answer_id", answerId);
         SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
         Tio.bSend(channelContext, packet);

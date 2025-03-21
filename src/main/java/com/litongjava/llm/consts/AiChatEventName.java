@@ -25,4 +25,5 @@ public interface AiChatEventName {
   String linkedin_posts = "linkedin_posts";
   String social_media = "social_media";
   String suggested_questions = "suggested_questions";
+  String code_result = "code_result";
 }

@@ -11,6 +11,7 @@ import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.kit.PgObjectUtils;
+import com.litongjava.linux.ProcessResult;
 import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
@@ -87,6 +88,16 @@ public class LlmChatHistoryService {
     Row row = Row.by("id", id).set("content", message).set("role", "assistant").set("model", model)
         //
         .set("session_id", chatId);
+    Db.save(AgentTableNames.llm_chat_history, row);
+  }
+
+  public void saveAssistant(long answerId, Long session_id, String model, String message, ProcessResult codeResult) {
+    Row row = Row.by("id", answerId).set("content", message).set("role", "assistant").set("model", model)
+        //
+        .set("session_id", session_id);
+    if (codeResult != null) {
+      row.set("code_result", PgObjectUtils.json(codeResult));
+    }
     Db.save(AgentTableNames.llm_chat_history, row);
   }
 
