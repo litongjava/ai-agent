@@ -40,24 +40,29 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
   MatplotlibService matplotlibService = Aop.get(MatplotlibService.class);
 
   private boolean continueSend = true;
-  private ChannelContext channelContext;
-  private long answerId, start;
-  private ApiChatSendVo apiChatSendVo;
-  private CountDownLatch latch;
   private ChatCallbackVo callbackVo;
+  private ChannelContext channelContext;
+  private ApiChatSendVo apiChatSendVo;
+  private long answerId, start;
+  private String textQuestion;
+  private CountDownLatch latch;
 
-  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start) {
+  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start, String textQuestion) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
     this.start = start;
+    this.textQuestion = textQuestion;
   }
 
-  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start, CountDownLatch latch) {
+  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start,
+      //
+      String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
     this.start = start;
+    this.textQuestion = textQuestion;
     this.latch = latch;
   }
 
@@ -98,7 +103,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
         String content = success.getContent();
         if (latch == null || latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
           try {
-            ProcessResult codeResult = matplotlibService.generateMatplot(content);
+            ProcessResult codeResult = matplotlibService.generateMatplot(textQuestion, content);
             if (codeResult != null) {
               String json = JsonUtils.toJson(codeResult);
               SsePacket packet = new SsePacket(AiChatEventName.code_result, json);

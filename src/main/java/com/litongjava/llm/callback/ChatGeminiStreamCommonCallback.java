@@ -45,20 +45,25 @@ public class ChatGeminiStreamCommonCallback implements Callback {
   private long answerId, start;
   private CountDownLatch latch;
   private ChatCallbackVo callbackVo;
+  private String textQuestion;
 
-  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start, CountDownLatch latch) {
+  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start,
+      //
+      String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
     this.start = start;
     this.latch = latch;
+    this.textQuestion = textQuestion;
   }
 
-  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start) {
+  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start, String textQuestion) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
     this.start = start;
+    this.textQuestion = textQuestion;
   }
 
   @Override
@@ -98,7 +103,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
         String content = success.getContent();
         if (latch == null || latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
           try {
-            ProcessResult codeResult = matplotlibService.generateMatplot(content);
+            ProcessResult codeResult = matplotlibService.generateMatplot(textQuestion, content);
             if (codeResult != null) {
               String json = JsonUtils.toJson(codeResult);
               SsePacket packet = new SsePacket(AiChatEventName.code_result, json);

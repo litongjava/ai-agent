@@ -462,7 +462,7 @@ public class LlmAiChatService {
         //
         .setHistory(historyMessage).setChannelContext(channelContext);
 
-    if (textQuestion != null && textQuestion.startsWith("4o:")){
+    if (textQuestion != null && textQuestion.startsWith("4o:")) {
       if (stream) {
         SsePacket packet = new SsePacket(AiChatEventName.progress, "The user specifies that the gpt4o model is used for message processing");
         Tio.bSend(channelContext, packet);
@@ -919,7 +919,8 @@ public class LlmAiChatService {
     long start = System.currentTimeMillis();
     // 添加文本
     List<ChatMessage> messages = vo.getMessages();
-    messages.add(new ChatMessage("user", vo.getInput_quesiton()));
+    String textQuestion = vo.getInput_quesiton();
+    messages.add(new ChatMessage("user", textQuestion));
 
     OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI).setChatMessages(messages);
 
@@ -930,7 +931,7 @@ public class LlmAiChatService {
       Tio.bSend(channelContext, packet);
 
       chatRequestVo.setStream(true);
-      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, vo, answerId, start);
+      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, vo, answerId, start, textQuestion);
       Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
       log.info("add call:{}", sessionId);
       ChatStreamCallCan.put(sessionId, call);
