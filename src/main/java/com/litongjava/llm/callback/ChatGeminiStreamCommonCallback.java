@@ -24,6 +24,7 @@ import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.http.server.util.SseEmitter;
+import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;
 
@@ -74,7 +75,8 @@ public class ChatGeminiStreamCommonCallback implements Callback {
       log.error(data);
       RunningNotificationService notification = AiAgentContext.me().getNotification();
       if (notification != null) {
-        notification.sendError(data);
+        Long appTenant = EnvUtils.getLong("app.tenant");
+        notification.sendError(appTenant, data);
       }
       SsePacket packet = new SsePacket(AiChatEventName.error, errorBody);
       Tio.bSend(channelContext, packet);

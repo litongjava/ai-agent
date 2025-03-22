@@ -1,13 +1,13 @@
 package com.litongjava.llm.service;
 
 public interface RunningNotificationService {
-  void sendQuestion(String msg);
+  boolean sendQuestion(Long tenant, String msg);
 
-  void sendPredict(String msg);
+  boolean sendLike(Long tenant, String msg);
 
-  void sendLike(String msg);
+  boolean sendError(Long tenant, String msg);
 
-  void sendError(String msg);
+  boolean sendRewrite(Long tenant, String msg);
 
-  void sendRewrite(String string);
+  boolean sendPredict(Long tenant, String msg);
 }

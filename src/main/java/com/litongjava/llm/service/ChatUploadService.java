@@ -16,7 +16,6 @@ import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.costants.TioBootAdminTableNames;
 import com.litongjava.tio.boot.admin.dao.SystemUploadFileDao;
-import com.litongjava.tio.boot.admin.services.StorageService;
 import com.litongjava.tio.boot.admin.services.SystemUploadFileService;
 import com.litongjava.tio.boot.admin.utils.AwsS3Utils;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
@@ -30,7 +29,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 @Slf4j
-public class ChatUploadService implements StorageService {
+public class ChatUploadService {
   ChatFileService chatFileService = Aop.get(ChatFileService.class);
 
   public RespBodyVo upload(String category, UploadFile uploadFile) {
@@ -41,7 +40,7 @@ public class ChatUploadService implements StorageService {
     Long id = uploadResultVo.getId();
     if (!Db.exists(AgentTableNames.chat_upload_file, "id", id)) {
       try {
-        String content = chatFileService.parseContent(uploadFile);
+        String content = chatFileService.parseFile(uploadFile);
         if (content == null) {
           return RespBodyVo.fail("un support file type");
         } else {
@@ -123,22 +122,19 @@ public class ChatUploadService implements StorageService {
 
   }
 
-  @Override
   public String getUrl(String bucketName, String targetName) {
     return Aop.get(SystemUploadFileService.class).getUrl(bucketName, targetName);
   }
 
-  @Override
   public UploadResultVo getUrlById(String id) {
     return Aop.get(SystemUploadFileService.class).getUrlById(id);
   }
 
-  @Override
   public UploadResultVo getUrlById(long id) {
     return Aop.get(SystemUploadFileService.class).getUrlById(id);
   }
 
-  @Override
+
   public UploadResultVo getUrlByMd5(String md5) {
     return Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);
   }

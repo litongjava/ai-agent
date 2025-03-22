@@ -310,7 +310,8 @@ public class ApiChatHandler {
 
     RunningNotificationService notification = AiAgentContext.me().getNotification();
     if (notification != null) {
-      notification.sendLike(messageText.toString());
+      Long appTenant = EnvUtils.getLong("app.tenant");
+      notification.sendLike(appTenant, messageText.toString());
     }
     return response.setJson(RespBodyVo.ok());
   }

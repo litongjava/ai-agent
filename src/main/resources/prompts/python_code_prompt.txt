@@ -23,15 +23,13 @@
    - 所有包含数学公式（mathtext）的字符串必须使用原始字符串前缀 `r''`，以防止转义字符错误。
    - 在 mathtext 表达式中，LaTeX 命令必须使用 **单斜杠** `\`，不要使用双斜杠 `\\`，否则会导致 matplotlib 渲染失败。
    - 正确示例：
-  ```python
   plt.plot(x, y, label=r'$f(x) = \frac{2}{3}\sqrt{x^3 + 1}$')
   plt.title(r'Plot of $f(x) = \frac{2}{3}\sqrt{x^3 + 1}$')
-  ```
+  
 - 错误示例：
-  ```python
   plt.plot(x, y, label=r'$f(x) = \frac{2}{3}\\sqrt{x^3 + 1}$')  # 错误：用了双斜杠
   plt.title('Plot of $f(x) = \frac{2}{3}\sqrt{x^3 + 1}$')       # 错误：缺少 r''
-  ```
+  
    - 若使用 matplotlib 的 mathtext 功能，必须确保表达式在 `$...$` 内闭合且无语法错误。
 
 6. 示例说明：

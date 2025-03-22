@@ -4,21 +4,17 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import com.litongjava.groq.GropConst;
-import com.litongjava.groq.GropModel;
-import com.litongjava.groq.GroqSpeechClient;
-import com.litongjava.groq.TranscriptionsRequest;
-import com.litongjava.groq.TranscriptionsResponse;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.utils.DocxUtils;
-import com.litongjava.llm.utils.PdfUtils;
 import com.litongjava.llm.utils.ExcelUtils;
+import com.litongjava.llm.utils.PdfUtils;
 import com.litongjava.llm.utils.PptxUtils;
 import com.litongjava.tio.http.common.UploadFile;
 import com.litongjava.tio.utils.hutool.FilenameUtils;
 
 public class ChatFileService {
 
-  public String parseContent(UploadFile uploadFile) throws IOException {
+  public String parseFile(UploadFile uploadFile) throws IOException {
     String name = uploadFile.getName();
     byte[] data = uploadFile.getData();
     String suffix = FilenameUtils.getSuffix(name).toLowerCase();
@@ -26,11 +22,11 @@ public class ChatFileService {
 
     if ("txt".equals(suffix) || "md".equals(suffix)) {
       text = new String(data, StandardCharsets.UTF_8);
+      
     } else if (GropConst.SUPPORT_LIST.contains(suffix)) {
-      TranscriptionsRequest transcriptionsRequest = new TranscriptionsRequest();
-      transcriptionsRequest.setModel(GropModel.WHISPER_LARGE_V3_TURBO);
-      TranscriptionsResponse transcriptions = GroqSpeechClient.transcriptions(data, name, transcriptionsRequest);
-      text = transcriptions.getText();
+      MediaService mediaService = Aop.get(MediaService.class);
+      text = mediaService.parseMedia(name, data);
+      
     } else if ("pdf".equals(suffix)) {
       text = PdfUtils.parseContent(data);
     } else if ("docx".equals(suffix)) {

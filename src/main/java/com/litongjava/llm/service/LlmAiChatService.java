@@ -302,6 +302,7 @@ public class LlmAiChatService {
     }
 
     // 6.发送问题通知
+    RunningNotificationService notification = AiAgentContext.me().getNotification();
     if (StrUtil.isNotEmpty(textQuestion)) {
       StringBuffer stringBuffer = new StringBuffer();
 
@@ -322,9 +323,9 @@ public class LlmAiChatService {
       }
 
       log.info("question:{}", stringBuffer.toString());
-      RunningNotificationService notification = AiAgentContext.me().getNotification();
       if (notification != null) {
-        notification.sendQuestion(stringBuffer.toString());
+        Long appTenant = EnvUtils.getLong("app.tenant");
+        notification.sendQuestion(appTenant, stringBuffer.toString());
       }
 
       if (!EnvUtils.isDev()) {
@@ -368,7 +369,10 @@ public class LlmAiChatService {
     //
     stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
 
-    AiAgentContext.me().getNotification().sendRewrite(stringBuffer.toString());
+    if(notification!=null) {
+      Long appTenant = EnvUtils.getLong("app.tenant");
+      notification.sendRewrite(appTenant,stringBuffer.toString());
+    }
 
     if (stream && channelContext != null) {
       Kv kv = Kv.by("question", textQuestion).set("history", historyMessage).set("rewrited", textQuestion);

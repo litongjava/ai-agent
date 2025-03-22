@@ -8,13 +8,12 @@ import com.jfinal.kit.Kv;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.linux.ProcessResult;
 import com.litongjava.llm.can.ChatStreamCallCan;
-import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendType;
+import com.litongjava.llm.service.AgentNotificationService;
 import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.MatplotlibService;
-import com.litongjava.llm.service.RunningNotificationService;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.openai.chat.ChatResponseDelta;
 import com.litongjava.openai.chat.Choice;
@@ -72,10 +71,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       String errorBody = response.body().string();
       String data = "Chat model response an unsuccessful message:" + errorBody;
       log.error(data);
-      RunningNotificationService notification = AiAgentContext.me().getNotification();
-      if (notification != null) {
-        notification.sendError(data);
-      }
+      Aop.get(AgentNotificationService.class).sendError(data);
       SsePacket packet = new SsePacket(AiChatEventName.error, data);
       Tio.bSend(channelContext, packet);
       try {

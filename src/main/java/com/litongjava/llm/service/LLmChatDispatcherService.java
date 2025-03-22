@@ -21,7 +21,6 @@ import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.callback.ChatGeminiStreamCommonCallback;
 import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
-import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendProvider;
@@ -300,10 +299,7 @@ public class LLmChatDispatcherService {
 
     chatRequestVo.setStream(true);
     String requestJson = JsonUtils.toSkipNullJson(chatRequestVo);
-    RunningNotificationService notification = AiAgentContext.me().getNotification();
-    if (notification != null) {
-      notification.sendPredict(requestJson);
-    }
+    Aop.get(AgentNotificationService.class).sendPredict(requestJson);
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
@@ -358,10 +354,8 @@ public class LLmChatDispatcherService {
     geminiChatRequestVo.setContents(contents);
 
     String requestJson = JsonUtils.toSkipNullJson(geminiChatRequestVo);
-    RunningNotificationService notification = AiAgentContext.me().getNotification();
-    if (notification != null) {
-      notification.sendPredict(requestJson);
-    }
+    Aop.get(AgentNotificationService.class).sendPredict(requestJson);
+
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
