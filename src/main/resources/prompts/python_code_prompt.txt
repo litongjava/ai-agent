@@ -38,49 +38,47 @@
 - 如果代码中必须使用这些字符，请使用适当的转义字符（例如 < 替换为 &lt;，> 替换为 &gt;，& 替换为 &amp;），或使用 CDATA 块包裹代码内容，确保 XML 格式正确
 
 7. 示例说明：
-   - 以下为创建一个简单 Python 脚本的示例，该脚本实现打印 "Hello, world!" 的功能：
-
+- 以下为创建一个简单 Python 脚本的示例，该脚本实现打印 "Hello, world!" 的功能：
 <execute_python>
 <content>
 print("Hello, world!")
 </content>
 </execute_python>
    
-   - 下面给出一个示例 Python 脚本，演示如何绘制函数图形和其切线:
-
+- 下面给出一个示例 Python 脚本，演示如何绘制函数图形和其切线:
 <execute_python>
 <content>
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 定义函数 f(x) = x^2
+# Define function f(x) = x^2
 def f(x):
     return x**2
 
-# 定义切线方程
+# Define the tangent line equation
 def tangent_line(a, x):
-    return 2*a*x - a**2
+    return 2 * a * x - a**2
 
-# 生成 x 数据
+# Generate x data
 x = np.linspace(-5, 5, 400)
 y = f(x)
 
-# 选取多个切点
+# Select multiple tangent points
 a_values = [-2, -1, 0, 1, 2]
 
-# 绘图
+# Plotting
 plt.figure(figsize=(8, 6))
 plt.plot(x, y, label=r'$f(x) = x^2$', color='blue')
 
-# 绘制每个切点的切线
+# Plot the tangent line for each point
 for a in a_values:
     tangent_y = tangent_line(a, x)
     plt.plot(x, tangent_y, '--', label=fr'Tangent at $x={a}$')
-
-    # 标记切点
+    
+    # Mark the tangent point
     plt.scatter(a, f(a), color='red', zorder=3)
 
-# 设置图表属性
+# Set plot properties
 plt.xlabel('x')
 plt.ylabel('y')
 plt.title('Function $f(x) = x^2$ and its Tangents')
@@ -89,7 +87,42 @@ plt.axvline(0, color='black', linewidth=0.5)
 plt.legend()
 plt.grid(True)
 
-# 显示图形
+# Display the plot
+plt.show()
+</content>
+</execute_python>
+
+- 下面给出一个示例 Python 脚本，演示如何绘制函数图形和其切线并转义字符:
+<execute_python>
+<content>
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define function f(x)
+def f(x):
+    return (2/3) * np.sqrt(x**3 + 1)
+
+# Generate x values
+# Original comment:
+#   x = np.linspace(-1, 5, 400)  # Start from -1 to avoid imaginary numbers for x < -1^(1/3)
+# The '<' symbol in 'x < -1^(1/3)' is misinterpreted as the start of a tag during XML parsing, causing an error.
+# Modified comment: start from -1 to avoid complex number results.
+x = np.linspace(-1, 5, 400)  # Start from -1 to avoid complex number results
+
+y = f(x)
+
+# Create the plot
+plt.figure(figsize=(8, 6))
+plt.plot(x, y, label=r'$f(x) = \frac{2}{3}\sqrt{x^3 + 1}$')  # Use raw string (r'') to preserve LaTeX format
+
+# Add axis labels and title
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title(r'Plot of $f(x) = \frac{2}{3}\sqrt{x^3 + 1}$')
+plt.grid(True)
+plt.legend()
+
+# Display the plot
 plt.show()
 </content>
 </execute_python>
