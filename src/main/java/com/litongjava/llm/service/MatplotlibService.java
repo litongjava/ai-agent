@@ -42,6 +42,8 @@ public class MatplotlibService {
       toolVo = ResponseXmlTagUtils.extracted(text);
     } catch (ParserConfigurationException | SAXException | IOException e) {
       log.error("text:{}", text, e.getMessage(), e);
+      String msg = "code:" + text + ",message" + e.getMessage();
+      Aop.get(AgentNotificationService.class).sendError(msg);
       return null;
     }
     if (toolVo.getName().equals("execute_python")) {
