@@ -1,12 +1,7 @@
 package com.litongjava.llm.service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
 
 import com.litongjava.gemini.GeminiCandidateVo;
 import com.litongjava.gemini.GeminiChatRequestVo;
@@ -40,7 +35,7 @@ public class MatplotlibService {
     ToolVo toolVo = null;
     try {
       toolVo = ResponseXmlTagUtils.extracted(text);
-    } catch (ParserConfigurationException | SAXException | IOException e) {
+    } catch (Exception e) {
       log.error("text:{}", text, e.getMessage(), e);
       String msg = "code:" + text + ",message" + e.getMessage();
       Aop.get(AgentNotificationService.class).sendError(msg);
