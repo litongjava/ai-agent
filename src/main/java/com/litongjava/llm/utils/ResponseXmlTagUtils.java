@@ -15,9 +15,6 @@ import org.xml.sax.SAXException;
 
 import com.litongjava.llm.vo.ToolVo;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class ResponseXmlTagUtils {
 
   public static ToolVo extracted(String xmlContent) throws ParserConfigurationException, SAXException, IOException {
@@ -25,13 +22,7 @@ public class ResponseXmlTagUtils {
       int index = xmlContent.lastIndexOf("<execute_python>");
       int lastIndex = xmlContent.lastIndexOf("</execute_python>");
       if (index > 0) {
-        try {
-          xmlContent = xmlContent.substring(index, lastIndex + 17).trim();
-        } catch (Exception e) {
-          log.error("xmlContent:{},start:{},end:{}", xmlContent, index, lastIndex, e);
-          return null;
-
-        }
+        xmlContent = xmlContent.substring(index, lastIndex + 17).trim();
       }
     }
     // 将字符串转换为 InputStream

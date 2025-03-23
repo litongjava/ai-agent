@@ -1,5 +1,7 @@
 package com.litongjava.llm.service;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +39,11 @@ public class MatplotlibService {
       toolVo = ResponseXmlTagUtils.extracted(text);
     } catch (Exception e) {
       log.error("text:{}", text, e.getMessage(), e);
-      String msg = "code:" + text + ",message" + e.getMessage();
+      StringWriter stringWriter = new StringWriter();
+      PrintWriter printWriter = new PrintWriter(stringWriter);
+      e.printStackTrace(printWriter);
+      String stackTrace = stringWriter.toString();
+      String msg = "code:" + text + ",stackTrace" + stackTrace;
       Aop.get(AgentNotificationService.class).sendError(msg);
       return null;
     }

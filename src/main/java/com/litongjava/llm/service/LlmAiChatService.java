@@ -369,9 +369,9 @@ public class LlmAiChatService {
     //
     stringBuffer.append("history:" + JsonUtils.toSkipNullJson(historyMessage)).append("\n");
 
-    if(notification!=null) {
+    if (notification != null) {
       Long appTenant = EnvUtils.getLong("app.tenant");
-      notification.sendRewrite(appTenant,stringBuffer.toString());
+      notification.sendRewrite(appTenant, stringBuffer.toString());
     }
 
     if (stream && channelContext != null) {
@@ -443,7 +443,7 @@ public class LlmAiChatService {
 
         for (String url : urls) {
           ResponseVo responseVo = webPageService.get(url);
-          if (responseVo!=null && responseVo.isOk()) {
+          if (responseVo != null && responseVo.isOk()) {
             StringBuffer htmlContent = new StringBuffer();
             htmlContent.append("source:").append(url).append(" content:").append(responseVo.getBodyString()).append("  ");
             String string = htmlContent.toString();
@@ -454,6 +454,8 @@ public class LlmAiChatService {
 
           } else {
             message = "Sorry, No web page content is available of %s, please try again later.";
+            message = String.format(message, url);
+            historyMessage.add(new ChatMessage("user", message));
             message = String.format(message, url);
             Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
           }
