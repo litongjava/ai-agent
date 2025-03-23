@@ -29,6 +29,7 @@ public class ChatFileService {
       
     } else if ("pdf".equals(suffix)) {
       text = PdfUtils.parseContent(data);
+      
     } else if ("docx".equals(suffix)) {
       text = DocxUtils.parseDocx(data);
     } else if ("xlsx".equals(suffix)) {

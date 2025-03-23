@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class ToolVo {
-  private String name;
-  private String content;
+  private String action;
+  private String tool;
+  private String code;
 }
