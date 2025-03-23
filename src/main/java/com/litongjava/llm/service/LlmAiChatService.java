@@ -443,7 +443,7 @@ public class LlmAiChatService {
 
         for (String url : urls) {
           ResponseVo responseVo = webPageService.get(url);
-          if (responseVo.isOk()) {
+          if (responseVo!=null && responseVo.isOk()) {
             StringBuffer htmlContent = new StringBuffer();
             htmlContent.append("source:").append(url).append(" content:").append(responseVo.getBodyString()).append("  ");
             String string = htmlContent.toString();

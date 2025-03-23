@@ -12,6 +12,7 @@ import org.jsoup.nodes.Element;
 import com.google.common.util.concurrent.Striped;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
+import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.PdfUtils;
 import com.litongjava.model.http.response.ResponseVo;
@@ -60,6 +61,9 @@ public class WebPageService {
 
         } catch (Exception e) {
           log.error(e.getMessage(), e);
+          String message = "Failed to get %s, exception is:%s";
+          message = String.format(message, url, e.getMessage());
+          Aop.get(AgentNotificationService.class).sendError(message);
           return null;
         }
       } else {
@@ -114,7 +118,7 @@ public class WebPageService {
     StringBuffer stringBuffer = new StringBuffer();
     for (String url : urls) {
       ResponseVo responseVo = get(url);
-      if (responseVo.isOk()) {
+      if (responseVo != null && responseVo.isOk()) {
         stringBuffer.append("source:").append(url).append(" content:").append(responseVo.getBodyString());
       }
     }
