@@ -91,6 +91,7 @@ public class LlmAiChatService {
     String type = apiSendVo.getType();
     boolean stream = apiSendVo.isStream();
     String model = apiSendVo.getModel();
+    String provider = apiSendVo.getProvider();
     Long schoolId = apiSendVo.getSchool_id();
     String userId = apiSendVo.getUser_id();
     Long sessionId = apiSendVo.getSession_id();
@@ -306,13 +307,23 @@ public class LlmAiChatService {
     if (StrUtil.isNotEmpty(textQuestion)) {
       StringBuffer stringBuffer = new StringBuffer();
 
-      stringBuffer.append("app env:").append(EnvUtils.getStr("app.env")).append("\n").append("userId:").append(userId).append("\n").append("schooL id:").append(schoolId).append("\n");
+      stringBuffer.append("app env:").append(EnvUtils.getStr("app.env")).append("\n")
+          //
+          .append("userId:").append(userId).append("\n")
+          //
+          .append("school id:").append(schoolId).append("\n");
+
+      stringBuffer.append("user question:").append(textQuestion).append("\n")
+          //
+          .append("type:").append(type).append("\n")
+          //
+          .append("provider:").append(provider).append("\n")
+          //
+          .append("model").append(model).append("\n");
 
       if (schoolDict != null) {
-        stringBuffer.append("schooL name:").append(schoolDict.getFull_name()).append("\n");
+        stringBuffer.append("school name:").append(schoolDict.getFull_name()).append("\n");
       }
-      //
-      stringBuffer.append("user question:").append(textQuestion).append("\n").append("type:").append(type).append("\n");
 
       if (appId != null) {
         stringBuffer.append("app id:").append(appId).append("\n");
