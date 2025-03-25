@@ -1,0 +1,7 @@
+Answer the question using the format below:
+**Answer**:  
+{{correct_answer}}  
+**Explanation**:   
+{{explanation content}}
+
+Output using the language of the user's message.
