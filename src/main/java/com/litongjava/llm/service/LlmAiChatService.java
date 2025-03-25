@@ -68,6 +68,7 @@ public class LlmAiChatService {
   private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
   private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
   private YoutubeVideoSubtitleService youtubeVideoSubtitleService = Aop.get(YoutubeVideoSubtitleService.class);
+  private SchoolDictDao schoolDictDao = Aop.get(SchoolDictDao.class);
   private boolean enableRwrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
@@ -105,7 +106,7 @@ public class LlmAiChatService {
     // 1.查询学校
     if (schoolId != null) {
       try {
-        schoolDict = Aop.get(SchoolDictDao.class).getSchoolById(schoolId.longValue());
+        schoolDict = schoolDictDao.getSchoolById(schoolId.longValue());
       } catch (Exception e) {
         e.printStackTrace();
 

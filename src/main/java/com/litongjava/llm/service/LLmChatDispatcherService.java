@@ -54,6 +54,8 @@ import okhttp3.Call;
 
 @Slf4j
 public class LLmChatDispatcherService {
+  
+  private AgentNotificationService agentNotificationService = Aop.get(AgentNotificationService.class);
 
   /**
    * 使用模型处理消息
@@ -98,11 +100,13 @@ public class LLmChatDispatcherService {
     // 添加用户问题
     if (uploadFiles != null) {
       for (UploadResultVo uploadResultVo : uploadFiles) {
-        history.add(new ChatMessage("user", "upload a " + uploadResultVo.getName() + " content is:" + uploadResultVo.getContent()));
+        history.add(new ChatMessage("user", uploadResultVo.getName() + " " + uploadResultVo.getContent()));
       }
     }
 
-    history.add(new ChatMessage("user", textQuestion));
+    if(StrUtil.isNotBlank(textQuestion)) {
+      history.add(new ChatMessage("user", textQuestion));
+    }
 
     //    if (ApiChatSendType.youtube.equals(type)) {
     //      if (args != null && args.getUrl() != null) {
@@ -299,7 +303,7 @@ public class LLmChatDispatcherService {
 
     chatRequestVo.setStream(true);
     String requestJson = JsonUtils.toSkipNullJson(chatRequestVo);
-    Aop.get(AgentNotificationService.class).sendPredict(requestJson);
+    agentNotificationService.sendPredict(requestJson);
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {

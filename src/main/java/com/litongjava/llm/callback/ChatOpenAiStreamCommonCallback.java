@@ -75,7 +75,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       SsePacket packet = new SsePacket(AiChatEventName.error, data);
       Tio.bSend(channelContext, packet);
       try {
-        ChatStreamCallCan.remove(apiChatSendVo.getSchool_id());
+        ChatStreamCallCan.remove(apiChatSendVo.getSession_id());
       } catch (Exception e) {
         e.printStackTrace();
       }
