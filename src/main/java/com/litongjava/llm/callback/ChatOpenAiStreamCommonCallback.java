@@ -22,6 +22,7 @@ import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.http.server.util.SseEmitter;
+import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;
 
@@ -97,7 +98,8 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
 
       if (success != null && !success.getContent().isEmpty()) {
         String content = success.getContent();
-        if (latch == null || latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
+        boolean gen = EnvUtils.getBoolean("chat.tutor.gen.functiom.graph",false);
+        if (gen && latch == null || latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
           try {
             ProcessResult codeResult = matplotlibService.generateMatplot(textQuestion, content);
             if (codeResult != null) {
