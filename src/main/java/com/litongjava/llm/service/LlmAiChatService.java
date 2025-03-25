@@ -319,7 +319,7 @@ public class LlmAiChatService {
           //
           .append("provider:").append(provider).append("\n")
           //
-          .append("model").append(model).append("\n");
+          .append("model:").append(model).append("\n");
 
       if (schoolDict != null) {
         stringBuffer.append("school name:").append(schoolDict.getFull_name()).append("\n");
