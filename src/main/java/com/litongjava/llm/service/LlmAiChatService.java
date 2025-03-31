@@ -5,8 +5,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 import com.jfinal.kit.Kv;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GoogleGeminiModels;
@@ -38,7 +36,6 @@ import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.constants.OpenAiModels;
 import com.litongjava.searxng.SearxngResult;
 import com.litongjava.searxng.SearxngSearchClient;
-import com.litongjava.searxng.SearxngSearchParam;
 import com.litongjava.searxng.SearxngSearchResponse;
 import com.litongjava.template.PromptEngine;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
@@ -48,7 +45,6 @@ import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.http.server.util.SseEmitter;
 import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.hutool.StrUtil;
-import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
@@ -62,13 +58,13 @@ public class LlmAiChatService {
   String defaultFallBackMessage = "Dear user, your conversation count has exceeded the maximum length for multiple rounds of conversation. Please start a new session.";
 
   private LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
-  private LinkedInService linkedInService = Aop.get(LinkedInService.class);
-  private SocialMediaService socialMediaService = Aop.get(SocialMediaService.class);
   private WebPageService webPageService = Aop.get(WebPageService.class);
   private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
   private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
   private YoutubeVideoSubtitleService youtubeVideoSubtitleService = Aop.get(YoutubeVideoSubtitleService.class);
+
   private SchoolDictDao schoolDictDao = Aop.get(SchoolDictDao.class);
+  YoutubeService youtubeService = Aop.get(YoutubeService.class);
   private boolean enableRwrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
@@ -406,7 +402,7 @@ public class LlmAiChatService {
       }
     } else if (ApiChatSendType.celebrity.equals(type)) {
       log.info("celebrity:{}", textQuestion);
-      String systemPrompt = celebrity(channelContext, chatSendArgs);
+      String systemPrompt = Aop.get(CelebrityService.class).celebrity(channelContext, chatSendArgs);
       chatParamVo.setSystemPrompt(systemPrompt);
       if (systemPrompt == null) {
         if (channelContext != null) {
@@ -431,7 +427,7 @@ public class LlmAiChatService {
         String systemPrompt = generalPrompt();
         chatParamVo.setSystemPrompt(systemPrompt);
       }
-      youtube(channelContext, chatSendArgs, historyMessage);
+      youtubeService.youtube(channelContext, chatSendArgs, historyMessage);
     } else {
       if (ApiChatSendCmd.summary.equals(cmd)) {
         String systemPrompt = PromptEngine.renderToString("general_summary_prompt.txt");
@@ -494,50 +490,6 @@ public class LlmAiChatService {
     }
   }
 
-  private void youtube(ChannelContext channelContext, ChatMessageArgs chatSendArgs, List<ChatMessage> historyMessage) {
-    String message = null;
-    if (channelContext != null) {
-      if (chatSendArgs != null && chatSendArgs.getUrl() != null) {
-        String url = chatSendArgs.getUrl();
-        message = "First, let me get the YouTube video sub title. It will take a few minutes " + url + ".  ";
-
-        Kv by = Kv.by("content", message);
-        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-        Tio.send(channelContext, ssePacket);
-
-        String videoId = YouTubeIdUtil.extractVideoId(url);
-        String subTitle = youtubeVideoSubtitleService.get(videoId);
-        if (subTitle == null) {
-          message = "Sorry, No transcript is available for this video, let me downlaod video.  It will take a few minutes.  ";
-          by = Kv.by("content", message);
-          ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-          Tio.send(channelContext, ssePacket);
-
-          subTitle = youtubeVideoSubtitleService.transcriptWithGemini(url, videoId);
-        }
-
-        if (subTitle != null) {
-          by = Kv.by("content", subTitle);
-          ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-          Tio.send(channelContext, ssePacket);
-
-          historyMessage.add(0, new ChatMessage("user", subTitle));
-        } else {
-          message = "Sorry, No transcript is available for this video, please try again later.";
-          by = Kv.by("content", message);
-          ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-          Tio.send(channelContext, ssePacket);
-        }
-
-      } else {
-        message = "First, let me review the YouTube video. It will take a few minutes .";
-        Kv by = Kv.by("content", message);
-        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-        Tio.send(channelContext, ssePacket);
-      }
-    }
-  }
-
   private String tutor(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
@@ -548,191 +500,6 @@ public class LlmAiChatService {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
     return PromptEngine.renderToStringFromDb("general_prompt.txt", kv);
-  }
-
-  private String celebrity(ChannelContext channelContext, ChatMessageArgs chatSendArgs) {
-    String name = chatSendArgs.getName();
-    String institution = chatSendArgs.getInstitution();
-    //必须要添加两个institution,添加后搜索更准,但是不知道原理是什么?猜测是搜索引擎提高了权重
-    String textQuestion = name + " (" + institution + ")" + " at " + institution;
-
-    if (channelContext != null) {
-      Kv by = Kv.by("content", "First let me search google with " + textQuestion + ". ");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-    }
-
-    SearxngSearchResponse searchResponse = Aop.get(SearchService.class).searchapi(textQuestion);
-    List<SearxngResult> results = searchResponse.getResults();
-
-    //SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
-    //SearxngSearchResponse searchResponse2 = Aop.get(SearchService.class).google("site:linkedin.com/in/ " + name + " at " + institution);
-    //    List<SearxngResult> results2 = searchResponse2.getResults();
-    //    for (SearxngResult searxngResult : results2) {
-    //      results.add(searxngResult);
-    //    }
-    if (results != null && results.size() < 1) {
-      Kv by = Kv.by("content", "unfortunate Failed to search.I will try again a 3 seconds. ");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      searchResponse = SearxngSearchClient.search(textQuestion);
-      results = searchResponse.getResults();
-
-      if (results != null && results.size() < 1) {
-        by = Kv.by("content", "unfortunate Failed to search.I will try again a 3 seconds. ");
-        ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-        Tio.send(channelContext, ssePacket);
-        try {
-          Thread.sleep(3000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-        searchResponse = SearxngSearchClient.search(textQuestion);
-        results = searchResponse.getResults();
-      }
-    }
-    if (results != null && results.size() < 1) {
-      Kv by = Kv.by("content", "unfortunate Failed to search.Please try again later. ");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-      return null;
-    }
-    List<WebPageContent> pages = new ArrayList<>();
-    StringBuffer markdown = new StringBuffer();
-    StringBuffer sources = new StringBuffer();
-    for (int i = 0; i < results.size(); i++) {
-      SearxngResult searxngResult = results.get(i);
-      String title = searxngResult.getTitle();
-      String url = searxngResult.getUrl();
-      pages.add(new WebPageContent(title, url));
-
-      markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
-      String content = searxngResult.getContent();
-      sources.append("source " + (i + 1) + ":").append(title).append(" ").append("url:").append(url).append(" ")
-          //
-          .append("content:").append(content).append("\r\n");
-    }
-
-    if (channelContext != null) {
-      SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
-      Tio.send(channelContext, ssePacket);
-    }
-
-    if (channelContext != null) {
-      Kv by = Kv.by("content", "Second let me extra social media account with " + textQuestion + ".");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-    }
-
-    String soicalMediaAccounts = socialMediaService.extraSoicalMedia(name, institution, sources.toString());
-    if (channelContext != null) {
-      SsePacket ssePacket = new SsePacket(AiChatEventName.social_media, soicalMediaAccounts);
-      Tio.send(channelContext, ssePacket);
-    }
-
-    if (channelContext != null) {
-      Kv by = Kv.by("content", "Third let me search video with " + textQuestion + ". ");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-    }
-    SearxngSearchParam param = new SearxngSearchParam();
-    param.setFormat("json").setQ(textQuestion).setCategories("videos");
-    searchResponse = SearxngSearchClient.search(param);
-    results = searchResponse.getResults();
-    pages = new ArrayList<>();
-    for (int i = 0; i < results.size(); i++) {
-      SearxngResult searxngResult = results.get(i);
-      String title = searxngResult.getTitle();
-      String url = searxngResult.getUrl();
-      pages.add(new WebPageContent(title, url));
-    }
-
-    if (channelContext != null) {
-      SsePacket ssePacket = new SsePacket(AiChatEventName.video, JsonUtils.toSkipNullJson(pages));
-      Tio.send(channelContext, ssePacket);
-    }
-
-    if (channelContext != null) {
-      Kv by = Kv.by("content", "Forth let me search linkedin with " + name + " " + institution + ". ");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-    }
-    //SearxngSearchResponse person = LinkedinSearch.person(name, institution);
-    //List<SearxngResult> personResults = person.getResults();
-    //if (personResults != null && personResults.size() > 0) {
-    //String url = personResults.get(0).getUrl();
-
-    String profile = null;
-    String url = null;
-    try {
-      JSONArray social_media = FastJson2Utils.parseObject(soicalMediaAccounts).getJSONArray("social_media");
-      for (int i = 0; i < social_media.size(); i++) {
-        JSONObject jsonObject = social_media.getJSONObject(i);
-        if ("LinkedIn".equals(jsonObject.getString("platform"))) {
-          url = jsonObject.getString("url");
-          break;
-        }
-      }
-    } catch (Exception e) {
-      Kv by = Kv.by("content", "unfortunate Failed to find linkedin url. ");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-      log.error(e.getMessage(), e);
-    }
-
-    if (StrUtil.isNotBlank(url)) {
-      if (channelContext != null) {
-        Kv by = Kv.by("content", "Fith let me read linkedin profile " + url + ". ");
-        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-        Tio.send(channelContext, ssePacket);
-      }
-      try {
-        profile = linkedInService.profileScraper(url);
-        if (profile != null) {
-          SsePacket ssePacket = new SsePacket(AiChatEventName.linkedin, profile);
-          Tio.send(channelContext, ssePacket);
-        }
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        Kv by = Kv.by("content", "unfortunate Failed to read linkedin profile " + url + ". ");
-        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-        Tio.send(channelContext, ssePacket);
-      }
-
-      if (channelContext != null) {
-        Kv by = Kv.by("content", "Sixth let me read linkedin posts " + url + ". ");
-        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-        Tio.send(channelContext, ssePacket);
-      }
-
-      try {
-        String profilePosts = linkedInService.profilePostsScraper(url);
-        if (profilePosts != null) {
-          SsePacket ssePacket = new SsePacket(AiChatEventName.linkedin_posts, profilePosts);
-          Tio.send(channelContext, ssePacket);
-        }
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        Kv by = Kv.by("content", "unfortunate Failed to read linkedin profile posts " + url + ". ");
-        SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-        Tio.send(channelContext, ssePacket);
-      }
-    }
-
-    if (channelContext != null) {
-      Kv by = Kv.by("content", "Then let me summary all information and generate user information. ");
-      SsePacket ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
-      Tio.send(channelContext, ssePacket);
-    }
-    // 3. 使用 PromptEngine 模版引擎填充提示词
-    Kv kv = Kv.by("name", name).set("institution", institution).set("info", markdown).set("profile", profile);
-    String systemPrompt = PromptEngine.renderToStringFromDb("celebrity_prompt.txt", kv);
-    return systemPrompt;
   }
 
   private String search(ChannelContext channelContext, String textQuestion) {

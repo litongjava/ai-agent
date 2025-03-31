@@ -81,7 +81,8 @@ public class YoutubeVideoSubtitleService {
       if (textSubTitle == null) {
         return null;
       }
-      Row.by("id", SnowflakeIdUtils.id()).set("video_id", videoId).set("text_subtitle", textSubTitle);
+      Row row = Row.by("id", SnowflakeIdUtils.id()).set("video_id", videoId).set("text_subtitle", textSubTitle);
+      Db.save(AgentTableNames.youtube_video_subtitle, row);
       return textSubTitle;
     } finally {
       lock.unlock();
@@ -89,7 +90,9 @@ public class YoutubeVideoSubtitleService {
   }
 
   private String transcriptWithGemini(String url) {
-
+    // TODO Auto-generated method stub
     return null;
   }
+
+
 }
