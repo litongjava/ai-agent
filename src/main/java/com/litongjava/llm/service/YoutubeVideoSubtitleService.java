@@ -19,6 +19,9 @@ import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.video.VideoTimeUtils;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class YoutubeVideoSubtitleService {
   public static final Striped<Lock> locks = Striped.lock(1024);
 
@@ -95,6 +98,7 @@ public class YoutubeVideoSubtitleService {
 
   private String transcriptWithGemini(String url) {
     String model = GoogleGeminiModels.GEMINI_2_5_FLASH_PREVIEW_04_17;
+    log.info("parse subtitile:{},{}", model, url);
     String userPrompt = "Extract video subtitles, output format [hh:mm:ss-hh:mm:ss] subtitle";
     String text = GeminiClient.parseYoutubeSubtitle(model, url, userPrompt);
     System.out.println(text);
