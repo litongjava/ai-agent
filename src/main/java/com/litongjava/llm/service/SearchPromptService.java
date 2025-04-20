@@ -12,7 +12,7 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.vo.SchoolDict;
-import com.litongjava.openai.constants.OpenAiModels;
+import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.openai.embedding.EmbeddingResponseVo;
 import com.litongjava.openai.utils.EmbeddingVectorUtils;
 import com.litongjava.template.SqlTemplates;

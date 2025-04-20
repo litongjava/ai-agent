@@ -11,7 +11,7 @@ import com.litongjava.db.activerecord.Row;
 import com.litongjava.db.utils.PgVectorUtils;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.openai.client.OpenAiClient;
-import com.litongjava.openai.constants.OpenAiModels;
+import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.openai.embedding.EmbeddingData;
 import com.litongjava.openai.embedding.EmbeddingRequestVo;
 import com.litongjava.openai.embedding.EmbeddingResponseVo;

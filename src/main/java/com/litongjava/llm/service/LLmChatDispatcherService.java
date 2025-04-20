@@ -33,7 +33,7 @@ import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
-import com.litongjava.openai.constants.OpenAiModels;
+import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.siliconflow.SiliconFlowConsts;
 import com.litongjava.siliconflow.SiliconFlowModels;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
