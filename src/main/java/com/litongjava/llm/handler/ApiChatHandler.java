@@ -219,7 +219,12 @@ public class ApiChatHandler {
 
     Long session_id = request.getLong("session_id");
     if (session_id == null) {
-      session_id = request.getLong("chat_id");
+      try {
+        session_id = request.getLong("chat_id");
+      } catch (Exception e) {
+        return response.fail(RespBodyVo.fail(e.getMessage()));
+      }
+
       if (session_id == null) {
         return response.fail(RespBodyVo.fail("chat_id can not be empty"));
       }
