@@ -99,7 +99,7 @@ public class YoutubeVideoSubtitleService {
   private String transcriptWithGemini(String url) {
     String model = GoogleGeminiModels.GEMINI_2_5_FLASH_PREVIEW_04_17;
     log.info("parse subtitile:{},{}", model, url);
-    String userPrompt = "Extract video subtitles, output format [hh:mm:ss-hh:mm:ss] subtitle";
+    String userPrompt = "Extract video subtitles, output format [hh:mm:ss-hh:mm:ss] subtitle  ";
     String text = GeminiClient.parseYoutubeSubtitle(model, url, userPrompt);
     return text;
   }
