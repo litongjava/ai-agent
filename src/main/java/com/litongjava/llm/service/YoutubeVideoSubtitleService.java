@@ -101,8 +101,7 @@ public class YoutubeVideoSubtitleService {
     log.info("parse subtitile:{},{}", model, url);
     String userPrompt = "Extract video subtitles, output format [hh:mm:ss-hh:mm:ss] subtitle";
     String text = GeminiClient.parseYoutubeSubtitle(model, url, userPrompt);
-    System.out.println(text);
-    return null;
+    return text;
   }
 
 }
