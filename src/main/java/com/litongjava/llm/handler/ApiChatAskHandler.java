@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.litongjava.chat.ChatMessage;
+import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.ApiChatSendType;
@@ -11,8 +13,6 @@ import com.litongjava.llm.service.LlmAiChatService;
 import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.model.body.RespBodyVo;
-import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;

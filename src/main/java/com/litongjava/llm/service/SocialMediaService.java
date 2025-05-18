@@ -8,11 +8,11 @@ import org.postgresql.util.PGobject;
 
 import com.google.common.util.concurrent.Striped;
 import com.jfinal.kit.Kv;
+import com.litongjava.chat.ChatMessage;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentTableNames;
-import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.openai.chat.ChatResponseFormatType;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;

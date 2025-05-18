@@ -3,10 +3,10 @@ package com.litongjava.llm.service;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.chat.ChatMessage;
+import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AiChatEventName;
-import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;

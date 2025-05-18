@@ -2,7 +2,7 @@ package com.litongjava.llm.vo;
 
 import java.util.List;
 
-import com.litongjava.openai.chat.ChatMessage;
+import com.litongjava.chat.ChatMessage;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 

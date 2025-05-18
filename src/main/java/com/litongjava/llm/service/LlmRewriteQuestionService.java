@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.jfinal.template.Template;
+import com.litongjava.chat.ChatMessage;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.db.utils.MarkdownTableUtils;
 import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GoogleGeminiModels;
-import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;

@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.chat.ChatMessage;
 import com.litongjava.llm.callback.ChatCallbackVo;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.vo.ApiChatSendVo;
-import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.openai.chat.ChatResponseFormatType;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;

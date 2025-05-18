@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.chat.ChatMessage;
+import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.consts.AiModelNames;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
@@ -28,8 +30,6 @@ import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ApiChatSendVo;
 import com.litongjava.llm.vo.ChatParamVo;
-import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;

@@ -5,8 +5,8 @@ import java.util.List;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.litongjava.chat.ChatMessage;
 import com.litongjava.openai.chat.ChatMesageContent;
-import com.litongjava.openai.chat.ChatMessage;
 import com.litongjava.openai.chat.ChatRequestImage;
 import com.litongjava.openai.chat.OpenAiChatMessage;
 

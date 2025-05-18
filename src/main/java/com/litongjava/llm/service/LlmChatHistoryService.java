@@ -6,6 +6,7 @@ import java.util.List;
 import org.postgresql.util.PGobject;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
@@ -17,7 +18,6 @@ import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
-import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.openai.chat.MessageRole;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;

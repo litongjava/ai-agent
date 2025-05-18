@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.chat.ChatMessage;
+import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.google.search.GoogleCustomSearchClient;
@@ -28,8 +30,6 @@ import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.http.response.ResponseVo;
 import com.litongjava.model.web.WebPageContent;
-import com.litongjava.openai.chat.ChatMessage;
-import com.litongjava.openai.chat.ChatMessageArgs;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
