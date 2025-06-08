@@ -31,5 +31,5 @@ public class ApiChatSendVo {
   private Long previous_answer_id;
   private List<ChatMessage> messages;
   private List<Long> file_ids;
-  private String input_quesiton;
+  private String user_input_quesiton;
 }

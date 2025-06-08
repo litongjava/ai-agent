@@ -30,7 +30,7 @@ public class FollowUpQuestionService {
     String type = apiChatSendVo.getType();
     if (ApiChatSendType.celebrity.equals(type)) {
       List<ChatMessage> messages = apiChatSendVo.getMessages();
-      String input_quesiton = apiChatSendVo.getInput_quesiton();
+      String input_quesiton = apiChatSendVo.getUser_input_quesiton();
       String answer = callbackVo.getContent();
       messages.add(new ChatMessage("user", input_quesiton));
       messages.add(new ChatMessage("assistant", answer));
