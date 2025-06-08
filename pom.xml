@@ -23,12 +23,6 @@
 
     <dependency>
       <groupId>com.litongjava</groupId>
-      <artifactId>java-openai</artifactId>
-      <version>1.1.9</version>
-    </dependency>
-    
-    <dependency>
-      <groupId>com.litongjava</groupId>
       <artifactId>java-native-media</artifactId>
       <version>1.0.0</version>
     </dependency>
@@ -67,11 +61,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>com.alibaba</groupId>
-      <artifactId>druid</artifactId>
-      <version>0.2.9</version>
-    </dependency>
 
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -84,7 +73,7 @@
     <dependency>
       <groupId>com.litongjava</groupId>
       <artifactId>tio-boot-admin</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.3</version>
     </dependency>
 
     <dependency>

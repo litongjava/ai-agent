@@ -172,7 +172,7 @@ public class LLmChatDispatcherService {
         OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_241226, messages, answerId);
         ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo, answerId, start, textQuesiton, latch);
         String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-        Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+        Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo, callback);
         calls.add(call);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
@@ -253,7 +253,7 @@ public class LLmChatDispatcherService {
           long start = System.currentTimeMillis();
           ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start, textQuestion);
           String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-          Call call = OpenAiClient.chatCompletions(VolcEngineConst.BASE_URL, apiKey, chatRequestVo, callback);
+          Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);

@@ -27,7 +27,7 @@ public class VectorService {
 
   public String getVector(String text) {
     String v = null;
-    String md5 = Md5Utils.getMD5(text);
+    String md5 = Md5Utils.md5Hex(text);
     String sql = String.format("select v from %s where md5=? and m=?", AgentTableNames.llm_vector_embedding);
     PGobject pGobject = Db.queryFirst(sql, md5, OpenAiModels.TEXT_EMBEDDING_3_LARGE);
     if (pGobject != null) {
@@ -53,7 +53,7 @@ public class VectorService {
   }
 
   public synchronized EmbeddingResponseVo getVector(String text, String model) {
-    String md5 = Md5Utils.getMD5(text);
+    String md5 = Md5Utils.md5Hex(text);
     String sql = String.format("select v from %s where md5=? and m=?", AgentTableNames.llm_vector_embedding);
     PGobject pGobject = Db.queryFirst(sql, md5, model);
     if (pGobject != null) {
