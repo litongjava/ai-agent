@@ -76,7 +76,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       SsePacket packet = new SsePacket(AiChatEventName.error, data);
       Tio.bSend(channelContext, packet);
       try {
-        ChatStreamCallCan.remove(apiChatSendVo.getSession_id());
+        ChatStreamCallCan.removeCall(apiChatSendVo.getSession_id());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -125,7 +125,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
       }
     }
     try {
-      ChatStreamCallCan.remove(apiChatSendVo.getSession_id());
+      ChatStreamCallCan.removeCall(apiChatSendVo.getSession_id());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -150,7 +150,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
   public void onFailure(Call call, IOException e) {
     SsePacket packet = new SsePacket(AiChatEventName.progress, "error: " + e.getMessage());
     Tio.bSend(channelContext, packet);
-    ChatStreamCallCan.remove(apiChatSendVo.getSession_id());
+    ChatStreamCallCan.removeCall(apiChatSendVo.getSession_id());
     close();
   }
 

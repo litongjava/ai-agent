@@ -14,6 +14,7 @@ import com.litongjava.google.search.GoogleCustomSearchClient;
 import com.litongjava.google.search.GoogleCustomSearchResponse;
 import com.litongjava.google.search.SearchResultItem;
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.llm.callback.ChatOpenAiEventSourceListener;
 import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
@@ -52,6 +53,7 @@ import com.litongjava.tio.utils.youtube.YouTubeIdUtil;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
+import okhttp3.sse.EventSource;
 
 @Slf4j
 public class LlmAiChatService {
@@ -481,6 +483,7 @@ public class LlmAiChatService {
       String answer = processMessageByChatModel(apiSendVo, channelContext);
       aiChatResponseVo.setContent(answer);
       return RespBodyVo.ok(aiChatResponseVo);
+      
     } else {
       dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
@@ -713,10 +716,12 @@ public class LlmAiChatService {
       Tio.bSend(channelContext, packet);
 
       chatRequestVo.setStream(true);
-      ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, vo, answerId, start, textQuestion);
-      Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
+      //ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, vo, answerId, start, textQuestion);
+      ChatOpenAiEventSourceListener listener = new ChatOpenAiEventSourceListener(channelContext, vo, answerId, start, textQuestion);
+      //Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
+      EventSource eventSource = OpenAiClient.chatCompletions(chatRequestVo, listener);
       log.info("add call:{}", sessionId);
-      ChatStreamCallCan.put(sessionId, call);
+      ChatStreamCallCan.put(sessionId, eventSource);
       return null;
 
     } else {

@@ -5,14 +5,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import okhttp3.Call;
+import okhttp3.sse.EventSource;
 
 public class ChatStreamCallCan {
   public static Map<Long, okhttp3.Call> callMap = new ConcurrentHashMap<>();
+  public static Map<Long, EventSource> eventMap = new ConcurrentHashMap<>();
   public static Map<Long, List<okhttp3.Call>> callsMap = new ConcurrentHashMap<>();
 
-  public static okhttp3.Call stop(Long id) {
+  public static void stop(Long id) {
     stopCalls(id);
-    return stopCall(id);
+    stopCall(id);
+    stopEvent(id);
+
   }
 
   public static List<Call> stopCalls(Long id) {
@@ -38,7 +42,17 @@ public class ChatStreamCallCan {
     return null;
   }
 
-  public static okhttp3.Call remove(Long id) {
+  private static EventSource stopEvent(Long id) {
+    EventSource eventSource = eventMap.get(id);
+    if (eventSource != null) {
+      eventSource.cancel();
+      return eventMap.remove(id);
+    }
+    return null;
+
+  }
+
+  public static okhttp3.Call removeCall(Long id) {
     return callMap.remove(id);
   }
 
@@ -53,4 +67,13 @@ public class ChatStreamCallCan {
   public static List<okhttp3.Call> removeCalls(Long sessionId, List<Call> calls) {
     return callsMap.remove(sessionId);
   }
+
+  public static void put(Long sessionId, EventSource eventSource) {
+    eventMap.put(sessionId, eventSource);
+  }
+
+  public static EventSource removeEvent(Long id) {
+    return eventMap.remove(id);
+  }
+
 }
