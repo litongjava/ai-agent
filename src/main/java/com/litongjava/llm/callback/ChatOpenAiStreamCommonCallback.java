@@ -6,7 +6,6 @@ import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
 import com.litongjava.jfinal.aop.Aop;
-import com.litongjava.linux.ProcessResult;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendType;
@@ -22,6 +21,7 @@ import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.http.server.util.SseEmitter;
+import com.litongjava.tio.utils.commandline.ProcessResult;
 import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.json.JsonUtils;

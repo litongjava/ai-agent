@@ -16,7 +16,6 @@
 
     <!-- 应用程序属性 -->
     <final.name>web-hello</final.name>
-    <main.class>com.litongjava.telegram.bots.TelegramBotApp</main.class>
   </properties>
 
   <dependencies>
@@ -74,7 +73,7 @@
     <dependency>
       <groupId>com.litongjava</groupId>
       <artifactId>tio-boot-admin</artifactId>
-      <version>1.0.3</version>
+      <version>1.0.4</version>
     </dependency>
 
     <dependency>

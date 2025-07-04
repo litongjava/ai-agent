@@ -12,7 +12,7 @@ import com.litongjava.gemini.GeminiContentVo;
 import com.litongjava.gemini.GeminiInlineDataVo;
 import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.gemini.GoogleGeminiModels;
-import com.litongjava.tio.utils.encoder.Base64Utils;
+import com.litongjava.tio.utils.base64.Base64Utils;
 import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.http.ContentTypeUtils;
 import com.litongjava.tio.utils.hutool.FilenameUtils;

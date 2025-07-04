@@ -13,7 +13,7 @@ public class ApiLinkedInHandler {
     LinkedInService linkedInService = Aop.get(LinkedInService.class);
     String profile = linkedInService.profileScraper(url);
     if(profile!=null) {
-      response.setString(profile);
+      response.body(profile);
     }
     return response;
   }

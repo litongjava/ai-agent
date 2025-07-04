@@ -12,7 +12,6 @@ import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.kit.PgObjectUtils;
-import com.litongjava.linux.ProcessResult;
 import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.utils.AgentBotUserThumbUtils;
@@ -21,6 +20,7 @@ import com.litongjava.model.page.Page;
 import com.litongjava.openai.chat.MessageRole;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
+import com.litongjava.tio.utils.commandline.ProcessResult;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.tio.utils.thread.TioThreadUtils;
 
