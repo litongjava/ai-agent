@@ -74,7 +74,7 @@ public class SocialMediaService {
   }
 
   private OpenAiChatResponseVo useDeepseek(OpenAiChatRequestVo chatRequestVo) {
-    chatRequestVo.setModel(VolcEngineModels.DEEPSEEK_V3_241226);
+    chatRequestVo.setModel(VolcEngineModels.DEEPSEEK_V3_250324);
     String apiKey = EnvUtils.get("VOLCENGINE_API_KEY");
     return OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo);
   }

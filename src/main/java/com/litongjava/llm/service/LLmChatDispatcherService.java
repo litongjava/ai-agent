@@ -169,7 +169,7 @@ public class LLmChatDispatcherService {
     //deepseek v3
     Threads.getTioExecutor().execute(() -> {
       try {
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_241226, messages, answerId);
+        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_250324, messages, answerId);
         ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo, answerId, start, textQuesiton, latch);
         String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
         Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo, callback);
@@ -243,9 +243,9 @@ public class LLmChatDispatcherService {
 
     } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
       if (AiModelNames.DEEPSEEK_R1.equals(model)) {
-        model = VolcEngineModels.DEEPSEEK_R1_250120;
+        model = VolcEngineModels.DEEPSEEK_R1_250528;
       } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
-        model = VolcEngineModels.DEEPSEEK_V3_241226;
+        model = VolcEngineModels.DEEPSEEK_V3_250324;
       }
       OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
       Threads.getTioExecutor().execute(() -> {
