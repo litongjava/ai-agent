@@ -15,7 +15,6 @@ import com.litongjava.google.search.GoogleCustomSearchResponse;
 import com.litongjava.google.search.SearchResultItem;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.callback.ChatOpenAiEventSourceListener;
-import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AgentMessageType;
@@ -52,7 +51,6 @@ import com.litongjava.tio.utils.thread.TioThreadUtils;
 import com.litongjava.tio.utils.youtube.YouTubeIdUtil;
 
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Call;
 import okhttp3.sse.EventSource;
 
 @Slf4j
