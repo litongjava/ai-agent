@@ -37,6 +37,9 @@ import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.searxng.SearxngResult;
 import com.litongjava.searxng.SearxngSearchClient;
 import com.litongjava.searxng.SearxngSearchResponse;
+import com.litongjava.tavily.TavilyClient;
+import com.litongjava.tavily.TavilySearchResponse;
+import com.litongjava.tavily.TavilySearchResult;
 import com.litongjava.template.PromptEngine;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
@@ -481,7 +484,7 @@ public class LlmAiChatService {
       String answer = processMessageByChatModel(apiSendVo, channelContext);
       aiChatResponseVo.setContent(answer);
       return RespBodyVo.ok(aiChatResponseVo);
-      
+
     } else {
       dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
@@ -501,16 +504,16 @@ public class LlmAiChatService {
   }
 
   private String search(ChannelContext channelContext, String textQuestion) {
-    SearxngSearchResponse searchResponse = SearxngSearchClient.search(textQuestion);
-    List<SearxngResult> results = searchResponse.getResults();
+    TavilySearchResponse search = TavilyClient.search(textQuestion);
+    List<TavilySearchResult> results = search.getResults();
     List<WebPageContent> pages = new ArrayList<>();
     StringBuffer markdown = new StringBuffer();
     for (int i = 0; i < results.size(); i++) {
-      SearxngResult searxngResult = results.get(i);
-      String title = searxngResult.getTitle();
-      String url = searxngResult.getUrl();
+      TavilySearchResult searchResult = results.get(i);
+      String title = searchResult.getTitle();
+      String url = searchResult.getUrl();
       pages.add(new WebPageContent(title, url));
-      markdown.append("source " + (i + 1) + " " + searxngResult.getContent());
+      markdown.append("source " + (i + 1) + " " + searchResult.getContent());
     }
     if (channelContext != null) {
       SsePacket ssePacket = new SsePacket(AiChatEventName.citation, JsonUtils.toSkipNullJson(pages));
