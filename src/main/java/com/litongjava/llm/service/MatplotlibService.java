@@ -5,16 +5,16 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.litongjava.chat.UniResponseSchema;
 import com.litongjava.gemini.GeminiCandidateVo;
 import com.litongjava.gemini.GeminiChatRequestVo;
 import com.litongjava.gemini.GeminiChatResponseVo;
 import com.litongjava.gemini.GeminiClient;
-import com.litongjava.gemini.GeminiGenerationConfigVo;
+import com.litongjava.gemini.GeminiGenerationConfig;
 import com.litongjava.gemini.GeminiPartVo;
-import com.litongjava.gemini.GeminiResponseSchema;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
-import com.litongjava.linux.LinuxClient;
+import com.litongjava.linux.JavaKitClient;
 import com.litongjava.llm.vo.ToolVo;
 import com.litongjava.template.PromptEngine;
 import com.litongjava.tio.boot.admin.services.AwsS3StorageService;
@@ -51,14 +51,14 @@ public class MatplotlibService {
     }
     if (toolVo != null && "execute_python".equals(toolVo.getTool())) {
       String code = toolVo.getCode();
-      ProcessResult result = LinuxClient.executePythonCode(code);
+      ProcessResult result = JavaKitClient.executePythonCode(code);
       if (result != null) {
         String stdErr = result.getStdErr();
         if (StrUtil.isNotBlank(stdErr)) {
           String prompt = "python代码执行过程中出现了错误,请修正错误并仅输出修改后的代码,错误信息:%s";
           prompt = String.format(prompt, stdErr);
           code = fixCodeError(prompt, code);
-          result = LinuxClient.executePythonCode(code);
+          result = JavaKitClient.executePythonCode(code);
         }
 
         List<String> images = result.getImages();
@@ -110,8 +110,8 @@ public class MatplotlibService {
     reqVo.setUserPrompts(userPrompt, quesiton, answer);
     reqVo.setSystemPrompt(systemPrompt);
 
-    GeminiResponseSchema pythonCode = GeminiResponseSchema.pythonCode();
-    GeminiGenerationConfigVo geminiGenerationConfigVo = new GeminiGenerationConfigVo();
+    UniResponseSchema pythonCode = UniResponseSchema.pythonCode();
+    GeminiGenerationConfig geminiGenerationConfigVo = new GeminiGenerationConfig();
     geminiGenerationConfigVo.buildJsonValue().setResponseSchema(pythonCode);
 
     reqVo.setGenerationConfig(geminiGenerationConfigVo);
