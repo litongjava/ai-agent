@@ -12,13 +12,13 @@ import com.litongjava.llm.vo.SchoolDict;
  */
 public class SchoolDictDao {
   public Row getById(Long id) {
-    String sql = "select * from rumi_school_dict where id=?";
-    return Db.findFirstByCache("rumi_school_dict", id, 600, sql, id);
+    String sql = "select * from llm_school_dict where id=?";
+    return Db.findFirstByCache("llm_school_dict", id, 600, sql, id);
   }
 
   public SchoolDict getSchoolById(Long id) {
-    String sql = "select id,name,abbr_name,bot_name,domain_name from rumi_school_dict where id=?";
-    Row record = Db.findFirstByCache("rumi_school_dict", id, 600, sql, id);
+    String sql = "select id,name,abbr_name,bot_name,domain_name from llm_school_dict where id=?";
+    Row record = Db.findFirstByCache("llm_school_dict", id, 600, sql, id);
     if (record == null) {
       return null;
     }
