@@ -8,6 +8,6 @@ public class UserAskQuesitonService {
 
   public boolean save(String content) {
     Row record = Row.by("content", content);
-    return Db.save(AgentTableNames.user_asked_questions, record);
+    return Db.save(AgentTableNames.llm_user_asked_questions, record);
   }
 }
