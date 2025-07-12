@@ -40,9 +40,10 @@ public class ApiChatHandler {
     HttpResponse response = TioRequestContext.getResponse();
     CORSUtils.enableCORS(response);
 
-    Integer num = request.getInt("num");
-    if (num == null) {
-      num = 4;
+    int num = 4;
+    String name = request.getParam("num");
+    if (StrUtil.isNotEmpty(name)) {
+      num = Integer.parseInt(name);
     }
 
     TableResult<Page<Row>> tr = Aop.get(LlmQuestionRecommendService.class).page(num);
@@ -53,7 +54,7 @@ public class ApiChatHandler {
       List<Kv> kvs = list.stream().map(e -> e.toKv()).collect(Collectors.toList());
       respBodyVo = RespBodyVo.ok(kvs);
     } else {
-      respBodyVo = RespBodyVo.fail(tr.getMsg());
+      respBodyVo = RespBodyVo.fail();
     }
 
     return response.setJson(respBodyVo);
@@ -131,7 +132,12 @@ public class ApiChatHandler {
     Long sesion_id = request.getLong("session_id");
     log.info("sesion_id", sesion_id);
     if (sesion_id == null) {
-      sesion_id = request.getLong("chat_id");
+      try {
+        sesion_id = request.getLong("chat_id");
+      }catch (Exception e) {
+        return response.fail(RespBodyVo.fail(e.getMessage()));
+      }
+      
       if (sesion_id == null) {
         return response.fail(RespBodyVo.fail("sesion_id can not be empty"));
       }

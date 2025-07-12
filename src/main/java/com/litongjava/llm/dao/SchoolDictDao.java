@@ -17,12 +17,12 @@ public class SchoolDictDao {
   }
 
   public SchoolDict getSchoolById(Long id) {
-    String sql = "select id,name,abbr_name,bot_name,domain_name from llm_school_dict where id=?";
+    String sql = "select id,full_name,abbr_name,bot_name,domain_name from llm_school_dict where id=?";
     Row record = Db.findFirstByCache("llm_school_dict", id, 600, sql, id);
     if (record == null) {
       return null;
     }
-    String fullName = record.getStr("name");
+    String fullName = record.getStr("full_name");
     String abbrName = record.getStr("abbr_name");
     String botName = record.getStr("bot_name");
     String domain_name = record.getStr("domain_name");
