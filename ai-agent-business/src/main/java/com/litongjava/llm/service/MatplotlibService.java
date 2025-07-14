@@ -14,6 +14,7 @@ import com.litongjava.gemini.GeminiGenerationConfig;
 import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.linux.CodeRequest;
 import com.litongjava.linux.JavaKitClient;
 import com.litongjava.llm.vo.ToolVo;
 import com.litongjava.template.PromptEngine;
@@ -25,6 +26,7 @@ import com.litongjava.tio.utils.commandline.ProcessResult;
 import com.litongjava.tio.utils.encoder.ImageVo;
 import com.litongjava.tio.utils.hutool.StrUtil;
 import com.litongjava.tio.utils.json.JsonUtils;
+import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,14 +53,22 @@ public class MatplotlibService {
     }
     if (toolVo != null && "execute_python".equals(toolVo.getTool())) {
       String code = toolVo.getCode();
-      ProcessResult result = JavaKitClient.executePythonCode(code);
+      CodeRequest codeRequest = new CodeRequest(code);
+      long id = SnowflakeIdUtils.id();
+      codeRequest.setId(id);
+      log.info("run code {}",id);
+      ProcessResult result = JavaKitClient.executePythonCode(codeRequest);
       if (result != null) {
         String stdErr = result.getStdErr();
         if (StrUtil.isNotBlank(stdErr)) {
           String prompt = "python代码执行过程中出现了错误,请修正错误并仅输出修改后的代码,错误信息:%s";
           prompt = String.format(prompt, stdErr);
           code = fixCodeError(prompt, code);
-          result = JavaKitClient.executePythonCode(code);
+          codeRequest = new CodeRequest(code);
+          id = SnowflakeIdUtils.id();
+          codeRequest.setId(id);
+          log.info("run code {}",id);
+          result = JavaKitClient.executePythonCode(codeRequest);
         }
 
         List<String> images = result.getImages();
