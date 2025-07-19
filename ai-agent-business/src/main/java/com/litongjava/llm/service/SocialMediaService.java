@@ -8,7 +8,7 @@ import org.postgresql.util.PGobject;
 
 import com.google.common.util.concurrent.Striped;
 import com.jfinal.kit.Kv;
-import com.litongjava.chat.ChatMessage;
+import com.litongjava.chat.UniChatMessage;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.kit.PgObjectUtils;
@@ -50,8 +50,8 @@ public class SocialMediaService {
       Kv set = Kv.by("data", searchInfo).set("name", name).set("institution", institution);
       String renderToString = PromptEngine.renderToStringFromDb("extra_soical_media_prompt.txt", set);
       log.info("prompt:{}", renderToString);
-      ChatMessage chatMessage = new ChatMessage("user", renderToString);
-      List<ChatMessage> messages = new ArrayList<>();
+      UniChatMessage chatMessage = new UniChatMessage("user", renderToString);
+      List<UniChatMessage> messages = new ArrayList<>();
       messages.add(chatMessage);
       OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo();
       chatRequestVo.setStream(false);

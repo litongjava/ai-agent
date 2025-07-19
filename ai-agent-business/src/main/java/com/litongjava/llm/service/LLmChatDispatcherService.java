@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.chat.ChatMessage;
 import com.litongjava.chat.ChatMessageArgs;
+import com.litongjava.chat.UniChatMessage;
 import com.litongjava.consts.AiModelNames;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
@@ -75,7 +75,7 @@ public class LLmChatDispatcherService {
     Boolean stream = apiSendVo.isStream();
     String type = apiSendVo.getType();
     ChannelContext channelContext = paramVo.getChannelContext();
-    List<ChatMessage> history = paramVo.getHistory();
+    List<UniChatMessage> history = paramVo.getHistory();
     Long sessionId = apiSendVo.getSession_id();
     String rewrite_quesiton = paramVo.getRewriteQuestion();
     String textQuestion = paramVo.getTextQuestion();
@@ -94,29 +94,29 @@ public class LLmChatDispatcherService {
     }
     //添加系统消息
     if (systemPrompt != null) {
-      history.add(0, new ChatMessage("system", systemPrompt));
+      history.add(0, new UniChatMessage("system", systemPrompt));
     }
 
     // 添加用户问题
     if (uploadFiles != null) {
       for (UploadResultVo uploadResultVo : uploadFiles) {
-        history.add(new ChatMessage("user", uploadResultVo.getName() + " " + uploadResultVo.getContent()));
+        history.add(new UniChatMessage("user", uploadResultVo.getName() + " " + uploadResultVo.getContent()));
       }
     }
 
     if(StrUtil.isNotBlank(textQuestion)) {
-      history.add(new ChatMessage("user", textQuestion));
+      history.add(new UniChatMessage("user", textQuestion));
     }
 
     //    if (ApiChatSendType.youtube.equals(type)) {
     //      if (args != null && args.getUrl() != null) {
-    //        history.add(new ChatMessage("user", textQuestion, args));
+    //        history.add(new UniChatMessage("user", textQuestion, args));
     //      } else {
-    //        history.add(new ChatMessage("user", textQuestion));
+    //        history.add(new UniChatMessage("user", textQuestion));
     //      }
     //    } else {
     //      if (StrUtil.isNotBlank(textQuestion)) {
-    //        history.add(new ChatMessage("user", textQuestion));
+    //        history.add(new UniChatMessage("user", textQuestion));
     //      }
     //    }
 
@@ -162,7 +162,7 @@ public class LLmChatDispatcherService {
    */
   private AiChatResponseVo multiModel(ChannelContext channelContext, ApiChatSendVo apiSendVo, long answerId, String textQuesiton) {
     CountDownLatch latch = new CountDownLatch(3);
-    List<ChatMessage> messages = apiSendVo.getMessages();
+    List<UniChatMessage> messages = apiSendVo.getMessages();
 
     long start = System.currentTimeMillis();
     List<Call> calls = new ArrayList<Call>();
@@ -217,7 +217,7 @@ public class LLmChatDispatcherService {
     String provider = apiChatSendVo.getProvider();
     String model = apiChatSendVo.getModel();
 
-    List<ChatMessage> messages = apiChatSendVo.getMessages();
+    List<UniChatMessage> messages = apiChatSendVo.getMessages();
     if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
       if (AiModelNames.DEEPSEEK_R1.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_R1;
@@ -296,7 +296,7 @@ public class LLmChatDispatcherService {
     }
   }
 
-  private OpenAiChatRequestVo genOpenAiRequestVo(String model, List<ChatMessage> messages, Long answerId) {
+  private OpenAiChatRequestVo genOpenAiRequestVo(String model, List<UniChatMessage> messages, Long answerId) {
     OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(model)
         //
         .setChatMessages(messages);
@@ -313,11 +313,11 @@ public class LLmChatDispatcherService {
     return chatRequestVo;
   }
 
-  private GeminiChatRequestVo genGeminiRequestVo(List<ChatMessage> messages, long answerId) {
+  private GeminiChatRequestVo genGeminiRequestVo(List<UniChatMessage> messages, long answerId) {
     GeminiChatRequestVo geminiChatRequestVo = new GeminiChatRequestVo();
 
     List<GeminiContentVo> contents = new ArrayList<>(messages.size());
-    for (ChatMessage chatMessage : messages) {
+    for (UniChatMessage chatMessage : messages) {
       String role = chatMessage.getRole();
       String content = chatMessage.getContent();
       if (StrUtil.isBlank(content)) {

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.jfinal.template.Template;
-import com.litongjava.chat.ChatMessage;
+import com.litongjava.chat.UniChatMessage;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.db.utils.MarkdownTableUtils;
 import com.litongjava.gemini.GeminiClient;
@@ -18,7 +18,7 @@ import com.litongjava.template.PromptEngine;
 
 public class LlmRewriteQuestionService {
 
-  public String rewriteSearchQuesiton(String question, List<ChatMessage> messages) {
+  public String rewriteSearchQuesiton(String question, List<UniChatMessage> messages) {
     // 1.渲染模版
     Template template = PromptEngine.getTemplate("search_rewrite_question_prompt.txt");
 
@@ -31,7 +31,7 @@ public class LlmRewriteQuestionService {
     return predict(question, prompt);
   }
 
-  public String rewrite(String question, List<ChatMessage> messages) {
+  public String rewrite(String question, List<UniChatMessage> messages) {
     // 1.渲染模版
     Template template = PromptEngine.getTemplate("rewrite_question_prompt.txt");
 
@@ -72,10 +72,10 @@ public class LlmRewriteQuestionService {
     return content;
   }
 
-  private String toMarkdown(List<ChatMessage> messages) {
+  private String toMarkdown(List<UniChatMessage> messages) {
 
     List<Row> histories = new ArrayList<>();
-    for (ChatMessage m : messages) {
+    for (UniChatMessage m : messages) {
       histories.add(Row.by("role", m.getRole()).set("message", m.getContent()));
     }
     return MarkdownTableUtils.to(histories);

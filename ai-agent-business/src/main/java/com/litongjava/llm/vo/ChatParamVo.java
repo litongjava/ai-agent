@@ -2,7 +2,7 @@ package com.litongjava.llm.vo;
 
 import java.util.List;
 
-import com.litongjava.chat.ChatMessage;
+import com.litongjava.chat.UniChatMessage;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 
@@ -20,7 +20,7 @@ public class ChatParamVo {
   private String rewriteQuestion;
   private String systemPrompt;
   private String textQuestion;
-  private List<ChatMessage> history;
+  private List<UniChatMessage> history;
   private ChannelContext channelContext;
   private List<UploadResultVo> uploadFiles;
 }

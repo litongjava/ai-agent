@@ -49,7 +49,7 @@ public class AdminAppConfig {
       r.add("/api/v1/chat/history", apiChatHandler::getChatHistory);
       r.add("/api/v1/chat/stop", apiChatHandler::stop);
       ApiChatAskHandler apiChatAskHandler = Aop.get(ApiChatAskHandler.class);
-      r.add("/api/v1/chat/send", apiChatAskHandler::send);
+      r.add("/api/v1/chat/ask", apiChatAskHandler::send);
     }
 
 

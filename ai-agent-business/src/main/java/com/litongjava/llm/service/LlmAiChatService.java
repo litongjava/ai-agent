@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.chat.ChatMessage;
 import com.litongjava.chat.ChatMessageArgs;
+import com.litongjava.chat.UniChatMessage;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.google.search.GoogleCustomSearchClient;
@@ -75,7 +75,7 @@ public class LlmAiChatService {
      * inputQestion 用户输入的问题
      * textQuestion 用户输入的问题和提示词
      */
-    List<ChatMessage> messages = apiSendVo.getMessages();
+    List<UniChatMessage> messages = apiSendVo.getMessages();
     String inputQestion = null;
     String augmentedQuestion = null;
     if (messages != null && messages.size() > 0) {
@@ -225,7 +225,7 @@ public class LlmAiChatService {
 
     // 4.处理历史记录,拼接历史消息
     boolean isFirstQuestion = false;
-    List<ChatMessage> historyMessage = new ArrayList<>();
+    List<UniChatMessage> historyMessage = new ArrayList<>();
     if (histories == null || histories.size() < 1) {
       isFirstQuestion = true;
     } else {
@@ -245,7 +245,7 @@ public class LlmAiChatService {
                 if (extractVideoId != null) {
                   String subTitle = youtubeVideoSubtitleService.get(extractVideoId);
                   if (subTitle != null) {
-                    historyMessage.add(new ChatMessage(role, subTitle));
+                    historyMessage.add(new UniChatMessage(role, subTitle));
 
                   }
                 }
@@ -255,15 +255,15 @@ public class LlmAiChatService {
             if (urls != null && urls.length > 0) {
               if (ApiChatSendType.general.equals(historyArgs.getType())) {
                 String htmlContent = webPageService.readHtmlPage(urls);
-                historyMessage.add(new ChatMessage(role, htmlContent));
+                historyMessage.add(new UniChatMessage(role, htmlContent));
               }
             }
 
             if (StrUtil.isNotBlank(content)) {
-              historyMessage.add(new ChatMessage(role, content));
+              historyMessage.add(new UniChatMessage(role, content));
             }
           } else {
-            historyMessage.add(new ChatMessage(role, content));
+            historyMessage.add(new UniChatMessage(role, content));
           }
         } else if (AgentMessageType.FILE.equals(messageType)) {
           String role = record.getStr("role");
@@ -271,11 +271,11 @@ public class LlmAiChatService {
           String str = record.getStr("metadata");
           List<UploadResultVo> uploadVos = JsonUtils.parseArray(str, UploadResultVo.class);
           for (UploadResultVo uploadResult : uploadVos) {
-            historyMessage.add(new ChatMessage(role, String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
+            historyMessage.add(new UniChatMessage(role, String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
           }
 
           if (StrUtil.notBlank(content)) {
-            historyMessage.add(new ChatMessage(role, content));
+            historyMessage.add(new UniChatMessage(role, content));
           }
         }
       }
@@ -458,12 +458,12 @@ public class LlmAiChatService {
 
             message = "Read result:" + string;
             Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
-            historyMessage.add(new ChatMessage("user", string));
+            historyMessage.add(new UniChatMessage("user", string));
 
           } else {
             message = "Sorry, No web page content is available of %s, please try again later.";
             message = String.format(message, url);
-            historyMessage.add(new ChatMessage("user", message));
+            historyMessage.add(new UniChatMessage("user", message));
             message = String.format(message, url);
             Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
           }
@@ -491,7 +491,7 @@ public class LlmAiChatService {
     }
   }
 
-  private String tutor(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
+  private String tutor(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage, SchoolDict schoolDict, String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
     return PromptEngine.renderToStringFromDb("tutor_prompt.txt", kv);
@@ -527,7 +527,7 @@ public class LlmAiChatService {
     return systemPrompt;
   }
 
-  private String advise(ChannelContext channelContext, String textQuestion, List<ChatMessage> historyMessage, SchoolDict schoolDict, String model) {
+  private String advise(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage, SchoolDict schoolDict, String model) {
     String full_name = schoolDict.getFull_name();
     String domain_name = schoolDict.getDomain_name();
     if (channelContext != null) {
@@ -704,9 +704,9 @@ public class LlmAiChatService {
     Long sessionId = vo.getSession_id();
     long start = System.currentTimeMillis();
     // 添加文本
-    List<ChatMessage> messages = vo.getMessages();
+    List<UniChatMessage> messages = vo.getMessages();
     String textQuestion = vo.getUser_input_quesiton();
-    messages.add(new ChatMessage("user", textQuestion));
+    messages.add(new UniChatMessage("user", textQuestion));
 
     OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI).setChatMessages(messages);
 

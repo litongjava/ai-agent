@@ -2,8 +2,8 @@ package com.litongjava.llm.vo;
 
 import java.util.List;
 
-import com.litongjava.chat.ChatMessage;
 import com.litongjava.chat.ChatMessageArgs;
+import com.litongjava.chat.UniChatMessage;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,7 +29,7 @@ public class ApiChatSendVo {
   private boolean rewrite;
   private Long previous_question_id;
   private Long previous_answer_id;
-  private List<ChatMessage> messages;
+  private List<UniChatMessage> messages;
   private List<Long> file_ids;
   private String user_input_quesiton;
 }

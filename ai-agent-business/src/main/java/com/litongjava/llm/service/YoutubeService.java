@@ -3,8 +3,8 @@ package com.litongjava.llm.service;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.chat.ChatMessage;
 import com.litongjava.chat.ChatMessageArgs;
+import com.litongjava.chat.UniChatMessage;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.tio.core.ChannelContext;
@@ -16,8 +16,8 @@ import com.litongjava.tio.utils.youtube.YouTubeIdUtil;
 public class YoutubeService {
 
   private YoutubeVideoSubtitleService youtubeVideoSubtitleService = Aop.get(YoutubeVideoSubtitleService.class);
-  
-  public void youtube(ChannelContext channelContext, ChatMessageArgs chatSendArgs, List<ChatMessage> historyMessage) {
+
+  public void youtube(ChannelContext channelContext, ChatMessageArgs chatSendArgs, List<UniChatMessage> historyMessage) {
     String message = null;
     if (channelContext != null) {
       if (chatSendArgs != null && chatSendArgs.getUrl() != null) {
@@ -44,7 +44,7 @@ public class YoutubeService {
           ssePacket = new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(by));
           Tio.send(channelContext, ssePacket);
 
-          historyMessage.add(0, new ChatMessage("user", subTitle));
+          historyMessage.add(0, new UniChatMessage("user", subTitle));
         } else {
           message = "Sorry, No transcript is available for this video, please try again later.";
           by = Kv.by("content", message);

@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.litongjava.chat.ChatMessage;
 import com.litongjava.chat.ChatMessageArgs;
+import com.litongjava.chat.UniChatMessage;
 import com.litongjava.gemini.GoogleGeminiModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.ApiChatSendType;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ApiChatAskHandler {
   private LlmAiChatService llmAiChatService = Aop.get(LlmAiChatService.class);
-  
+
   public HttpResponse send(HttpRequest httpRequest) {
     HttpResponse response = TioRequestContext.getResponse();
     CORSUtils.enableCORS(response);
@@ -116,7 +116,7 @@ public class ApiChatAskHandler {
     }
 
     if (messages != null) {
-      List<ChatMessage> messageList = messages.toJavaList(ChatMessage.class);
+      List<UniChatMessage> messageList = messages.toJavaList(UniChatMessage.class);
       apiChatSendVo.setMessages(messageList);
     }
 
@@ -150,7 +150,6 @@ public class ApiChatAskHandler {
       response.setSend(false);
     }
 
-    
     RespBodyVo RespBodyVo = llmAiChatService.index(channelContext, apiChatSendVo);
     if (!stream) {
       response.setJson(RespBodyVo);
