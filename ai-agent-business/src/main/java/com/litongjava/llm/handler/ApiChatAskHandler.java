@@ -6,7 +6,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
-import com.litongjava.gemini.GoogleGeminiModels;
+import com.litongjava.gemini.GoogleModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.service.LlmAiChatService;
@@ -77,7 +77,7 @@ public class ApiChatAskHandler {
         provider = "google";
       }
       if (model == null) {
-        model = GoogleGeminiModels.GEMINI_2_0_FLASH;
+        model = GoogleModels.GEMINI_2_0_FLASH;
       }
     } else {
       if (provider == null) {

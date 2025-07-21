@@ -7,7 +7,7 @@ import com.google.common.util.concurrent.Striped;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GeminiClient;
-import com.litongjava.gemini.GoogleGeminiModels;
+import com.litongjava.gemini.GoogleModels;
 import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.http.response.ResponseVo;
@@ -97,7 +97,7 @@ public class YoutubeVideoSubtitleService {
   }
 
   private String transcriptWithGemini(String url) {
-    String model = GoogleGeminiModels.GEMINI_2_5_FLASH;
+    String model = GoogleModels.GEMINI_2_5_FLASH;
     log.info("parse subtitile:{},{}", model, url);
     String userPrompt = "Extract video subtitles, output format [hh:mm:ss-hh:mm:ss] subtitle  \r\n";
     String text = GeminiClient.parseYoutubeSubtitle(model, url, userPrompt);

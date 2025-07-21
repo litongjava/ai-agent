@@ -12,7 +12,7 @@ import com.litongjava.gemini.GeminiChatResponseVo;
 import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GeminiGenerationConfig;
 import com.litongjava.gemini.GeminiPartVo;
-import com.litongjava.gemini.GoogleGeminiModels;
+import com.litongjava.gemini.GoogleModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.linux.CodeRequest;
 import com.litongjava.linux.JavaKitClient;
@@ -127,7 +127,7 @@ public class MatplotlibService {
     reqVo.setGenerationConfig(geminiGenerationConfigVo);
 
     // 2. Send sync request: generateContent
-    GeminiChatResponseVo respVo = GeminiClient.generate(GoogleGeminiModels.GEMINI_2_0_FLASH, reqVo);
+    GeminiChatResponseVo respVo = GeminiClient.generate(GoogleModels.GEMINI_2_0_FLASH, reqVo);
     if (respVo != null) {
       List<GeminiCandidateVo> candidates = respVo.getCandidates();
       GeminiCandidateVo candidate = candidates.get(0);

@@ -8,7 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import com.jfinal.kit.Kv;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
-import com.litongjava.consts.AiModelNames;
+import com.litongjava.consts.ModelNames;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GeminiChatRequestVo;
@@ -17,7 +17,7 @@ import com.litongjava.gemini.GeminiContentVo;
 import com.litongjava.gemini.GeminiFileDataVo;
 import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.gemini.GeminiSystemInstructionVo;
-import com.litongjava.gemini.GoogleGeminiModels;
+import com.litongjava.gemini.GoogleModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.callback.ChatGeminiStreamCommonCallback;
@@ -199,7 +199,7 @@ public class LLmChatDispatcherService {
         long id = SnowflakeIdUtils.id();
         GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, id);
         ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiSendVo, id, start, textQuesiton, latch);
-        Call geminiCall = GeminiClient.stream(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
+        Call geminiCall = GeminiClient.stream(GoogleModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
         calls.add(geminiCall);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
@@ -219,9 +219,9 @@ public class LLmChatDispatcherService {
 
     List<UniChatMessage> messages = apiChatSendVo.getMessages();
     if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
-      if (AiModelNames.DEEPSEEK_R1.equals(model)) {
+      if (ModelNames.DEEPSEEK_R1.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_R1;
-      } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
+      } else if (ModelNames.DEEPSEEK_V3.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_V3;
       }
 
@@ -242,9 +242,9 @@ public class LLmChatDispatcherService {
       return null;
 
     } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
-      if (AiModelNames.DEEPSEEK_R1.equals(model)) {
+      if (ModelNames.DEEPSEEK_R1.equals(model)) {
         model = VolcEngineModels.DEEPSEEK_R1_250528;
-      } else if (AiModelNames.DEEPSEEK_V3.equals(model)) {
+      } else if (ModelNames.DEEPSEEK_V3.equals(model)) {
         model = VolcEngineModels.DEEPSEEK_V3_250324;
       }
       OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);

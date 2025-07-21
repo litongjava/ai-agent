@@ -9,7 +9,7 @@ import com.jfinal.kit.Kv;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
 import com.litongjava.db.activerecord.Row;
-import com.litongjava.gemini.GoogleGeminiModels;
+import com.litongjava.gemini.GoogleModels;
 import com.litongjava.google.search.GoogleCustomSearchClient;
 import com.litongjava.google.search.GoogleCustomSearchResponse;
 import com.litongjava.google.search.SearchResultItem;
@@ -416,7 +416,7 @@ public class LlmAiChatService {
     } else if (ApiChatSendType.tutor.equals(type)) {
       if (StrUtil.isNotBlank(model)) {
         apiSendVo.setProvider("google");
-        apiSendVo.setModel(GoogleGeminiModels.GEMINI_2_0_FLASH);
+        apiSendVo.setModel(GoogleModels.GEMINI_2_0_FLASH);
       }
 
     } else if (ApiChatSendType.youtube.equals(type)) {

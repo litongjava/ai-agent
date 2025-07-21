@@ -10,7 +10,7 @@ import com.litongjava.chat.UniChatMessage;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.db.utils.MarkdownTableUtils;
 import com.litongjava.gemini.GeminiClient;
-import com.litongjava.gemini.GoogleGeminiModels;
+import com.litongjava.gemini.GoogleModels;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
@@ -62,7 +62,7 @@ public class LlmRewriteQuestionService {
   }
 
   private String googleGemini(String prompt) {
-    String content = GeminiClient.chatWithModel(GoogleGeminiModels.GEMINI_2_0_FLASH_EXP, "user", prompt);
+    String content = GeminiClient.chatWithModel(GoogleModels.GEMINI_2_0_FLASH_EXP, "user", prompt);
     return content;
   }
 
