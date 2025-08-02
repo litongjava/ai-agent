@@ -9,6 +9,7 @@ import com.jfinal.kit.Kv;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
 import com.litongjava.consts.ModelNames;
+import com.litongjava.consts.ModelPlatformName;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GeminiChatRequestVo;
@@ -25,10 +26,9 @@ import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.consts.AiChatEventName;
-import com.litongjava.llm.consts.ApiChatSendProvider;
 import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.vo.AiChatResponseVo;
-import com.litongjava.llm.vo.ApiChatSendVo;
+import com.litongjava.llm.vo.ApiChatAskVo;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
@@ -70,7 +70,7 @@ public class LLmChatDispatcherService {
    * @param aiChatResponseVo 
    * @return 响应对象
    */
-  public AiChatResponseVo predict(ApiChatSendVo apiSendVo, ChatParamVo paramVo, AiChatResponseVo aiChatResponseVo) {
+  public AiChatResponseVo predict(ApiChatAskVo apiSendVo, ChatParamVo paramVo, AiChatResponseVo aiChatResponseVo) {
     String provider = apiSendVo.getProvider();
     Boolean stream = apiSendVo.isStream();
     String type = apiSendVo.getType();
@@ -131,7 +131,7 @@ public class LLmChatDispatcherService {
         return singleModel(channelContext, apiSendVo, answerId, textQuestion);
       }
     } else {
-      if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
+      if (ModelPlatformName.SILICONFLOW.equals(provider)) {
 
       } else {
         OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI)
@@ -160,7 +160,7 @@ public class LLmChatDispatcherService {
    * @param answerId
    * @return
    */
-  private AiChatResponseVo multiModel(ChannelContext channelContext, ApiChatSendVo apiSendVo, long answerId, String textQuesiton) {
+  private AiChatResponseVo multiModel(ChannelContext channelContext, ApiChatAskVo apiSendVo, long answerId, String textQuesiton) {
     CountDownLatch latch = new CountDownLatch(3);
     List<UniChatMessage> messages = apiSendVo.getMessages();
 
@@ -212,13 +212,13 @@ public class LLmChatDispatcherService {
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, String textQuestion) {
+  private AiChatResponseVo singleModel(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, String textQuestion) {
     Long sessionId = apiChatSendVo.getSession_id();
     String provider = apiChatSendVo.getProvider();
     String model = apiChatSendVo.getModel();
 
     List<UniChatMessage> messages = apiChatSendVo.getMessages();
-    if (provider.equals(ApiChatSendProvider.SILICONFLOW)) {
+    if (provider.equals(ModelPlatformName.SILICONFLOW)) {
       if (ModelNames.DEEPSEEK_R1.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_R1;
       } else if (ModelNames.DEEPSEEK_V3.equals(model)) {
@@ -241,7 +241,7 @@ public class LLmChatDispatcherService {
       });
       return null;
 
-    } else if (provider.equals(ApiChatSendProvider.VOLCENGINE)) {
+    } else if (provider.equals(ModelPlatformName.VOLC_ENGINE)) {
       if (ModelNames.DEEPSEEK_R1.equals(model)) {
         model = VolcEngineModels.DEEPSEEK_R1_250528;
       } else if (ModelNames.DEEPSEEK_V3.equals(model)) {
@@ -260,7 +260,7 @@ public class LLmChatDispatcherService {
         }
       });
       return null;
-    } else if (provider.equals(ApiChatSendProvider.GOOGLE)) {
+    } else if (ModelPlatformName.GOOGLE.equals(provider)) {
 
       Threads.getTioExecutor().execute(() -> {
         try {

@@ -21,10 +21,11 @@ import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendCmd;
 import com.litongjava.llm.consts.ApiChatSendType;
+import com.litongjava.llm.consts.ResponsePrompt;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.utils.AgentBotQuestionUtils;
 import com.litongjava.llm.vo.AiChatResponseVo;
-import com.litongjava.llm.vo.ApiChatSendVo;
+import com.litongjava.llm.vo.ApiChatAskVo;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
@@ -58,7 +59,7 @@ import okhttp3.sse.EventSource;
 
 @Slf4j
 public class LlmAiChatService {
-  String defaultFallBackMessage = "Dear user, your conversation count has exceeded the maximum length for multiple rounds of conversation. Please start a new session.";
+  
 
   private LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
   private WebPageService webPageService = Aop.get(WebPageService.class);
@@ -70,12 +71,13 @@ public class LlmAiChatService {
   YoutubeService youtubeService = Aop.get(YoutubeService.class);
   private boolean enableRewrite = false;
 
-  public RespBodyVo index(ChannelContext channelContext, ApiChatSendVo apiSendVo) {
+  public RespBodyVo index(ChannelContext channelContext, ApiChatAskVo apiChatAskVo) {
     /**
      * inputQestion 用户输入的问题
      * textQuestion 用户输入的问题和提示词
      */
-    List<UniChatMessage> messages = apiSendVo.getMessages();
+    
+    List<UniChatMessage> messages = apiChatAskVo.getMessages();
     String inputQestion = null;
     String augmentedQuestion = null;
     if (messages != null && messages.size() > 0) {
@@ -84,22 +86,23 @@ public class LlmAiChatService {
       augmentedQuestion = inputQestion;
     }
 
-    apiSendVo.setUser_input_quesiton(inputQestion);
+    apiChatAskVo.setUser_input_quesiton(inputQestion);
 
     // save file content to history
     ChatParamVo chatParamVo = new ChatParamVo();
-    String type = apiSendVo.getType();
-    boolean stream = apiSendVo.isStream();
-    String model = apiSendVo.getModel();
-    String provider = apiSendVo.getProvider();
-    Long schoolId = apiSendVo.getSchool_id();
-    String userId = apiSendVo.getUser_id();
-    Long sessionId = apiSendVo.getSession_id();
-    Long appId = apiSendVo.getApp_id();
-    List<Long> file_ids = apiSendVo.getFile_ids();
-    String cmd = apiSendVo.getCmd();
-    ChatMessageArgs chatSendArgs = apiSendVo.getArgs();
-
+    String type = apiChatAskVo.getType();
+    boolean stream = apiChatAskVo.isStream();
+    String model = apiChatAskVo.getModel();
+    String provider = apiChatAskVo.getProvider();
+    Long schoolId = apiChatAskVo.getSchool_id();
+    String userId = apiChatAskVo.getUser_id();
+    Long sessionId = apiChatAskVo.getSession_id();
+    Long appId = apiChatAskVo.getApp_id();
+    List<Long> file_ids = apiChatAskVo.getFile_ids();
+    String cmd = apiChatAskVo.getCmd();
+    ChatMessageArgs chatSendArgs = apiChatAskVo.getArgs();
+    boolean history_enabled = apiChatAskVo.isHistory_enabled();
+    
     SchoolDict schoolDict = null;
 
     // 1.查询学校
@@ -175,32 +178,36 @@ public class LlmAiChatService {
       }
     }
 
-    // 3.查询历史
-    if (apiSendVo.isRewrite()) {
-      Long previous_question_id = apiSendVo.getPrevious_question_id();
-      Long previous_answer_id = apiSendVo.getPrevious_answer_id();
+
+    // 移除历史
+    if (apiChatAskVo.isRe_generate()) {
+      Long previous_question_id = apiChatAskVo.getPrevious_question_id();
+      Long previous_answer_id = apiChatAskVo.getPrevious_answer_id();
       llmChatHistoryService.remove(previous_question_id, previous_answer_id);
     }
 
+    // 3.查询历史
     AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
     List<Row> histories = null;
-    if (!ApiChatSendType.translator.equals(type)) {
-      try {
-        histories = llmChatHistoryService.getHistory(sessionId);
-      } catch (Exception e) {
-        e.printStackTrace();
-        String error = e.getMessage();
-        if (stream) {
-          SsePacket ssePacket = new SsePacket(AiChatEventName.error, error);
-          Tio.bSend(channelContext, ssePacket);
-          SseEmitter.closeSeeConnection(channelContext);
+    if(history_enabled) {
+      if (!ApiChatSendType.translator.equals(type)) {
+        try {
+          histories = llmChatHistoryService.getHistory(sessionId);
+        } catch (Exception e) {
+          e.printStackTrace();
+          String error = e.getMessage();
+          if (stream) {
+            SsePacket ssePacket = new SsePacket(AiChatEventName.error, error);
+            Tio.bSend(channelContext, ssePacket);
+            SseEmitter.closeSeeConnection(channelContext);
+          }
+          return RespBodyVo.fail(error);
         }
-        return RespBodyVo.fail(error);
       }
     }
 
     if (histories != null && histories.size() > 30) {
-      String message = defaultFallBackMessage + " Your new question might be:" + augmentedQuestion;
+      String message = ResponsePrompt.defaultFallBackMessage + " Your new question might be:" + augmentedQuestion;
 
       long answerId = SnowflakeIdUtils.id();
       aiChatResponseVo.setAnswerId(answerId);
@@ -415,8 +422,8 @@ public class LlmAiChatService {
       chatParamVo.setSystemPrompt(systemPrompt);
     } else if (ApiChatSendType.tutor.equals(type)) {
       if (StrUtil.isNotBlank(model)) {
-        apiSendVo.setProvider("google");
-        apiSendVo.setModel(GoogleModels.GEMINI_2_0_FLASH);
+        apiChatAskVo.setProvider("google");
+        apiChatAskVo.setModel(GoogleModels.GEMINI_2_0_FLASH);
       }
 
     } else if (ApiChatSendType.youtube.equals(type)) {
@@ -481,12 +488,12 @@ public class LlmAiChatService {
         SsePacket packet = new SsePacket(AiChatEventName.progress, "The user specifies that the gpt4o model is used for message processing");
         Tio.bSend(channelContext, packet);
       }
-      String answer = processMessageByChatModel(apiSendVo, channelContext);
+      String answer = processMessageByChatModel(apiChatAskVo, channelContext);
       aiChatResponseVo.setContent(answer);
       return RespBodyVo.ok(aiChatResponseVo);
 
     } else {
-      dispatcherService.predict(apiSendVo, chatParamVo, aiChatResponseVo);
+      dispatcherService.predict(apiChatAskVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }
   }
@@ -699,7 +706,7 @@ public class LlmAiChatService {
     return markdown;
   }
 
-  public String processMessageByChatModel(ApiChatSendVo vo, ChannelContext channelContext) {
+  public String processMessageByChatModel(ApiChatAskVo vo, ChannelContext channelContext) {
     boolean stream = vo.isStream();
     Long sessionId = vo.getSession_id();
     long start = System.currentTimeMillis();

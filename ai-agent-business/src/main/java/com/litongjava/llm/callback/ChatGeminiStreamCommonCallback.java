@@ -18,7 +18,7 @@ import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.MatplotlibService;
 import com.litongjava.llm.service.RunningNotificationService;
-import com.litongjava.llm.vo.ApiChatSendVo;
+import com.litongjava.llm.vo.ApiChatAskVo;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -42,13 +42,13 @@ public class ChatGeminiStreamCommonCallback implements Callback {
 
   private boolean continueSend = true;
   private ChannelContext channelContext;
-  private ApiChatSendVo apiChatSendVo;
+  private ApiChatAskVo apiChatSendVo;
   private long answerId, start;
   private CountDownLatch latch;
   private ChatCallbackVo callbackVo;
   private String textQuestion;
 
-  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start,
+  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, long start,
       //
       String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;
@@ -59,7 +59,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
     this.textQuestion = textQuestion;
   }
 
-  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, long answerId, long start, String textQuestion) {
+  public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, long start, String textQuestion) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;

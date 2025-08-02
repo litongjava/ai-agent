@@ -11,7 +11,7 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.service.LlmAiChatService;
 import com.litongjava.llm.service.LlmChatSessionService;
-import com.litongjava.llm.vo.ApiChatSendVo;
+import com.litongjava.llm.vo.ApiChatAskVo;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.core.ChannelContext;
@@ -97,7 +97,7 @@ public class ApiChatAskHandler {
 
     JSONArray messages = reqVo.getJSONArray("messages");
     JSONObject args = reqVo.getJSONObject("args");
-    ApiChatSendVo apiChatSendVo = new ApiChatSendVo();
+    ApiChatAskVo apiChatSendVo = new ApiChatAskVo();
     if (args != null) {
       ChatMessageArgs javaObject = args.toJavaObject(ChatMessageArgs.class);
       javaObject.setType(type);
@@ -127,7 +127,8 @@ public class ApiChatAskHandler {
         .setApp_id(appId).setChat_type(chatType).setStream(stream).setCmd(cmd);
 
     if (rewrite != null) {
-      apiChatSendVo.setRewrite(rewrite).setPrevious_question_id(previous_question_id).setPrevious_answer_id(previous_answer_id);
+      apiChatSendVo.setRe_generate(rewrite).setPrevious_question_id(previous_question_id)
+          .setPrevious_answer_id(previous_answer_id);
     }
     LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
 

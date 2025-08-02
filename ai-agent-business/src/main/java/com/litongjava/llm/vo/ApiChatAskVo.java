@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-public class ApiChatSendVo {
+public class ApiChatAskVo {
   private String provider;
   private String model;
   private String type;
@@ -26,7 +26,8 @@ public class ApiChatSendVo {
   private String cmd;
   private ChatMessageArgs args;
   private boolean stream;
-  private boolean rewrite;
+  private boolean re_generate;
+  private boolean history_enabled;
   private Long previous_question_id;
   private Long previous_answer_id;
   private List<UniChatMessage> messages;

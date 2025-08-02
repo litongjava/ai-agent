@@ -8,7 +8,7 @@ import com.litongjava.chat.UniChatMessage;
 import com.litongjava.llm.callback.ChatCallbackVo;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendType;
-import com.litongjava.llm.vo.ApiChatSendVo;
+import com.litongjava.llm.vo.ApiChatAskVo;
 import com.litongjava.openai.chat.ChatResponseFormatType;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
@@ -26,7 +26,7 @@ import com.litongjava.volcengine.VolcEngineModels;
 
 public class FollowUpQuestionService {
 
-  public void generate(ChannelContext channelContext, ApiChatSendVo apiChatSendVo, ChatCallbackVo callbackVo) {
+  public void generate(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, ChatCallbackVo callbackVo) {
     String type = apiChatSendVo.getType();
     if (ApiChatSendType.celebrity.equals(type)) {
       List<UniChatMessage> messages = apiChatSendVo.getMessages();
