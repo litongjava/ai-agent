@@ -126,6 +126,7 @@ public class LlmAiChatService {
         String fileName = "translator_prompt.txt";
         Kv by = Kv.by("data", inputQestion);
         augmentedQuestion = Aop.get(PromptService.class).render(fileName, by);
+        history_enabled = false;
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
@@ -135,6 +136,7 @@ public class LlmAiChatService {
         String fileName = "english_vocabulary_prompt.txt";
         Kv by = Kv.by("word", inputQestion);
         augmentedQuestion = Aop.get(PromptService.class).render(fileName, by);
+        history_enabled = false;
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
@@ -144,6 +146,7 @@ public class LlmAiChatService {
         String fileName = "english_sentence_prompt.txt";
         Kv by = Kv.by("sentence", inputQestion);
         augmentedQuestion = Aop.get(PromptService.class).render(fileName, by);
+        history_enabled = false;
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
