@@ -28,7 +28,7 @@ import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.vo.AiChatResponseVo;
-import com.litongjava.llm.vo.ApiChatAskVo;
+import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
@@ -70,7 +70,7 @@ public class LLmChatDispatcherService {
    * @param aiChatResponseVo 
    * @return 响应对象
    */
-  public AiChatResponseVo predict(ApiChatAskVo apiSendVo, ChatParamVo paramVo, AiChatResponseVo aiChatResponseVo) {
+  public AiChatResponseVo predict(ChatAskVo apiSendVo, ChatParamVo paramVo, AiChatResponseVo aiChatResponseVo) {
     String provider = apiSendVo.getProvider();
     Boolean stream = apiSendVo.isStream();
     String type = apiSendVo.getType();
@@ -160,7 +160,7 @@ public class LLmChatDispatcherService {
    * @param answerId
    * @return
    */
-  private AiChatResponseVo multiModel(ChannelContext channelContext, ApiChatAskVo apiSendVo, long answerId, String textQuesiton) {
+  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskVo apiSendVo, long answerId, String textQuesiton) {
     CountDownLatch latch = new CountDownLatch(3);
     List<UniChatMessage> messages = apiSendVo.getMessages();
 
@@ -212,7 +212,7 @@ public class LLmChatDispatcherService {
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, String textQuestion) {
+  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, String textQuestion) {
     Long sessionId = apiChatSendVo.getSession_id();
     String provider = apiChatSendVo.getProvider();
     String model = apiChatSendVo.getModel();

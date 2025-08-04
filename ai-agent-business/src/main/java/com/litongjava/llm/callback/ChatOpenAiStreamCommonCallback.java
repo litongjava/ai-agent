@@ -13,7 +13,7 @@ import com.litongjava.llm.service.AgentNotificationService;
 import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.MatplotlibService;
-import com.litongjava.llm.vo.ApiChatAskVo;
+import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.openai.chat.ChatResponseDelta;
 import com.litongjava.openai.chat.Choice;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
@@ -42,12 +42,12 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
   private boolean continueSend = true;
   private ChatCallbackVo callbackVo;
   private ChannelContext channelContext;
-  private ApiChatAskVo apiChatSendVo;
+  private ChatAskVo apiChatSendVo;
   private long answerId, start;
   private String textQuestion;
   private CountDownLatch latch;
 
-  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, long start, String textQuestion) {
+  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long start, String textQuestion) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
@@ -55,7 +55,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
     this.textQuestion = textQuestion;
   }
 
-  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, long start,
+  public ChatOpenAiStreamCommonCallback(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long start,
       //
       String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;

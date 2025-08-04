@@ -11,7 +11,7 @@ import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.MatplotlibService;
-import com.litongjava.llm.vo.ApiChatAskVo;
+import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.openai.chat.ChatResponseDelta;
 import com.litongjava.openai.chat.Choice;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
@@ -36,7 +36,7 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
   private MatplotlibService matplotlibService = Aop.get(MatplotlibService.class);
   
   private final ChannelContext channelContext;
-  private final ApiChatAskVo apiChatSendVo;
+  private final ChatAskVo apiChatSendVo;
   private final long answerId;
   private final long startTs;
   private final String textQuestion;
@@ -47,11 +47,11 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
   private boolean sentCitations = false;
   private boolean continueSend = true;
 
-  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, long startTs, String textQuestion) {
+  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs, String textQuestion) {
     this(channelContext, apiChatSendVo, answerId, startTs, textQuestion, null);
   }
 
-  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ApiChatAskVo apiChatSendVo, long answerId, long startTs, String textQuestion, CountDownLatch latch) {
+  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs, String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;

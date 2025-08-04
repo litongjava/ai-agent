@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-public class ApiChatAskVo {
+public class ChatAskVo {
   private String provider;
   private String model;
   private String type;

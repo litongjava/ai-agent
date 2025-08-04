@@ -11,7 +11,7 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.ApiChatSendType;
 import com.litongjava.llm.service.LlmAiChatService;
 import com.litongjava.llm.service.LlmChatSessionService;
-import com.litongjava.llm.vo.ApiChatAskVo;
+import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.core.ChannelContext;
@@ -52,7 +52,7 @@ public class ApiChatAskHandler {
       schoolId = reqVo.getLong("schoolId");
     }
     String type = reqVo.getString("type");
-    boolean validateChatId = reqVo.getBooleanValue("validate_session_id", true);
+    
     Boolean stream = reqVo.getBoolean("stream");
     Long appId = reqVo.getLong("app_id");
     String provider = reqVo.getString("provider");
@@ -64,6 +64,9 @@ public class ApiChatAskHandler {
     String session_type = reqVo.getString("session_type");
     String session_name = reqVo.getString("session_name");
     String cmd = reqVo.getString("cmd");
+    
+    boolean validateChatId = reqVo.getBooleanValue("validate_session_id", true);
+    boolean history_enabled = reqVo.getBooleanValue("history_enabled", true);
 
     if (stream == null) {
       stream = true;
@@ -97,17 +100,17 @@ public class ApiChatAskHandler {
 
     JSONArray messages = reqVo.getJSONArray("messages");
     JSONObject args = reqVo.getJSONObject("args");
-    ApiChatAskVo apiChatSendVo = new ApiChatAskVo();
+    ChatAskVo chatAskVo = new ChatAskVo();
     if (args != null) {
       ChatMessageArgs javaObject = args.toJavaObject(ChatMessageArgs.class);
       javaObject.setType(type);
-      apiChatSendVo.setArgs(javaObject);
+      chatAskVo.setArgs(javaObject);
     }
 
     if (jsonArray != null) {
       try {
         List<Long> fileIds = jsonArray.toJavaList(Long.class);
-        apiChatSendVo.setFile_ids(fileIds);
+        chatAskVo.setFile_ids(fileIds);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
         response.setJson(RespBodyVo.fail("Fail to parse file_ids:" + e.getMessage()));
@@ -117,17 +120,17 @@ public class ApiChatAskHandler {
 
     if (messages != null) {
       List<UniChatMessage> messageList = messages.toJavaList(UniChatMessage.class);
-      apiChatSendVo.setMessages(messageList);
+      chatAskVo.setMessages(messageList);
     }
 
-    apiChatSendVo.setProvider(provider).setModel(model).setType(type).setUser_id(userId)
+    chatAskVo.setProvider(provider).setModel(model).setType(type).setUser_id(userId)
         //
-        .setSession_id(session_id).setSchool_id(schoolId)
+        .setSession_id(session_id).setSchool_id(schoolId).setHistory_enabled(history_enabled)
         //
         .setApp_id(appId).setChat_type(chatType).setStream(stream).setCmd(cmd);
 
     if (rewrite != null) {
-      apiChatSendVo.setRe_generate(rewrite).setPrevious_question_id(previous_question_id)
+      chatAskVo.setRe_generate(rewrite).setPrevious_question_id(previous_question_id)
           .setPrevious_answer_id(previous_answer_id);
     }
     LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
@@ -151,7 +154,7 @@ public class ApiChatAskHandler {
       response.setSend(false);
     }
 
-    RespBodyVo RespBodyVo = llmAiChatService.index(channelContext, apiChatSendVo);
+    RespBodyVo RespBodyVo = llmAiChatService.index(channelContext, chatAskVo);
     if (!stream) {
       response.setJson(RespBodyVo);
     }
