@@ -13,7 +13,7 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AiChatEventName;
-import com.litongjava.llm.consts.ApiChatSendType;
+import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.MatplotlibService;
@@ -104,7 +104,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
       if (success != null && !success.getContent().isEmpty()) {
         String content = success.getContent();
         boolean gen = EnvUtils.getBoolean("chat.tutor.gen.functiom.graph", false);
-        if (gen && latch != null && latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
+        if (gen && latch != null && latch.getCount() == 1 && ApiChatAskType.tutor.equals(apiChatSendVo.getType())) {
           try {
             ProcessResult codeResult = matplotlibService.generateMatplot(textQuestion, content);
             if (codeResult != null) {

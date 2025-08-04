@@ -26,7 +26,7 @@ import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.consts.AiChatEventName;
-import com.litongjava.llm.consts.ApiChatSendType;
+import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.llm.vo.ChatParamVo;
@@ -125,7 +125,7 @@ public class LLmChatDispatcherService {
     if (stream) {
       //SsePacket packet = new SsePacket(AiChatEventName.input, JsonUtils.toJson(history));
       //Tio.bSend(channelContext, packet);
-      if (ApiChatSendType.compare.equals(type)) {
+      if (ApiChatAskType.compare.equals(type)) {
         return multiModel(channelContext, apiSendVo, answerId, textQuestion);
       } else {
         return singleModel(channelContext, apiSendVo, answerId, textQuestion);

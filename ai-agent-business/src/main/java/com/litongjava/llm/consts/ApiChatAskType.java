@@ -1,8 +1,10 @@
 package com.litongjava.llm.consts;
 
-public interface ApiChatSendType {
+public interface ApiChatAskType {
   String general = "general";
   String translator = "translator";
+  String english_vocabulary = "english_vocabulary";
+  String english_sentence = "english_sentence";
   String search = "search";
   String perplexity = "perplexity";
   String celebrity = "celebrity";

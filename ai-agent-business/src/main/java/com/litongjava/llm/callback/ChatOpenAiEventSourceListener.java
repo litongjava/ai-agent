@@ -7,7 +7,7 @@ import com.jfinal.kit.Kv;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.consts.AiChatEventName;
-import com.litongjava.llm.consts.ApiChatSendType;
+import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.MatplotlibService;
@@ -133,7 +133,7 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
     ProcessResult codeResult = null;
     try {
       boolean genGraph = EnvUtils.getBoolean("chat.tutor.gen.functiom.graph", false);
-      if (genGraph && latch != null && latch.getCount() == 1 && ApiChatSendType.tutor.equals(apiChatSendVo.getType())) {
+      if (genGraph && latch != null && latch.getCount() == 1 && ApiChatAskType.tutor.equals(apiChatSendVo.getType())) {
         codeResult = matplotlibService.generateMatplot(textQuestion, completionContent.toString());
         if (codeResult != null) {
           Tio.bSend(channelContext, new SsePacket(AiChatEventName.code_result, JsonUtils.toJson(codeResult)));

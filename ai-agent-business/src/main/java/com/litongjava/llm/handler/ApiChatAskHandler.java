@@ -8,7 +8,7 @@ import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
 import com.litongjava.gemini.GoogleModels;
 import com.litongjava.jfinal.aop.Aop;
-import com.litongjava.llm.consts.ApiChatSendType;
+import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.service.LlmAiChatService;
 import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.vo.ChatAskVo;
@@ -75,7 +75,7 @@ public class ApiChatAskHandler {
       type = "general";
     }
 
-    if (ApiChatSendType.youtube.equals(type)) {
+    if (ApiChatAskType.youtube.equals(type)) {
       if (provider == null) {
         provider = "google";
       }
