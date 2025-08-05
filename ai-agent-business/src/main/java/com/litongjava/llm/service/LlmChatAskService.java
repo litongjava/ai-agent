@@ -9,7 +9,6 @@ import com.jfinal.kit.Kv;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
 import com.litongjava.db.activerecord.Row;
-import com.litongjava.gemini.GoogleModels;
 import com.litongjava.google.search.GoogleCustomSearchClient;
 import com.litongjava.google.search.GoogleCustomSearchResponse;
 import com.litongjava.google.search.SearchResultItem;
@@ -19,8 +18,8 @@ import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
 import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AiChatEventName;
-import com.litongjava.llm.consts.ApiChatSendCmd;
 import com.litongjava.llm.consts.ApiChatAskType;
+import com.litongjava.llm.consts.ApiChatSendCmd;
 import com.litongjava.llm.consts.ResponsePrompt;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.utils.AgentBotQuestionUtils;
@@ -74,7 +73,6 @@ public class LlmChatAskService {
     /**
      * inputQestion 用户输入的问题 textQuestion 用户输入的问题和提示词
      */
-
     List<UniChatMessage> messages = apiChatAskVo.getMessages();
     String inputQestion = null;
     String augmentedQuestion = null;
@@ -438,11 +436,6 @@ public class LlmChatAskService {
     } else if (ApiChatAskType.tutor.equals(type)) {
       String systemPrompt = tutor(channelContext, augmentedQuestion, historyMessage, schoolDict, model);
       chatParamVo.setSystemPrompt(systemPrompt);
-    } else if (ApiChatAskType.tutor.equals(type)) {
-      if (StrUtil.isNotBlank(model)) {
-        apiChatAskVo.setProvider("google");
-        apiChatAskVo.setModel(GoogleModels.GEMINI_2_0_FLASH);
-      }
 
     } else if (ApiChatAskType.youtube.equals(type)) {
       if (ApiChatSendCmd.summary.equals(cmd)) {

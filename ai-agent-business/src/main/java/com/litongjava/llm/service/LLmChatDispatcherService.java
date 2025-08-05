@@ -54,20 +54,20 @@ import okhttp3.Call;
 
 @Slf4j
 public class LLmChatDispatcherService {
-  
+
   private AgentNotificationService agentNotificationService = Aop.get(AgentNotificationService.class);
 
   /**
    * 使用模型处理消息
    *
-   * @param schoolId        学校ID
-   * @param sessionId       会话ID
-   * @param chatMessages    消息对象
-   * @param isFirstQuestion 是否为首次提问
-   * @param history  关联消息
-   * @param stream          是否使用流式响应
-   * @param channelContext  通道上下文
-   * @param aiChatResponseVo 
+   * @param schoolId         学校ID
+   * @param sessionId        会话ID
+   * @param chatMessages     消息对象
+   * @param isFirstQuestion  是否为首次提问
+   * @param history          关联消息
+   * @param stream           是否使用流式响应
+   * @param channelContext   通道上下文
+   * @param aiChatResponseVo
    * @return 响应对象
    */
   public AiChatResponseVo predict(ChatAskVo apiSendVo, ChatParamVo paramVo, AiChatResponseVo aiChatResponseVo) {
@@ -81,7 +81,6 @@ public class LLmChatDispatcherService {
     String textQuestion = paramVo.getTextQuestion();
     List<UploadResultVo> uploadFiles = paramVo.getUploadFiles();
     String systemPrompt = paramVo.getSystemPrompt();
-    ChatMessageArgs args = apiSendVo.getArgs();
     if (rewrite_quesiton != null) {
       textQuestion = rewrite_quesiton;
     }
@@ -92,8 +91,8 @@ public class LLmChatDispatcherService {
       SsePacket packet = new SsePacket(AiChatEventName.progress, JsonUtils.toJson(kv));
       Tio.bSend(channelContext, packet);
     }
-    //添加系统消息
-    if (systemPrompt != null) {
+    // 添加系统消息
+    if (StrUtil.isNotBlank(systemPrompt)) {
       history.add(0, new UniChatMessage("system", systemPrompt));
     }
 
@@ -104,27 +103,28 @@ public class LLmChatDispatcherService {
       }
     }
 
-    if(StrUtil.isNotBlank(textQuestion)) {
+    if (StrUtil.isNotBlank(textQuestion)) {
       history.add(new UniChatMessage("user", textQuestion));
     }
 
-    //    if (ApiChatSendType.youtube.equals(type)) {
-    //      if (args != null && args.getUrl() != null) {
-    //        history.add(new UniChatMessage("user", textQuestion, args));
-    //      } else {
-    //        history.add(new UniChatMessage("user", textQuestion));
-    //      }
-    //    } else {
-    //      if (StrUtil.isNotBlank(textQuestion)) {
-    //        history.add(new UniChatMessage("user", textQuestion));
-    //      }
-    //    }
+    // if (ApiChatSendType.youtube.equals(type)) {
+    // if (args != null && args.getUrl() != null) {
+    // history.add(new UniChatMessage("user", textQuestion, args));
+    // } else {
+    // history.add(new UniChatMessage("user", textQuestion));
+    // }
+    // } else {
+    // if (StrUtil.isNotBlank(textQuestion)) {
+    // history.add(new UniChatMessage("user", textQuestion));
+    // }
+    // }
 
     apiSendVo.setMessages(history);
     long answerId = SnowflakeIdUtils.id();
     if (stream) {
-      //SsePacket packet = new SsePacket(AiChatEventName.input, JsonUtils.toJson(history));
-      //Tio.bSend(channelContext, packet);
+      // SsePacket packet = new SsePacket(AiChatEventName.input,
+      // JsonUtils.toJson(history));
+      // Tio.bSend(channelContext, packet);
       if (ApiChatAskType.compare.equals(type)) {
         return multiModel(channelContext, apiSendVo, answerId, textQuestion);
       } else {
@@ -160,17 +160,19 @@ public class LLmChatDispatcherService {
    * @param answerId
    * @return
    */
-  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskVo apiSendVo, long answerId, String textQuesiton) {
+  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskVo apiSendVo, long answerId,
+      String textQuesiton) {
     CountDownLatch latch = new CountDownLatch(3);
     List<UniChatMessage> messages = apiSendVo.getMessages();
 
     long start = System.currentTimeMillis();
     List<Call> calls = new ArrayList<Call>();
-    //deepseek v3
+    // deepseek v3
     Threads.getTioExecutor().execute(() -> {
       try {
         OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_250324, messages, answerId);
-        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo, answerId, start, textQuesiton, latch);
+        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo,
+            answerId, start, textQuesiton, latch);
         String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
         Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo, callback);
         calls.add(call);
@@ -180,12 +182,13 @@ public class LLmChatDispatcherService {
 
     });
 
-    //gpt 4o
+    // gpt 4o
     Threads.getTioExecutor().execute(() -> {
       try {
         long id = SnowflakeIdUtils.id();
         OpenAiChatRequestVo genOpenAiRequestVo = genOpenAiRequestVo(OpenAiModels.GPT_4O, messages, id);
-        ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo, id, start, textQuesiton, latch);
+        ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo,
+            id, start, textQuesiton, latch);
         Call openAicall = OpenAiClient.chatCompletions(genOpenAiRequestVo, openAiCallback);
         calls.add(openAicall);
       } catch (Exception e) {
@@ -198,7 +201,8 @@ public class LLmChatDispatcherService {
       try {
         long id = SnowflakeIdUtils.id();
         GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, id);
-        ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiSendVo, id, start, textQuesiton, latch);
+        ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiSendVo,
+            id, start, textQuesiton, latch);
         Call geminiCall = GeminiClient.stream(GoogleModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
         calls.add(geminiCall);
       } catch (Exception e) {
@@ -212,7 +216,8 @@ public class LLmChatDispatcherService {
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, String textQuestion) {
+  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId,
+      String textQuestion) {
     Long sessionId = apiChatSendVo.getSession_id();
     String provider = apiChatSendVo.getProvider();
     String model = apiChatSendVo.getModel();
@@ -230,9 +235,11 @@ public class LLmChatDispatcherService {
         try {
           long start = System.currentTimeMillis();
 
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start, textQuestion);
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+              answerId, start, textQuestion);
           String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
-          Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
+          Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo,
+              callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -251,7 +258,8 @@ public class LLmChatDispatcherService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start, textQuestion);
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+              answerId, start, textQuestion);
           String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
           Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
@@ -266,7 +274,8 @@ public class LLmChatDispatcherService {
         try {
           long start = System.currentTimeMillis();
           GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
-          ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start, textQuestion);
+          ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext,
+              apiChatSendVo, answerId, start, textQuestion);
           Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
           ChatStreamCallCan.put(sessionId, geminiCall);
         } catch (Exception e) {
@@ -283,7 +292,8 @@ public class LLmChatDispatcherService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo, answerId, start, textQuestion);
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+              answerId, start, textQuestion);
           Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
@@ -308,7 +318,8 @@ public class LLmChatDispatcherService {
     // save to database
     TioThreadUtils.execute(() -> {
       String sanitizedJson = requestJson.replaceAll("\u0000", "");
-      Db.save(AgentTableNames.llm_chat_completion, Row.by("id", answerId).set("request", PgObjectUtils.json(sanitizedJson)));
+      Db.save(AgentTableNames.llm_chat_completion,
+          Row.by("id", answerId).set("request", PgObjectUtils.json(sanitizedJson)));
     });
     return chatRequestVo;
   }
@@ -363,7 +374,8 @@ public class LLmChatDispatcherService {
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
-      Db.save(AgentTableNames.llm_chat_completion, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
+      Db.save(AgentTableNames.llm_chat_completion,
+          Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
     });
     return geminiChatRequestVo;
 
