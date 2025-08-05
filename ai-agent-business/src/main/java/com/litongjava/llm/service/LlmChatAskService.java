@@ -58,7 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.sse.EventSource;
 
 @Slf4j
-public class LlmAiChatService {
+public class LlmChatAskService {
 
   private LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
   private WebPageService webPageService = Aop.get(WebPageService.class);

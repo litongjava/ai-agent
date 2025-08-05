@@ -9,7 +9,7 @@ import com.litongjava.chat.UniChatMessage;
 import com.litongjava.gemini.GoogleModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.ApiChatAskType;
-import com.litongjava.llm.service.LlmAiChatService;
+import com.litongjava.llm.service.LlmChatAskService;
 import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.model.body.RespBodyVo;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ApiChatAskHandler {
-  private LlmAiChatService llmAiChatService = Aop.get(LlmAiChatService.class);
+  private LlmChatAskService llmAiChatService = Aop.get(LlmChatAskService.class);
 
   public HttpResponse send(HttpRequest httpRequest) {
     HttpResponse response = TioRequestContext.getResponse();
