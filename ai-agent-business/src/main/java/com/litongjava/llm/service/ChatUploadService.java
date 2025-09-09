@@ -14,9 +14,10 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.table.services.ApiTable;
+import com.litongjava.tio.boot.admin.consts.StoragePlatformConst;
 import com.litongjava.tio.boot.admin.costants.TioBootAdminTableNames;
 import com.litongjava.tio.boot.admin.dao.SystemUploadFileDao;
-import com.litongjava.tio.boot.admin.services.SystemUploadFileService;
+import com.litongjava.tio.boot.admin.services.system.SystemUploadFileService;
 import com.litongjava.tio.boot.admin.utils.AwsS3Utils;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.http.common.UploadFile;
@@ -44,7 +45,8 @@ public class ChatUploadService {
         if (content == null) {
           return RespBodyVo.fail("un support file type");
         } else {
-          Row row = Row.by("id", id).set("name", uploadFile.getName()).set("content", content).set("md5", uploadResultVo.getMd5());
+          Row row = Row.by("id", id).set("name", uploadFile.getName()).set("content", content).set("md5",
+              uploadResultVo.getMd5());
           Db.save(AgentTableNames.chat_upload_file, row);
         }
       } catch (Exception e) {
@@ -111,7 +113,8 @@ public class ChatUploadService {
 
     TableInput kv = TableInput.create().set("name", originFilename).set("size", size).set("md5", md5)
         //
-        .set("platform", "aws s3").set("region_name", AwsS3Utils.regionName).set("bucket_name", AwsS3Utils.bucketName)
+        .set("platform", StoragePlatformConst.aws_s3).set("region_name", AwsS3Utils.regionName)
+        .set("bucket_name", AwsS3Utils.bucketName)
         //
         .set("target_name", targetName).set("file_id", etag);
 
@@ -123,7 +126,8 @@ public class ChatUploadService {
   }
 
   public String getUrl(String bucketName, String targetName) {
-    return Aop.get(SystemUploadFileService.class).getUrl(bucketName, targetName);
+    return Aop.get(SystemUploadFileService.class).getUrl(StoragePlatformConst.aws_s3, AwsS3Utils.regionName, bucketName,
+        targetName);
   }
 
   public UploadResultVo getUrlById(String id) {
@@ -133,7 +137,6 @@ public class ChatUploadService {
   public UploadResultVo getUrlById(long id) {
     return Aop.get(SystemUploadFileService.class).getUrlById(id);
   }
-
 
   public UploadResultVo getUrlByMd5(String md5) {
     return Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);

@@ -18,7 +18,7 @@ import com.litongjava.linux.CodeRequest;
 import com.litongjava.linux.JavaKitClient;
 import com.litongjava.llm.vo.ToolVo;
 import com.litongjava.template.PromptEngine;
-import com.litongjava.tio.boot.admin.services.AwsS3StorageService;
+import com.litongjava.tio.boot.admin.services.storage.AwsS3StorageService;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.http.common.UploadFile;
 import com.litongjava.tio.utils.base64.Base64Utils;
