@@ -5,9 +5,7 @@
     <artifactId>ai-agent</artifactId>
     <version>1.0.0</version>
   </parent>
-
-  <artifactId>ai-agent-business</artifactId>
-
+  <artifactId>agent-base</artifactId>
   <properties>
     <!-- 项目属性 -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -24,36 +22,6 @@
   </properties>
 
   <dependencies>
-
-    <dependency>
-      <groupId>com.litongjava</groupId>
-      <artifactId>agent-base</artifactId>
-      <version>1.0.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.litongjava</groupId>
-      <artifactId>java-native-media</artifactId>
-      <version>1.0.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.pdfbox</groupId>
-      <artifactId>pdfbox</artifactId>
-      <version>2.0.24</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.poi</groupId>
-      <artifactId>poi-ooxml</artifactId>
-      <version>5.2.5</version>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.15.0</version>
-    </dependency>
 
     <dependency>
       <groupId>com.alibaba</groupId>

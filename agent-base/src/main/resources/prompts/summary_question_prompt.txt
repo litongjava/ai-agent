@@ -1,0 +1,5 @@
+Create a concise, 3-16 word phrase as a header for the above query, strictly adhering to the 3-16 word limit and avoiding the use of the word 'title'
+If the input is in Chinese, return Chinese. If the input is in English, return English.
+If it is a writing task or a simple hi, hello rather than a question, you need to return `not_needed` as the response.
+Question: #(query)
+Summary:
