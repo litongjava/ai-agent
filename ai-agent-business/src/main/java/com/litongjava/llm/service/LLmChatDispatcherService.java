@@ -7,6 +7,7 @@ import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
 import com.litongjava.chat.ChatMessageArgs;
+import com.litongjava.chat.UniChatClient;
 import com.litongjava.chat.UniChatMessage;
 import com.litongjava.consts.ModelNames;
 import com.litongjava.consts.ModelPlatformName;
@@ -30,10 +31,13 @@ import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.llm.vo.ChatParamVo;
+import com.litongjava.openai.ChatProvider;
 import com.litongjava.openai.chat.OpenAiChatRequestVo;
 import com.litongjava.openai.chat.OpenAiChatResponseVo;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
+import com.litongjava.openrouter.OpenRouterConst;
+import com.litongjava.openrouter.OpenRouterModels;
 import com.litongjava.siliconflow.SiliconFlowConsts;
 import com.litongjava.siliconflow.SiliconFlowModels;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
@@ -174,7 +178,7 @@ public class LLmChatDispatcherService {
         ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo,
             answerId, start, textQuesiton, latch);
         String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-        Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo, callback);
+        Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo, callback);
         calls.add(call);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
@@ -261,13 +265,35 @@ public class LLmChatDispatcherService {
           ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
               answerId, start, textQuestion);
           String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-          Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PERFIX_URL, apiKey, chatRequestVo, callback);
+          Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
         }
       });
       return null;
+
+    } else if (provider.equals(ModelPlatformName.OPENROUTER)) {
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+
+      if (OpenRouterModels.QWEN_QWEN3_CODER.equals(model)) {
+        chatRequestVo.setProvider(ChatProvider.cerebras());
+      }
+
+      Threads.getTioExecutor().execute(() -> {
+        try {
+          long start = System.currentTimeMillis();
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+              answerId, start, textQuestion);
+          Call call = OpenAiClient.chatCompletions(OpenRouterConst.API_PREFIX_URL, UniChatClient.OPENROUTER_API_KEY,
+              chatRequestVo, callback);
+          ChatStreamCallCan.put(sessionId, call);
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
+        }
+      });
+      return null;
+
     } else if (ModelPlatformName.GOOGLE.equals(provider)) {
 
       Threads.getTioExecutor().execute(() -> {
