@@ -1,0 +1,77 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.litongjava</groupId>
+    <artifactId>ai-agent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+  <artifactId>ai-agent-base</artifactId>
+  <properties>
+    <!-- 项目属性 -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>1.8</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+
+    <!-- 版本属性 -->
+    <lombok-version>1.18.30</lombok-version>
+    <fastjson2.version>2.0.52</fastjson2.version>
+
+    <!-- 应用程序属性 -->
+    <final.name>web-hello</final.name>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>easyexcel</artifactId>
+      <version>4.0.3</version>
+    </dependency>
+
+
+    <!-- Lombok 用于简化代码 -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok-version}</version>
+      <optional>true</optional>
+      <scope>provided</scope>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.24</version>
+    </dependency>
+
+
+    <!-- Tio Boot 框架 -->
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>tio-boot-admin</artifactId>
+      <version>1.0.7</version>
+    </dependency>
+
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>2.17.100</version> <!-- 请检查并使用最新版本 -->
+    </dependency>
+
+    <dependency>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache-core</artifactId>
+      <version>2.6.11</version>
+    </dependency>
+
+    <!-- JUnit 用于测试 -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
