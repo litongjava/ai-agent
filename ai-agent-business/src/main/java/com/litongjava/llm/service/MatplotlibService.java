@@ -39,7 +39,7 @@ public class MatplotlibService {
     }
 
     String code = CodeBlockUtils.parsePythonCode(text);
-    if (StrUtil.isBlank(code)) {
+    if (StrUtil.isBlank(code) || !"not_needed".equals(code)) {
       if (channelContext != null) {
         Kv by = Kv.by("content", text).set("model", "qwen3");
         SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));

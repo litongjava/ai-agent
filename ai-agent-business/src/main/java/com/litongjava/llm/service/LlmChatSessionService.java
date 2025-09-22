@@ -16,11 +16,11 @@ import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
 public class LlmChatSessionService {
 
-  public TableResult<Kv> create(String userId, String name, Long school_id, String type, Integer chat_type, Long appId) {
+  public TableResult<Kv> create(String userId, String name, Long school_id, String type, Integer chat_type,
+      Long appId) {
 
     long id = SnowflakeIdUtils.id();
     Row record = Row.by("id", id);
-    record.setTableName(AgentTableNames.llm_chat_session);
     record.set("name", name);
     record.set("user_id", userId);
     record.set("school_id", school_id);
@@ -29,7 +29,7 @@ public class LlmChatSessionService {
     if (appId != null) {
       record.set("app_id", appId);
     }
-    boolean save = Db.save(record);
+    boolean save = Db.save(AgentTableNames.llm_chat_session, record);
     if (save) {
       return TableResult.ok(Kv.by("id", id).set("name", name));
     } else {

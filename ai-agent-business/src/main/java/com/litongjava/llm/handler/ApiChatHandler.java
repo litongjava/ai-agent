@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ApiChatHandler {
+  private LlmChatSessionService llmChatSessionService = Aop.get(LlmChatSessionService.class);
 
   public HttpResponse recommend(HttpRequest request) {
     HttpResponse response = TioRequestContext.getResponse();
@@ -115,7 +116,7 @@ public class ApiChatHandler {
     }
 
     Long school_id = Long.parseLong(schoolIdString);
-    TableResult<Kv> tr = Aop.get(LlmChatSessionService.class).create(userId, name, school_id, type, chatType, appId);
+    TableResult<Kv> tr = llmChatSessionService.create(userId, name, school_id, type, chatType, appId);
     if (tr.isOk()) {
       respBodyVo = RespBodyVo.ok(tr.getData());
     } else {
