@@ -5,7 +5,7 @@
     <artifactId>ai-agent</artifactId>
     <version>1.0.0</version>
   </parent>
-  <artifactId>agent-base</artifactId>
+  <artifactId>ai-agent-base</artifactId>
   <properties>
     <!-- 项目属性 -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
