@@ -20,7 +20,6 @@ import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.consts.ApiChatSendCmd;
-import com.litongjava.llm.consts.ResponsePrompt;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.utils.AgentBotQuestionUtils;
 import com.litongjava.llm.vo.AiChatResponseVo;
@@ -148,6 +147,18 @@ public class LlmChatAskService {
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
+    }
+
+    if (ApiChatAskType.math.equals(type)) {
+      if (StrUtil.isNotBlank(inputQestion)) {
+        String fileName = "math_prompt.txt";
+        // Kv by = Kv.by("data", inputQestion);
+        augmentedQuestion = Aop.get(PromptService.class).render(fileName);
+        history_enabled = false;
+      } else {
+        return RespBodyVo.fail("input question can not be empty");
+      }
+
     } else if (ApiChatAskType.celebrity.equals(type)) {
       String name = chatSendArgs.getName();
       String institution = chatSendArgs.getInstitution();
@@ -220,24 +231,24 @@ public class LlmChatAskService {
       }
     }
 
-    if (histories != null && histories.size() > 30) {
-      String message = ResponsePrompt.defaultFallBackMessage + " Your new question might be:" + augmentedQuestion;
-
-      long answerId = SnowflakeIdUtils.id();
-      aiChatResponseVo.setAnswerId(answerId);
-
-      llmChatHistoryService.saveAssistant(answerId, sessionId, message);
-      Kv kv = Kv.by("answer_id", answerId);
-      if (stream) {
-        SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", message)));
-        Tio.bSend(channelContext, ssePacket);
-        SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
-        Tio.send(channelContext, packet);
-        SseEmitter.closeSeeConnection(channelContext);
-      }
-      aiChatResponseVo.setContent(message);
-      return RespBodyVo.ok(message);
-    }
+//    if (histories != null && histories.size() > 30) {
+//      String message = ResponsePrompt.defaultFallBackMessage + " Your new question might be:" + augmentedQuestion;
+//
+//      long answerId = SnowflakeIdUtils.id();
+//      aiChatResponseVo.setAnswerId(answerId);
+//
+//      llmChatHistoryService.saveAssistant(answerId, sessionId, message);
+//      Kv kv = Kv.by("answer_id", answerId);
+//      if (stream) {
+//        SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(Kv.by("content", message)));
+//        Tio.bSend(channelContext, ssePacket);
+//        SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
+//        Tio.send(channelContext, packet);
+//        SseEmitter.closeSeeConnection(channelContext);
+//      }
+//      aiChatResponseVo.setContent(message);
+//      return RespBodyVo.ok(message);
+//    }
 
     if (stream && histories != null) {
       SsePacket ssePacket = new SsePacket(AiChatEventName.progress,

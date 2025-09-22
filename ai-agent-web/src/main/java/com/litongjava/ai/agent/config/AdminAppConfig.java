@@ -5,6 +5,7 @@ import com.litongjava.annotation.Initialization;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.handler.ApiChatAskHandler;
 import com.litongjava.llm.handler.ApiChatHandler;
+import com.litongjava.llm.handler.GeogebraChatHandler;
 import com.litongjava.tio.boot.admin.config.TioAdminControllerConfiguration;
 import com.litongjava.tio.boot.admin.config.TioAdminDbConfiguration;
 import com.litongjava.tio.boot.admin.config.TioAdminEhCacheConfig;
@@ -40,6 +41,9 @@ public class AdminAppConfig {
       
       ApiChatHandler apiChatHandler = Aop.get(ApiChatHandler.class);
       
+      GeogebraChatHandler geogebraChatHandler = new GeogebraChatHandler();
+      
+      
       r.add("/api/v1/chat/recommend", apiChatHandler::recommend);
       r.add("/api/v1/chat/create", apiChatHandler::createSession);
       r.add("/api/v1/chat/list", apiChatHandler::listSession);
@@ -50,6 +54,7 @@ public class AdminAppConfig {
       r.add("/api/v1/chat/stop", apiChatHandler::stop);
       ApiChatAskHandler apiChatAskHandler = Aop.get(ApiChatAskHandler.class);
       r.add("/api/v1/chat/ask", apiChatAskHandler::send);
+      r.add("/api/v1/geogebra/chat", geogebraChatHandler::chat);
     }
 
 

@@ -17,4 +17,15 @@ public class PromptService {
     }
     return textQuestion;
   }
+  
+  public String render(String key) {
+    String textQuestion;
+    boolean b = EnvUtils.getBoolean(AgentConfigKeys.AI_PROMPT_LOAD_FROM_DB);
+    if (b) {
+      textQuestion = PromptEngine.renderToStringFromDb(key);
+    } else {
+      textQuestion = PromptEngine.renderToString(key);
+    }
+    return textQuestion;
+  }
 }

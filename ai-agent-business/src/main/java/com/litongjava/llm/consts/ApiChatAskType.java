@@ -2,6 +2,7 @@ package com.litongjava.llm.consts;
 
 public interface ApiChatAskType {
   String general = "general";
+  String math = "math";
   String translator = "translator";
   String english_vocabulary = "english_vocabulary";
   String english_sentence = "english_sentence";
