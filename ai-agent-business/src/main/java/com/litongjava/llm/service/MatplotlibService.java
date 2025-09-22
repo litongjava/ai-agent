@@ -39,12 +39,15 @@ public class MatplotlibService {
     }
 
     String code = CodeBlockUtils.parsePythonCode(text);
-    if (StrUtil.isBlank(code) || !"not_needed".equals(code)) {
+    if (StrUtil.isBlank(code)) {
       if (channelContext != null) {
         Kv by = Kv.by("content", text).set("model", "qwen3");
         SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));
         Tio.send(channelContext, ssePacket);
       }
+      return null;
+    }
+    if ("not_needed".equals(code)) {
       return null;
     }
     ProcessResult result = null;
@@ -70,7 +73,6 @@ public class MatplotlibService {
         e.printStackTrace();
       }
     }
-
     List<String> images = result.getImages();
     if (images != null) {
       List<String> imageUrls = new ArrayList<>(images.size());
