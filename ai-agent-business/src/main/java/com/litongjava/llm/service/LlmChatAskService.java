@@ -149,17 +149,7 @@ public class LlmChatAskService {
       }
     }
 
-    if (ApiChatAskType.math.equals(type)) {
-      if (StrUtil.isNotBlank(inputQestion)) {
-        String fileName = "math_prompt.txt";
-        // Kv by = Kv.by("data", inputQestion);
-        augmentedQuestion = Aop.get(PromptService.class).render(fileName);
-        history_enabled = false;
-      } else {
-        return RespBodyVo.fail("input question can not be empty");
-      }
-
-    } else if (ApiChatAskType.celebrity.equals(type)) {
+    else if (ApiChatAskType.celebrity.equals(type)) {
       String name = chatSendArgs.getName();
       String institution = chatSendArgs.getInstitution();
       inputQestion = name + " at " + institution;
@@ -448,6 +438,11 @@ public class LlmChatAskService {
       String systemPrompt = tutor(channelContext, augmentedQuestion, historyMessage, schoolDict, model);
       chatParamVo.setSystemPrompt(systemPrompt);
 
+    } else if (ApiChatAskType.math.equals(type)) {
+      String fileName = "math_prompt.txt";
+      // Kv by = Kv.by("data", inputQestion);
+      String systemPrompt = Aop.get(PromptService.class).render(fileName);
+      chatParamVo.setSystemPrompt(systemPrompt);
     } else if (ApiChatAskType.youtube.equals(type)) {
       if (ApiChatSendCmd.summary.equals(cmd)) {
         String systemPrompt = PromptEngine.renderToStringFromDb("youtube_summary_prompt.txt");
