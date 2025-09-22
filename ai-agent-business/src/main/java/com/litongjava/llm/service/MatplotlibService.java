@@ -32,43 +32,39 @@ public class MatplotlibService {
     if (StrUtil.isBlank(text)) {
       return null;
     }
+    ProcessResult result = null;
     for (int i = 0; i < 10; i++) {
       long id = SnowflakeIdUtils.id();
       ExecuteCodeRequest codeRequest = new ExecuteCodeRequest(code);
       codeRequest.setId(id);
       log.info("run code {}", id);
       try {
-        ProcessResult result = JavaKitClient.executePythonCode(codeRequest);
+        result = JavaKitClient.executePythonCode(codeRequest);
         if (result != null) {
           String stdErr = result.getStdErr();
           if (StrUtil.isNotBlank(stdErr)) {
             code = pythonCodeService.fixCodeError(stdErr, code);
-            codeRequest = new ExecuteCodeRequest(code);
-            id = SnowflakeIdUtils.id();
-            codeRequest.setId(id);
-            log.info("run code {}", id);
-            result = JavaKitClient.executePythonCode(codeRequest);
+            continue;
           }
-
-          List<String> images = result.getImages();
-          if (images != null) {
-            List<String> imageUrls = new ArrayList<>(images.size());
-            for (String imageBase64Code : images) {
-              ImageVo decodeImage = Base64Utils.decodeImage(imageBase64Code);
-              UploadFile uploadFile = new UploadFile("matplotlib." + decodeImage.getExtension(), decodeImage.getData());
-              UploadResultVo resultVo = Aop.get(AwsS3StorageService.class).uploadFile("matplotlib", uploadFile);
-              String url = resultVo.getUrl();
-              imageUrls.add(url);
-            }
-            result.setImages(imageUrls);
-          }
-          return result;
         }
+        break;
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
 
-    return null;
+    List<String> images = result.getImages();
+    if (images != null) {
+      List<String> imageUrls = new ArrayList<>(images.size());
+      for (String imageBase64Code : images) {
+        ImageVo decodeImage = Base64Utils.decodeImage(imageBase64Code);
+        UploadFile uploadFile = new UploadFile("matplotlib." + decodeImage.getExtension(), decodeImage.getData());
+        UploadResultVo resultVo = Aop.get(AwsS3StorageService.class).uploadFile("matplotlib", uploadFile);
+        String url = resultVo.getUrl();
+        imageUrls.add(url);
+      }
+      result.setImages(imageUrls);
+    }
+    return result;
   }
 }
