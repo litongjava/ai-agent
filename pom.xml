@@ -13,8 +13,8 @@
   </properties>
 
   <modules>
+    <module>ai-agent-base</module>
     <module>ai-agent-business</module>
     <module>ai-agent-web</module>
-    <module>agent-base</module>
   </modules>
 </project>
