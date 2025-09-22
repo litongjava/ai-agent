@@ -27,9 +27,10 @@ import com.litongjava.tio.utils.thread.TioThreadUtils;
 public class LlmChatHistoryService {
 
   public RespBodyVo getHistory(Long session_id, int pageNo, int pageSize) {
-    TableInput ti = TableInput.create().setColumns("id,role,model,content,liked,metadata,citations,images,create_time")
+    TableInput ti = TableInput.create()
+        .setColumns("id,role,model,content,liked,metadata,citations,images,create_time,code_result")
         //
-        .setJsonFields("metadata,citations,images")
+        .setJsonFields("metadata,citations,images,code_result")
         //
         .set("session_id", session_id).set("hidden", false)
         //
@@ -53,20 +54,23 @@ public class LlmChatHistoryService {
   }
 
   public TableResult<Kv> saveUser(Long id, Long sessionId, String textQuestion) {
-    TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id", sessionId);
+    TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id",
+        sessionId);
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;
   }
 
   public TableResult<Kv> saveUser(long id, Long sessionId, String textQuestion, List<UploadResultVo> fileInfo) {
-    TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id", sessionId);
+    TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id",
+        sessionId);
     ti.set("type", AgentMessageType.FILE).set("metadata", fileInfo);
     ti.setJsonFields("metadata");
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;
   }
 
-  public void saveUser(long questionId, Long sessionId, String inputQestion, List<UploadResultVo> fileInfo, ChatMessageArgs chatSendArgs) {
+  public void saveUser(long questionId, Long sessionId, String inputQestion, List<UploadResultVo> fileInfo,
+      ChatMessageArgs chatSendArgs) {
     Row ti = Row.by("id", questionId).set("session_id", sessionId).set("content", inputQestion).set("role", "user");
     if (fileInfo != null) {
       ti.set("type", AgentMessageType.FILE).set("metadata", PgObjectUtils.json(fileInfo));
@@ -79,7 +83,8 @@ public class LlmChatHistoryService {
   }
 
   public TableResult<Kv> saveAssistant(Long id, Long sessionId, String message) {
-    TableInput ti = TableInput.by("id", id).set("content", message).set("role", "assistant").set("session_id", sessionId);
+    TableInput ti = TableInput.by("id", id).set("content", message).set("role", "assistant").set("session_id",
+        sessionId);
     TableResult<Kv> ts = ApiTable.save(AgentTableNames.llm_chat_history, ti);
     return ts;
   }

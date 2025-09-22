@@ -106,7 +106,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
         boolean gen = EnvUtils.getBoolean("chat.tutor.gen.functiom.graph", false);
         if (gen && latch != null && latch.getCount() == 1 && ApiChatAskType.tutor.equals(apiChatSendVo.getType())) {
           try {
-            ProcessResult codeResult = matplotlibService.generateMatplot(textQuestion, content);
+            ProcessResult codeResult = matplotlibService.generateMatplot(channelContext,textQuestion, content);
             if (codeResult != null) {
               String json = JsonUtils.toJson(codeResult);
               SsePacket packet = new SsePacket(AiChatEventName.code_result, json);

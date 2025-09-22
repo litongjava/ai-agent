@@ -104,7 +104,7 @@ public class ChatOpenAiStreamCommonCallback implements Callback {
         boolean genereateGraph = envConfigService.isGenerateGraph(latch, chatAskVo.getType());
         if (genereateGraph) {
           try {
-            ProcessResult codeResult = matplotlibService.generateMatplot(textQuestion, content);
+            ProcessResult codeResult = matplotlibService.generateMatplot(channelContext, textQuestion, content);
             if (codeResult != null) {
               String json = JsonUtils.toSkipNullJson(codeResult);
               SsePacket packet = new SsePacket(AiChatEventName.code_result, json);

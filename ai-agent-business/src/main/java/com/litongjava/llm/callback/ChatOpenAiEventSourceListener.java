@@ -34,7 +34,7 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
 
   private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
   private MatplotlibService matplotlibService = Aop.get(MatplotlibService.class);
-  
+
   private final ChannelContext channelContext;
   private final ChatAskVo apiChatSendVo;
   private final long answerId;
@@ -47,11 +47,13 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
   private boolean sentCitations = false;
   private boolean continueSend = true;
 
-  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs, String textQuestion) {
+  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId,
+      long startTs, String textQuestion) {
     this(channelContext, apiChatSendVo, answerId, startTs, textQuestion, null);
   }
 
-  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs, String textQuestion, CountDownLatch latch) {
+  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId,
+      long startTs, String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
@@ -134,13 +136,15 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
     try {
       boolean genGraph = EnvUtils.getBoolean("chat.tutor.gen.functiom.graph", false);
       if (genGraph && latch != null && latch.getCount() == 1 && ApiChatAskType.tutor.equals(apiChatSendVo.getType())) {
-        codeResult = matplotlibService.generateMatplot(textQuestion, completionContent.toString());
+        codeResult = matplotlibService.generateMatplot(channelContext, textQuestion, completionContent.toString());
         if (codeResult != null) {
           Tio.bSend(channelContext, new SsePacket(AiChatEventName.code_result, JsonUtils.toJson(codeResult)));
         }
-        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model, completionContent.toString(), codeResult);
+        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model,
+            completionContent.toString(), codeResult);
       } else {
-        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model, completionContent.toString());
+        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model,
+            completionContent.toString());
       }
     } catch (Exception ex) {
       log.error("Error saving assistant result", ex);
@@ -155,12 +159,14 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
 
     // 4. 后续提问生成 & 关闭 SSE
     if (latch == null) {
-      Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, new ChatCompletionVo(model, completionContent.toString()));
+      Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo,
+          new ChatCompletionVo(model, completionContent.toString()));
       SseEmitter.closeSeeConnection(channelContext);
     } else {
       latch.countDown();
       if (latch.getCount() == 0) {
-        Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, new ChatCompletionVo(model, completionContent.toString()));
+        Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo,
+            new ChatCompletionVo(model, completionContent.toString()));
         SseEmitter.closeSeeConnection(channelContext);
       }
     }

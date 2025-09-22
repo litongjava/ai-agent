@@ -3,16 +3,22 @@ package com.litongjava.llm.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jfinal.kit.Kv;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.linux.ExecuteCodeRequest;
 import com.litongjava.linux.JavaKitClient;
+import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.tio.boot.admin.services.storage.AwsS3StorageService;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
+import com.litongjava.tio.core.ChannelContext;
+import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.UploadFile;
+import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.utils.base64.Base64Utils;
 import com.litongjava.tio.utils.commandline.ProcessResult;
 import com.litongjava.tio.utils.encoder.ImageVo;
 import com.litongjava.tio.utils.hutool.StrUtil;
+import com.litongjava.tio.utils.json.JsonUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 import com.litongjava.utils.CodeBlockUtils;
 
@@ -23,13 +29,22 @@ public class MatplotlibService {
 
   private PythonCodeService pythonCodeService = Aop.get(PythonCodeService.class);
 
-  public ProcessResult generateMatplot(String quesiton, String answer) {
+  public ProcessResult generateMatplot(ChannelContext channelContext, String quesiton, String answer) {
     String text = pythonCodeService.generateMatplotlibCode(quesiton, answer);
     if (StrUtil.isBlank(text)) {
       return null;
     }
+    if (text.equals("not_needed")) {
+      return null;
+    }
+
     String code = CodeBlockUtils.parsePythonCode(text);
-    if (StrUtil.isBlank(text)) {
+    if (StrUtil.isBlank(code)) {
+      if (channelContext != null) {
+        Kv by = Kv.by("content", text).set("model", "qwen3");
+        SsePacket ssePacket = new SsePacket(AiChatEventName.delta, JsonUtils.toJson(by));
+        Tio.send(channelContext, ssePacket);
+      }
       return null;
     }
     ProcessResult result = null;
@@ -40,6 +55,9 @@ public class MatplotlibService {
       log.info("run code {}", id);
       try {
         result = JavaKitClient.executePythonCode(codeRequest);
+        if (result == null) {
+          continue;
+        }
         if (result != null) {
           String stdErr = result.getStdErr();
           if (StrUtil.isNotBlank(stdErr)) {
