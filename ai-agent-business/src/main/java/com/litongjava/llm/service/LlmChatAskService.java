@@ -523,7 +523,7 @@ public class LlmChatAskService {
       SchoolDict schoolDict, String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
-    return PromptEngine.renderToStringFromDb("tutor_prompt.txt", kv);
+    return Aop.get(PromptService.class).render("general_prompt.txt", kv);
   }
 
   private String generalPrompt() {

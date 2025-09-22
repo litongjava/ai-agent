@@ -45,7 +45,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
   private ChatAskVo apiChatSendVo;
   private long answerId, start;
   private CountDownLatch latch;
-  private ChatCallbackVo callbackVo;
+  private ChatCompletionVo callbackVo;
   private String textQuestion;
 
   public ChatGeminiStreamCommonCallback(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long start,
@@ -98,7 +98,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
         Tio.bSend(channelContext, ssePacket);
         return;
       }
-      ChatCallbackVo success = onSuccess(channelContext, responseBody, start);
+      ChatCompletionVo success = onSuccess(channelContext, responseBody, start);
       this.callbackVo = success;
 
       if (success != null && !success.getContent().isEmpty()) {
@@ -167,7 +167,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
    * @return 完整内容
    * @throws IOException
    */
-  public ChatCallbackVo onSuccess(ChannelContext channelContext, ResponseBody responseBody, Long start) throws IOException {
+  public ChatCompletionVo onSuccess(ChannelContext channelContext, ResponseBody responseBody, Long start) throws IOException {
     String model = null;
     StringBuffer completionContent = new StringBuffer();
     BufferedSource source = responseBody.source();
@@ -218,7 +218,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
 
     long end = System.currentTimeMillis();
     log.info("finish llm in {} {} {}(ms)", apiChatSendVo.getSession_id(), answerId, (end - start));
-    return new ChatCallbackVo(model, completionContent.toString());
+    return new ChatCompletionVo(model, completionContent.toString());
   }
 
   private void send(ChannelContext channelContext, SsePacket ssePacket) {

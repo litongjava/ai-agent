@@ -155,12 +155,12 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
 
     // 4. 后续提问生成 & 关闭 SSE
     if (latch == null) {
-      Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, new ChatCallbackVo(model, completionContent.toString()));
+      Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, new ChatCompletionVo(model, completionContent.toString()));
       SseEmitter.closeSeeConnection(channelContext);
     } else {
       latch.countDown();
       if (latch.getCount() == 0) {
-        Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, new ChatCallbackVo(model, completionContent.toString()));
+        Aop.get(FollowUpQuestionService.class).generate(channelContext, apiChatSendVo, new ChatCompletionVo(model, completionContent.toString()));
         SseEmitter.closeSeeConnection(channelContext);
       }
     }
