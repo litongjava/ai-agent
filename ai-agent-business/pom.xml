@@ -25,6 +25,13 @@
 
   <dependencies>
 
+    <!-- Tio Boot 框架 -->
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>tio-boot-admin</artifactId>
+      <version>1.0.7</version>
+    </dependency>
+
     <dependency>
       <groupId>com.litongjava</groupId>
       <artifactId>agent-base</artifactId>
@@ -78,13 +85,6 @@
       <version>42.2.24</version>
     </dependency>
 
-
-    <!-- Tio Boot 框架 -->
-    <dependency>
-      <groupId>com.litongjava</groupId>
-      <artifactId>tio-boot-admin</artifactId>
-      <version>1.0.6</version>
-    </dependency>
 
     <dependency>
       <groupId>software.amazon.awssdk</groupId>

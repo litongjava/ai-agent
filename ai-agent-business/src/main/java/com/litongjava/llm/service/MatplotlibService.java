@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.litongjava.jfinal.aop.Aop;
-import com.litongjava.linux.CodeRequest;
+import com.litongjava.linux.ExecuteCodeRequest;
 import com.litongjava.linux.JavaKitClient;
 import com.litongjava.llm.vo.ToolVo;
 import com.litongjava.tio.boot.admin.services.storage.AwsS3StorageService;
@@ -46,7 +46,7 @@ public class MatplotlibService {
     }
     if (toolVo != null && "execute_python".equals(toolVo.getTool())) {
       String code = toolVo.getCode();
-      CodeRequest codeRequest = new CodeRequest(code);
+      ExecuteCodeRequest codeRequest = new ExecuteCodeRequest(code);
       long id = SnowflakeIdUtils.id();
       codeRequest.setId(id);
       log.info("run code {}", id);
@@ -57,7 +57,7 @@ public class MatplotlibService {
           String prompt = "python代码执行过程中出现了错误,请修正错误并仅输出修改后的代码,错误信息:%s";
           prompt = String.format(prompt, stdErr);
           code = pythonCodeService.fixCodeError(prompt, code);
-          codeRequest = new CodeRequest(code);
+          codeRequest = new ExecuteCodeRequest(code);
           id = SnowflakeIdUtils.id();
           codeRequest.setId(id);
           log.info("run code {}", id);

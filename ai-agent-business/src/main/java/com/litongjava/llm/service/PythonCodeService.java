@@ -4,7 +4,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 
+import com.litongjava.chat.UniChatClient;
+import com.litongjava.chat.UniChatRequest;
+import com.litongjava.chat.UniChatResponse;
 import com.litongjava.chat.UniResponseSchema;
+import com.litongjava.consts.ModelPlatformName;
 import com.litongjava.gemini.GeminiCandidateVo;
 import com.litongjava.gemini.GeminiChatRequestVo;
 import com.litongjava.gemini.GeminiChatResponseVo;
@@ -14,6 +18,8 @@ import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.gemini.GoogleModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.vo.ToolVo;
+import com.litongjava.openai.ChatProvider;
+import com.litongjava.openrouter.OpenRouterModels;
 import com.litongjava.template.PromptEngine;
 import com.litongjava.tio.utils.hutool.StrUtil;
 import com.litongjava.tio.utils.json.JsonUtils;
@@ -22,11 +28,24 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PythonCodeService {
-  
+
   public String generateMatplotlibCode(String quesiton, String answer) {
     String systemPrompt = PromptEngine.renderToString("python_code_prompt.txt");
     String userPrompt = "请根据下面的用户的问题和答案使用python代码绘制函数图像帮助用户更好的理解问题.如果无需绘制函数图像,请返回`not_needed`";
 
+    UniChatRequest uniChatRequest = new UniChatRequest(systemPrompt);
+    uniChatRequest.setUserPrompts(userPrompt, quesiton, answer);
+
+    uniChatRequest.setPlatform(ModelPlatformName.OPENROUTER).setModel(OpenRouterModels.QWEN_QWEN3_CODER)
+        //
+        .setProvider(ChatProvider.cerebras()).setTemperature(0f);
+
+    // useGemini(quesiton, answer, systemPrompt, userPrompt);
+    UniChatResponse response = UniChatClient.generate(uniChatRequest);
+    return response.getMessage().getContent();
+  }
+
+  private String useGemini(String quesiton, String answer, String systemPrompt, String userPrompt) {
     // 1. Construct request body
     GeminiChatRequestVo reqVo = new GeminiChatRequestVo();
     reqVo.setUserPrompts(userPrompt, quesiton, answer);
@@ -51,9 +70,9 @@ public class PythonCodeService {
     }
     return null;
   }
-  
+
   public String fixCodeError(String userPrompt, String code) {
-    
+
     String text = generateMatplotlibCode(userPrompt, code);
     if (StrUtil.isBlank(text)) {
       return null;
@@ -73,6 +92,5 @@ public class PythonCodeService {
       return null;
     }
   }
-
 
 }
