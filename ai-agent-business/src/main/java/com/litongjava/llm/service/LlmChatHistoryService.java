@@ -48,7 +48,7 @@ public class LlmChatHistoryService {
   }
 
   public List<Row> getHistory(Long sessionId) {
-    String sql = "select role,type,content,metadata,args,create_time from %s where session_id =? order by create_time";
+    String sql = "select role,type,content,metadata,code_result,args,create_time from %s where session_id =? order by create_time";
     sql = String.format(sql, AgentTableNames.llm_chat_history);
     return Db.find(sql, sessionId);
   }
