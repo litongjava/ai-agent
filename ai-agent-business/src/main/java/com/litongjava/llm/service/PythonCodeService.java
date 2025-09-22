@@ -1,7 +1,5 @@
 package com.litongjava.llm.service;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 
 import com.litongjava.chat.UniChatClient;
@@ -16,13 +14,9 @@ import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GeminiGenerationConfig;
 import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.gemini.GoogleModels;
-import com.litongjava.jfinal.aop.Aop;
-import com.litongjava.llm.vo.ToolVo;
 import com.litongjava.openai.ChatProvider;
 import com.litongjava.openrouter.OpenRouterModels;
 import com.litongjava.template.PromptEngine;
-import com.litongjava.tio.utils.hutool.StrUtil;
-import com.litongjava.tio.utils.json.JsonUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,26 +65,23 @@ public class PythonCodeService {
     return null;
   }
 
-  public String fixCodeError(String userPrompt, String code) {
+  public String fixCodeError(String stdErr, String code) {
 
-    String text = generateMatplotlibCode(userPrompt, code);
-    if (StrUtil.isBlank(text)) {
-      return null;
-    }
-    ToolVo toolVo = null;
-    try {
-      toolVo = JsonUtils.parse(text, ToolVo.class);
-      return toolVo.getCode();
-    } catch (Exception e) {
-      log.error("text:{}", text, e.getMessage(), e);
-      StringWriter stringWriter = new StringWriter();
-      PrintWriter printWriter = new PrintWriter(stringWriter);
-      e.printStackTrace(printWriter);
-      String stackTrace = stringWriter.toString();
-      String msg = "code:" + text + ",stackTrace" + stackTrace;
-      Aop.get(AgentNotificationService.class).sendError(msg);
-      return null;
-    }
+    String prompt = "python代码执行过程中出现了错误,请修正错误并仅输出修改后的代码,错误信息:%s";
+    prompt = String.format(prompt, stdErr);
+
+    String systemPrompt = PromptEngine.renderToString("python_code_prompt.txt");
+
+    UniChatRequest uniChatRequest = new UniChatRequest(systemPrompt);
+    uniChatRequest.setUserPrompts(prompt);
+
+    uniChatRequest.setPlatform(ModelPlatformName.OPENROUTER).setModel(OpenRouterModels.QWEN_QWEN3_CODER)
+        //
+        .setProvider(ChatProvider.cerebras()).setTemperature(0f);
+
+    // useGemini(quesiton, answer, systemPrompt, userPrompt);
+    UniChatResponse response = UniChatClient.generate(uniChatRequest);
+    return response.getMessage().getContent();
   }
 
 }
