@@ -25,13 +25,6 @@
 
   <dependencies>
 
-    <!-- Tio Boot 框架 -->
-    <dependency>
-      <groupId>com.litongjava</groupId>
-      <artifactId>tio-boot-admin</artifactId>
-      <version>1.0.7</version>
-    </dependency>
-
     <dependency>
       <groupId>com.litongjava</groupId>
       <artifactId>agent-base</artifactId>
