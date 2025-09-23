@@ -26,4 +26,5 @@ public interface AiChatEventName {
   String social_media = "social_media";
   String suggested_questions = "suggested_questions";
   String code_result = "code_result";
+  String code_error = "code_error";
 }

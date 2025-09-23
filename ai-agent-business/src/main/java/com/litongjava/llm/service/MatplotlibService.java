@@ -64,6 +64,12 @@ public class MatplotlibService {
         if (result != null) {
           String stdErr = result.getStdErr();
           if (StrUtil.isNotBlank(stdErr)) {
+            if (channelContext != null) {
+              Kv by = Kv.by("err", stdErr);
+              SsePacket ssePacket = new SsePacket(AiChatEventName.code_error, JsonUtils.toJson(by));
+              Tio.send(channelContext, ssePacket);
+            }
+
             code = pythonCodeService.fixCodeError(stdErr, code);
             continue;
           }
