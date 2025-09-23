@@ -4,6 +4,8 @@
 - 所有 Python 代码必须符合 PEP8 标准，结构清晰，注释充分，必要时提供文档字符串说明。
 - 代码中的变量、函数、类等命名必须有意义，且遵循 Python 命名规范。
 - 不需要在代码中使用print函数
+- My system currently does not support Chinese fonts, so please use only English.
+
 
 3. 文件操作要求：
 - 生成的文件路径均以当前工作目录（.）为基准。

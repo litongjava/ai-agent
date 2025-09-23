@@ -62,10 +62,11 @@ public class MatplotlibService {
           continue;
         }
         if (result != null) {
+          List<String> images = result.getImages();
           String stdErr = result.getStdErr();
-          if (StrUtil.isNotBlank(stdErr)) {
+          if (images.size() < 1) {
             if (channelContext != null) {
-              Kv by = Kv.by("err", stdErr);
+              Kv by = Kv.by("content", stdErr).set("model", "qwen3");
               SsePacket ssePacket = new SsePacket(AiChatEventName.code_error, JsonUtils.toJson(by));
               Tio.send(channelContext, ssePacket);
             }
