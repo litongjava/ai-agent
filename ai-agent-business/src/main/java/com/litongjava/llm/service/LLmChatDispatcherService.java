@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.agent.consts.AgentLLMTableNames;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatClient;
 import com.litongjava.chat.UniChatMessage;
@@ -25,7 +26,6 @@ import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.callback.ChatGeminiStreamCommonCallback;
 import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
 import com.litongjava.llm.can.ChatStreamCallCan;
-import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.vo.AiChatResponseVo;
@@ -344,7 +344,7 @@ public class LLmChatDispatcherService {
     // save to database
     TioThreadUtils.execute(() -> {
       String sanitizedJson = requestJson.replaceAll("\u0000", "");
-      Db.save(AgentTableNames.llm_chat_completion,
+      Db.save(AgentLLMTableNames.llm_chat_completion,
           Row.by("id", answerId).set("request", PgObjectUtils.json(sanitizedJson)));
     });
     return chatRequestVo;
@@ -400,7 +400,7 @@ public class LLmChatDispatcherService {
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
-      Db.save(AgentTableNames.llm_chat_completion,
+      Db.save(AgentLLMTableNames.llm_chat_completion,
           Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
     });
     return geminiChatRequestVo;

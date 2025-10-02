@@ -27,7 +27,7 @@
 
     <dependency>
       <groupId>com.litongjava</groupId>
-      <artifactId>ai-agent-base</artifactId>
+      <artifactId>ai-agent-memory</artifactId>
       <version>1.0.0</version>
     </dependency>
 

@@ -7,19 +7,19 @@ import java.util.stream.Collectors;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.jfinal.kit.Kv;
+import com.litongjava.agent.consts.AgentLLMTableNames;
+import com.litongjava.agent.service.VectorService;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
-import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.LlmChatSessionService;
 import com.litongjava.llm.service.LlmQuestionRecommendService;
 import com.litongjava.llm.service.RunningNotificationService;
 import com.litongjava.llm.service.SearchPromptService;
-import com.litongjava.llm.service.VectorService;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
 import com.litongjava.openai.embedding.EmbeddingResponseVo;
@@ -289,11 +289,11 @@ public class ApiChatHandler {
 
     String userId = TioRequestContext.getUserIdString();
 
-    boolean exists = Db.exists(AgentTableNames.llm_chat_history, "id", questionId);
+    boolean exists = Db.exists(AgentLLMTableNames.llm_chat_history, "id", questionId);
     if (!exists) {
       return response.fail(RespBodyVo.fail("invalid quesion id"));
     }
-    exists = Db.exists(AgentTableNames.llm_chat_history, "id", answerId);
+    exists = Db.exists(AgentLLMTableNames.llm_chat_history, "id", answerId);
     if (!exists) {
       return response.fail(RespBodyVo.fail("invalid answer id"));
     }
@@ -301,7 +301,7 @@ public class ApiChatHandler {
     Aop.get(LlmChatHistoryService.class).like(questionId, answerId, like, userId);
 
     String sql = "SELECT (SELECT content FROM %s WHERE id = ?) AS question,(SELECT content FROM %s WHERE id = ?) AS answer";
-    sql = String.format(sql, AgentTableNames.llm_chat_history, AgentTableNames.llm_chat_history);
+    sql = String.format(sql, AgentLLMTableNames.llm_chat_history, AgentLLMTableNames.llm_chat_history);
 
     Row row = Db.findFirst(sql, questionId, answerId);
     StringBuffer messageText = new StringBuffer();

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.jfinal.template.Engine;
 import com.jfinal.template.Template;
+import com.litongjava.agent.service.VectorService;
 import com.litongjava.constants.ServerConfigKeys;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
