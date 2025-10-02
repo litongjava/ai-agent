@@ -1,22 +1,31 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.litongjava</groupId>
-  <artifactId>ai-agent</artifactId>
-  <version>1.0.0</version>
-  <packaging>pom</packaging>
+  <parent>
+    <groupId>com.litongjava</groupId>
+    <artifactId>ai-agent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>ai-agent-memory</artifactId>
+
   <properties>
     <!-- 项目属性 -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.8</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
+
+    <!-- 版本属性 -->
+    <lombok-version>1.18.30</lombok-version>
+    <fastjson2.version>2.0.52</fastjson2.version>
+
   </properties>
 
-  <modules>
-    <module>ai-agent-base</module>
-    <module>ai-agent-memory</module>
-    <module>ai-agent-business</module>
-    <module>ai-agent-web</module>
-    
-  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>ai-agent-base</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+  </dependencies>
 </project>
