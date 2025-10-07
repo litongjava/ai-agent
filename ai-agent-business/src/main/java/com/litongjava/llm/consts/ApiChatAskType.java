@@ -13,4 +13,5 @@ public interface ApiChatAskType {
   String advise = "advise";
   String tutor = "tutor";
   String youtube = "youtube";
+  String geogebra = "geogebra";
 }

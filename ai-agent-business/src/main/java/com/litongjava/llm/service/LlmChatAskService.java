@@ -443,6 +443,13 @@ public class LlmChatAskService {
       // Kv by = Kv.by("data", inputQestion);
       String systemPrompt = Aop.get(PromptService.class).render(fileName);
       chatParamVo.setSystemPrompt(systemPrompt);
+    
+    } else if (ApiChatAskType.geogebra.equals(type)) {
+      String fileName = "geogebra_prompt.txt";
+      // Kv by = Kv.by("data", inputQestion);
+      String systemPrompt = Aop.get(PromptService.class).render(fileName);
+      chatParamVo.setSystemPrompt(systemPrompt);
+      
     } else if (ApiChatAskType.youtube.equals(type)) {
       if (ApiChatSendCmd.summary.equals(cmd)) {
         String systemPrompt = PromptEngine.renderToStringFromDb("youtube_summary_prompt.txt");
