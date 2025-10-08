@@ -32,7 +32,7 @@ public class HtmlSaveHandler implements HttpRequestHandler {
       Row row = Row.by("id", id).set("md5", md5).set("html", bodyString);
       Db.save("llm_html_preview", row);
     }
-    Kv kv = Kv.by("url", host + "/html/preview/" + id);
+    Kv kv = Kv.by("url", "//" + host + "/html/preview/" + id);
     return response.body(RespBodyVo.ok(kv));
   }
 }
