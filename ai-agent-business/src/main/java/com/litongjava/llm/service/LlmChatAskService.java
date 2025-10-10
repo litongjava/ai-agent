@@ -63,9 +63,11 @@ public class LlmChatAskService {
   private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
   private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
   private YoutubeVideoSubtitleService youtubeVideoSubtitleService = Aop.get(YoutubeVideoSubtitleService.class);
+  private PromptService promptService = Aop.get(PromptService.class);
+  private AgentPromptService agentPromptService = Aop.get(AgentPromptService.class);
 
   private SchoolDictDao schoolDictDao = Aop.get(SchoolDictDao.class);
-  YoutubeService youtubeService = Aop.get(YoutubeService.class);
+  private YoutubeService youtubeService = Aop.get(YoutubeService.class);
   private boolean enableRewrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ChatAskVo apiChatAskVo) {
@@ -122,7 +124,7 @@ public class LlmChatAskService {
       if (StrUtil.isNotBlank(inputQestion)) {
         String fileName = "translator_prompt.txt";
         Kv by = Kv.by("data", inputQestion);
-        augmentedQuestion = Aop.get(PromptService.class).render(fileName, by);
+        augmentedQuestion = promptService.render(fileName, by);
         history_enabled = false;
       } else {
         return RespBodyVo.fail("input question can not be empty");
@@ -132,7 +134,7 @@ public class LlmChatAskService {
       if (StrUtil.isNotBlank(inputQestion)) {
         String fileName = "english_vocabulary_prompt.txt";
         Kv by = Kv.by("word", inputQestion);
-        augmentedQuestion = Aop.get(PromptService.class).render(fileName, by);
+        augmentedQuestion = promptService.render(fileName, by);
         history_enabled = false;
       } else {
         return RespBodyVo.fail("input question can not be empty");
@@ -142,7 +144,7 @@ public class LlmChatAskService {
       if (StrUtil.isNotBlank(inputQestion)) {
         String fileName = "english_sentence_prompt.txt";
         Kv by = Kv.by("sentence", inputQestion);
-        augmentedQuestion = Aop.get(PromptService.class).render(fileName, by);
+        augmentedQuestion = promptService.render(fileName, by);
         history_enabled = false;
       } else {
         return RespBodyVo.fail("input question can not be empty");
@@ -441,15 +443,13 @@ public class LlmChatAskService {
     } else if (ApiChatAskType.math.equals(type)) {
       String fileName = "math_prompt.txt";
       // Kv by = Kv.by("data", inputQestion);
-      String systemPrompt = Aop.get(PromptService.class).render(fileName);
+      String systemPrompt = promptService.render(fileName);
       chatParamVo.setSystemPrompt(systemPrompt);
-    
+
     } else if (ApiChatAskType.geogebra.equals(type)) {
-      String fileName = "geogebra_prompt.txt";
-      // Kv by = Kv.by("data", inputQestion);
-      String systemPrompt = Aop.get(PromptService.class).render(fileName);
+      String systemPrompt = agentPromptService.renderGeoGebraPrompt();
       chatParamVo.setSystemPrompt(systemPrompt);
-      
+
     } else if (ApiChatAskType.youtube.equals(type)) {
       if (ApiChatSendCmd.summary.equals(cmd)) {
         String systemPrompt = PromptEngine.renderToStringFromDb("youtube_summary_prompt.txt");
