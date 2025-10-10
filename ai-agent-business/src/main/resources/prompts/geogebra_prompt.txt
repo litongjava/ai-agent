@@ -36,6 +36,12 @@
 
 
 ## 完整的GeoGebra代码示例
+2d示例,仔细学习这个2d示例,避免常见的错误
 ```html
-#include("geogebra-tempatel.html")
+#include("geogebra-2d_tempatel.html")
+```
+
+3d示例,仔细学习这个3d示例,避免常见的错误
+```html
+#include("geogebra-3d_tempatel.html")
 ```
