@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
+import com.litongjava.agent.service.PromptService;
+import com.litongjava.agent.service.TranslateService;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
 import com.litongjava.db.activerecord.Row;
@@ -68,6 +70,7 @@ public class LlmChatAskService {
 
   private SchoolDictDao schoolDictDao = Aop.get(SchoolDictDao.class);
   private YoutubeService youtubeService = Aop.get(YoutubeService.class);
+  private TranslateService translateService = Aop.get(TranslateService.class);
   private boolean enableRewrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ChatAskVo apiChatAskVo) {
@@ -122,9 +125,7 @@ public class LlmChatAskService {
     // 2.问题预处理
     if (ApiChatAskType.translator.equals(type)) {
       if (StrUtil.isNotBlank(inputQestion)) {
-        String fileName = "translator_prompt.txt";
-        Kv by = Kv.by("data", inputQestion);
-        augmentedQuestion = promptService.render(fileName, by);
+        augmentedQuestion = translateService.augmenteQuesiton(inputQestion);
         history_enabled = false;
       } else {
         return RespBodyVo.fail("input question can not be empty");
@@ -530,7 +531,7 @@ public class LlmChatAskService {
       SchoolDict schoolDict, String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
-    return Aop.get(PromptService.class).render("general_prompt.txt", kv);
+    return promptService.render("general_prompt.txt", kv);
   }
 
   private String generalPrompt() {

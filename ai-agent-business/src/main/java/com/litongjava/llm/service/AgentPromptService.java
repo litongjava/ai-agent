@@ -1,5 +1,6 @@
 package com.litongjava.llm.service;
 
+import com.litongjava.agent.service.PromptService;
 import com.litongjava.jfinal.aop.Aop;
 
 public class AgentPromptService {

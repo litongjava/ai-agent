@@ -1,7 +1,7 @@
-package com.litongjava.llm.service;
+package com.litongjava.agent.service;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.llm.consts.AgentConfigKeys;
+import com.litongjava.agent.consts.AgentConfigKeys;
 import com.litongjava.template.PromptEngine;
 import com.litongjava.tio.utils.environment.EnvUtils;
 

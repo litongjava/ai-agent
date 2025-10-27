@@ -34,23 +34,34 @@ public class SummaryQuestionService {
     UniChatRequest uniChatRequest = new UniChatRequest(ModelPlatformName.OPENROUTER, OpenRouterModels.QWEN_QWEN3_CODER,
         messages);
 
+    String content = null;
+    UniChatResponse chatResponse = generate(uniChatRequest);
+
+    content = chatResponse.getMessage().getContent();
+
+    // 3. 判断结果并返回
+    if ("not_needed".equals(content)) {
+      return question;
+    }
+    return null;
+
+  }
+
+  private UniChatResponse generate(UniChatRequest uniChatRequest) {
+    UniChatResponse chatResponse = null;
     for (int i = 0; i < 3; i++) {
       try {
-        UniChatResponse chatResponse = UniChatClient.generate(uniChatRequest);
-        String content = chatResponse.getMessage().getContent();
-
-        // 3. 判断结果并返回
-        if ("not_needed".equals(content)) {
-          return question;
+        chatResponse = UniChatClient.generate(uniChatRequest);
+        if (chatResponse == null) {
+          continue;
+        } else {
+          break;
         }
-        return content;
       } catch (Exception e) {
         log.error(e.getMessage(), e);
         continue;
       }
-
     }
-    return null;
-
+    return chatResponse;
   }
 }

@@ -65,7 +65,6 @@
       <artifactId>ehcache-core</artifactId>
       <version>2.6.11</version>
     </dependency>
-
     <!-- JUnit 用于测试 -->
     <dependency>
       <groupId>junit</groupId>
