@@ -21,6 +21,8 @@ import com.litongjava.gemini.GeminiFileDataVo;
 import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.gemini.GeminiSystemInstructionVo;
 import com.litongjava.gemini.GoogleModels;
+import com.litongjava.gitee.GiteeConst;
+import com.litongjava.gitee.GiteeModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.callback.ChatGeminiStreamCommonCallback;
@@ -57,7 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 
 @Slf4j
-public class LLmChatDispatcherService {
+public class LLmChatInferenceService {
 
   private AgentNotificationService agentNotificationService = Aop.get(AgentNotificationService.class);
 
@@ -131,9 +133,11 @@ public class LLmChatDispatcherService {
       // Tio.bSend(channelContext, packet);
       if (ApiChatAskType.compare.equals(type)) {
         return multiModel(channelContext, apiSendVo, answerId, textQuestion);
+
       } else {
         return singleModel(channelContext, apiSendVo, answerId, textQuestion);
       }
+
     } else {
       if (ModelPlatformName.SILICONFLOW.equals(provider)) {
 
@@ -286,6 +290,28 @@ public class LLmChatDispatcherService {
           ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
               answerId, start, textQuestion);
           Call call = OpenAiClient.chatCompletions(OpenRouterConst.API_PREFIX_URL, UniChatClient.OPENROUTER_API_KEY,
+              chatRequestVo, callback);
+          ChatStreamCallCan.put(sessionId, call);
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
+        }
+      });
+      return null;
+
+    } else if (provider.equals(ModelPlatformName.GITEE)) {
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+
+      if (OpenRouterModels.QWEN_QWEN3_CODER.equals(model)) {
+        model = GiteeModels.QWEN3_CODER_480B_A35B_INSTRUCT;
+      }
+
+      Threads.getTioExecutor().execute(() -> {
+        try {
+          long start = System.currentTimeMillis();
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+              answerId, start, textQuestion);
+
+          Call call = OpenAiClient.chatCompletions(GiteeConst.API_PREFIX_URL, UniChatClient.GITEE_API_KEY,
               chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {

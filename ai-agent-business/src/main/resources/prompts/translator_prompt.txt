@@ -1,4 +1,0 @@
-<data>
-#(data)
-</data>
-翻译成#(targetLanguage)仅返回翻译后的内容,不要<data>和</data>

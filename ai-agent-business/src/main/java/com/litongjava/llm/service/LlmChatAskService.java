@@ -60,7 +60,7 @@ import okhttp3.sse.EventSource;
 @Slf4j
 public class LlmChatAskService {
 
-  private LLmChatDispatcherService dispatcherService = Aop.get(LLmChatDispatcherService.class);
+  private LLmChatInferenceService dispatcherService = Aop.get(LLmChatInferenceService.class);
   private WebPageService webPageService = Aop.get(WebPageService.class);
   private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
   private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);

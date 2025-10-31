@@ -13,20 +13,23 @@ public class ChineseDetector {
    * @param threshold 阈值（0-1之间，例如 0.3 表示 30%）
    */
   public static boolean isChinese(String text, double threshold) {
-    if (text == null)
+    if (text == null) {
       return false;
+    }
 
     String trimmed = text.trim();
-    if (trimmed.isEmpty())
+    if (trimmed.isEmpty()) {
       return false;
+    }
 
     int chineseCount = 0;
     int totalCount = 0;
 
     for (int i = 0; i < trimmed.length(); i++) {
       char ch = trimmed.charAt(i);
-      if (Character.isWhitespace(ch))
+      if (Character.isWhitespace(ch)) {
         continue;
+      }
 
       totalCount++;
       if (isChineseChar(ch)) {
@@ -34,8 +37,9 @@ public class ChineseDetector {
       }
     }
 
-    if (totalCount == 0)
+    if (totalCount == 0) {
       return false;
+    }
 
     double ratio = (double) chineseCount / totalCount;
     return ratio >= threshold;

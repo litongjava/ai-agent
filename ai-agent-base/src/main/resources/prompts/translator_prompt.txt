@@ -3,3 +3,4 @@
 </data>
 
 翻译成#(targetLanguage)仅返回翻译后的内容,不要<data>和</data>
+注意英语句的的正确语序，而不是直接按中文语序直译,例如 成都在中国哪个省的正确翻译是Which province is Chengdu in China 而不是Chengdu is in which province of China?
