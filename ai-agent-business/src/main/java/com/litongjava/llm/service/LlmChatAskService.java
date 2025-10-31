@@ -71,6 +71,8 @@ public class LlmChatAskService {
   private SchoolDictDao schoolDictDao = Aop.get(SchoolDictDao.class);
   private YoutubeService youtubeService = Aop.get(YoutubeService.class);
   private TranslateService translateService = Aop.get(TranslateService.class);
+  private ModelSelectService modelSelectService = Aop.get(ModelSelectService.class);
+  private RunningNotificationService notification = AiAgentContext.me().getNotification();
   private boolean enableRewrite = false;
 
   public RespBodyVo index(ChannelContext channelContext, ChatAskVo apiChatAskVo) {
@@ -92,8 +94,7 @@ public class LlmChatAskService {
     ChatParamVo chatParamVo = new ChatParamVo();
     String type = apiChatAskVo.getType();
     boolean stream = apiChatAskVo.isStream();
-    String model = apiChatAskVo.getModel();
-    String provider = apiChatAskVo.getProvider();
+
     Long schoolId = apiChatAskVo.getSchool_id();
     String userId = apiChatAskVo.getUser_id();
     Long sessionId = apiChatAskVo.getSession_id();
@@ -124,6 +125,8 @@ public class LlmChatAskService {
 
     // 2.问题预处理
     if (ApiChatAskType.translator.equals(type)) {
+      modelSelectService.select(type, apiChatAskVo);
+
       if (StrUtil.isNotBlank(inputQestion)) {
         augmentedQuestion = translateService.augmenteQuesiton(inputQestion);
         history_enabled = false;
@@ -132,6 +135,7 @@ public class LlmChatAskService {
       }
     }
     if (ApiChatAskType.english_vocabulary.equals(type)) {
+      modelSelectService.select(type, apiChatAskVo);
       if (StrUtil.isNotBlank(inputQestion)) {
         String fileName = "english_vocabulary_prompt.txt";
         Kv by = Kv.by("word", inputQestion);
@@ -142,6 +146,7 @@ public class LlmChatAskService {
       }
     }
     if (ApiChatAskType.english_sentence.equals(type)) {
+      modelSelectService.select(type, apiChatAskVo);
       if (StrUtil.isNotBlank(inputQestion)) {
         String fileName = "english_sentence_prompt.txt";
         Kv by = Kv.by("sentence", inputQestion);
@@ -308,6 +313,9 @@ public class LlmChatAskService {
       }
     }
 
+    String model = apiChatAskVo.getModel();
+    String provider = apiChatAskVo.getProvider();
+
     // 5.记录问题
     // save to the user question to db
     long questionId = SnowflakeIdUtils.id();
@@ -330,57 +338,6 @@ public class LlmChatAskService {
     aiChatResponseVo.setQuesitonId(questionId);
     if (fileInfo != null) {
       aiChatResponseVo.setUploadFiles(fileInfo);
-    }
-
-    // 6.发送问题通知
-    RunningNotificationService notification = AiAgentContext.me().getNotification();
-    if (StrUtil.isNotEmpty(augmentedQuestion)) {
-      StringBuffer stringBuffer = new StringBuffer();
-
-      stringBuffer.append("app env:").append(EnvUtils.getStr("app.env")).append("\n")
-          //
-          .append("userId:").append(userId).append("\n")
-          //
-          .append("school id:").append(schoolId).append("\n");
-
-      stringBuffer.append("user question:").append(augmentedQuestion).append("\n")
-          //
-          .append("type:").append(type).append("\n")
-          //
-          .append("provider:").append(provider).append("\n")
-          //
-          .append("model:").append(model).append("\n");
-
-      if (schoolDict != null) {
-        stringBuffer.append("school name:").append(schoolDict.getFull_name()).append("\n");
-      }
-
-      if (appId != null) {
-        stringBuffer.append("app id:").append(appId).append("\n");
-      }
-
-      if (chatSendArgs != null) {
-        stringBuffer.append("args:").append(JsonUtils.toSkipNullJson(chatSendArgs)).append("\n");
-      }
-
-      log.info("question:{}", stringBuffer.toString());
-      if (notification != null) {
-        Long appTenant = EnvUtils.getLong("app.tenant");
-        notification.sendQuestion(appTenant, stringBuffer.toString());
-      }
-
-      if (!EnvUtils.isDev()) {
-        String thatTextQuestion = augmentedQuestion;
-        TioThreadUtils.submit(() -> {
-          AgentBotQuestionUtils.send(stringBuffer.toString());
-          if (stream) {
-            SsePacket packet = new SsePacket(AiChatEventName.progress, "send message to lark");
-            Tio.send(channelContext, packet);
-          }
-          // save to db
-          Aop.get(UserAskQuesitonService.class).save(thatTextQuestion);
-        });
-      }
     }
 
     String rewriteQuestion = null;
@@ -442,12 +399,14 @@ public class LlmChatAskService {
       chatParamVo.setSystemPrompt(systemPrompt);
 
     } else if (ApiChatAskType.math.equals(type)) {
+      modelSelectService.select(type, apiChatAskVo);
       String fileName = "math_prompt.txt";
       // Kv by = Kv.by("data", inputQestion);
       String systemPrompt = promptService.render(fileName);
       chatParamVo.setSystemPrompt(systemPrompt);
 
     } else if (ApiChatAskType.geogebra.equals(type)) {
+      modelSelectService.select(type, apiChatAskVo);
       String systemPrompt = agentPromptService.renderGeoGebraPrompt();
       chatParamVo.setSystemPrompt(systemPrompt);
 
@@ -506,7 +465,58 @@ public class LlmChatAskService {
       }
     }
 
-    // 9.处理问题
+    // 09.发送问题通知
+
+    if (StrUtil.isNotEmpty(augmentedQuestion)) {
+      StringBuffer notificationStringBuffer = new StringBuffer();
+
+      notificationStringBuffer.append("app env:").append(EnvUtils.getStr("app.env")).append("\n")
+          //
+          .append("userId:").append(userId).append("\n")
+          //
+          .append("school id:").append(schoolId).append("\n");
+
+      notificationStringBuffer.append("user question:").append(augmentedQuestion).append("\n")
+          //
+          .append("type:").append(type).append("\n")
+          //
+          .append("provider:").append(provider).append("\n")
+          //
+          .append("model:").append(model).append("\n");
+
+      if (schoolDict != null) {
+        notificationStringBuffer.append("school name:").append(schoolDict.getFull_name()).append("\n");
+      }
+
+      if (appId != null) {
+        notificationStringBuffer.append("app id:").append(appId).append("\n");
+      }
+
+      if (chatSendArgs != null) {
+        notificationStringBuffer.append("args:").append(JsonUtils.toSkipNullJson(chatSendArgs)).append("\n");
+      }
+
+      log.info("question:{}", notificationStringBuffer.toString());
+      if (notification != null) {
+        Long appTenant = EnvUtils.getLong("app.tenant");
+        notification.sendQuestion(appTenant, notificationStringBuffer.toString());
+      }
+
+      if (!EnvUtils.isDev()) {
+        String thatTextQuestion = augmentedQuestion;
+        TioThreadUtils.submit(() -> {
+          AgentBotQuestionUtils.send(stringBuffer.toString());
+          if (stream) {
+            SsePacket packet = new SsePacket(AiChatEventName.progress, "send message to lark");
+            Tio.send(channelContext, packet);
+          }
+          // save to db
+          Aop.get(UserAskQuesitonService.class).save(thatTextQuestion);
+        });
+      }
+    }
+
+    // 10.处理问题
     chatParamVo.setFirstQuestion(isFirstQuestion).setTextQuestion(augmentedQuestion)
         //
         .setHistory(historyMessage).setChannelContext(channelContext);

@@ -299,11 +299,14 @@ public class LLmChatInferenceService {
       return null;
 
     } else if (provider.equals(ModelPlatformName.GITEE)) {
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
-
       if (OpenRouterModels.QWEN_QWEN3_CODER.equals(model)) {
         model = GiteeModels.QWEN3_CODER_480B_A35B_INSTRUCT;
+        
+      } else if (OpenRouterModels.AUTO.equals(model)) {
+        model = GiteeModels.QWEN3_CODER_480B_A35B_INSTRUCT;
       }
+
+      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
       Threads.getTioExecutor().execute(() -> {
         try {
