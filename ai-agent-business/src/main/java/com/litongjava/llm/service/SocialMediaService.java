@@ -14,8 +14,8 @@ import com.litongjava.db.activerecord.Row;
 import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.openai.chat.ChatResponseFormatType;
-import com.litongjava.openai.chat.OpenAiChatRequestVo;
-import com.litongjava.openai.chat.OpenAiChatResponseVo;
+import com.litongjava.openai.chat.OpenAiChatRequest;
+import com.litongjava.openai.chat.OpenAiChatResponse;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.template.PromptEngine;
@@ -53,12 +53,12 @@ public class SocialMediaService {
       UniChatMessage chatMessage = new UniChatMessage("user", renderToString);
       List<UniChatMessage> messages = new ArrayList<>();
       messages.add(chatMessage);
-      OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo();
+      OpenAiChatRequest chatRequestVo = new OpenAiChatRequest();
       chatRequestVo.setStream(false);
       chatRequestVo.setResponse_format(ChatResponseFormatType.json_object);
       chatRequestVo.setChatMessages(messages);
 
-      OpenAiChatResponseVo chat = useOpenAi(chatRequestVo);
+      OpenAiChatResponse chat = useOpenAi(chatRequestVo);
       content = chat.getChoices().get(0).getMessage().getContent();
       if (content.startsWith("```json")) {
         content = content.substring(7, content.length() - 3);
@@ -73,16 +73,16 @@ public class SocialMediaService {
     }
   }
 
-  private OpenAiChatResponseVo useDeepseek(OpenAiChatRequestVo chatRequestVo) {
+  private OpenAiChatResponse useDeepseek(OpenAiChatRequest chatRequestVo) {
     chatRequestVo.setModel(VolcEngineModels.DEEPSEEK_V3_250324);
     String apiKey = EnvUtils.get("VOLCENGINE_API_KEY");
     return OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo);
   }
 
   @SuppressWarnings("unused")
-  private OpenAiChatResponseVo useOpenAi(OpenAiChatRequestVo chatRequestVo) {
+  private OpenAiChatResponse useOpenAi(OpenAiChatRequest chatRequestVo) {
     chatRequestVo.setModel(OpenAiModels.GPT_4O_MINI);
-    OpenAiChatResponseVo chat = OpenAiClient.chatCompletions(chatRequestVo);
+    OpenAiChatResponse chat = OpenAiClient.chatCompletions(chatRequestVo);
     return chat;
   }
 }

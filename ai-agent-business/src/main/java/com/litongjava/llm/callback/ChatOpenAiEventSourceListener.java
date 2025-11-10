@@ -14,7 +14,7 @@ import com.litongjava.llm.service.MatplotlibService;
 import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.openai.chat.ChatResponseDelta;
 import com.litongjava.openai.chat.Choice;
-import com.litongjava.openai.chat.OpenAiChatResponseVo;
+import com.litongjava.openai.chat.OpenAiChatResponse;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -47,13 +47,13 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
   private boolean sentCitations = false;
   private boolean continueSend = true;
 
-  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId,
-      long startTs, String textQuestion) {
+  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs,
+      String textQuestion) {
     this(channelContext, apiChatSendVo, answerId, startTs, textQuestion, null);
   }
 
-  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId,
-      long startTs, String textQuestion, CountDownLatch latch) {
+  public ChatOpenAiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs,
+      String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;
     this.answerId = answerId;
@@ -78,7 +78,7 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
 
     try {
       // 1. 解析 JSON
-      OpenAiChatResponseVo chatResp = FastJson2Utils.parse(data, OpenAiChatResponseVo.class);
+      OpenAiChatResponse chatResp = FastJson2Utils.parse(data, OpenAiChatResponse.class);
       this.model = chatResp.getModel();
 
       // 2. 第一次发 citations
@@ -140,11 +140,9 @@ public class ChatOpenAiEventSourceListener extends EventSourceListener {
         if (codeResult != null) {
           Tio.bSend(channelContext, new SsePacket(AiChatEventName.code_result, JsonUtils.toJson(codeResult)));
         }
-        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model,
-            completionContent.toString(), codeResult);
+        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model, completionContent.toString(), codeResult);
       } else {
-        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model,
-            completionContent.toString());
+        llmChatHistoryService.saveAssistant(answerId, apiChatSendVo.getSession_id(), model, completionContent.toString());
       }
     } catch (Exception ex) {
       log.error("Error saving assistant result", ex);

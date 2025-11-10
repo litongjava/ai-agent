@@ -31,8 +31,8 @@ import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.http.response.ResponseVo;
 import com.litongjava.model.web.WebPageContent;
-import com.litongjava.openai.chat.OpenAiChatRequestVo;
-import com.litongjava.openai.chat.OpenAiChatResponseVo;
+import com.litongjava.openai.chat.OpenAiChatRequest;
+import com.litongjava.openai.chat.OpenAiChatResponse;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.searxng.SearxngResult;
@@ -756,7 +756,7 @@ public class LlmChatAskService {
     String textQuestion = vo.getUser_input_quesiton();
     messages.add(new UniChatMessage("user", textQuestion));
 
-    OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI)
+    OpenAiChatRequest chatRequestVo = new OpenAiChatRequest().setModel(OpenAiModels.GPT_4O_MINI)
         .setChatMessages(messages);
 
     long answerId = SnowflakeIdUtils.id();
@@ -778,7 +778,7 @@ public class LlmChatAskService {
       return null;
 
     } else {
-      OpenAiChatResponseVo chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
+      OpenAiChatResponse chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
       String content = chatCompletions.getChoices().get(0).getMessage().getContent();
       return content;
     }

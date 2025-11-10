@@ -11,7 +11,7 @@ import com.litongjava.db.activerecord.Row;
 import com.litongjava.db.utils.MarkdownTableUtils;
 import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GoogleModels;
-import com.litongjava.openai.chat.OpenAiChatResponseVo;
+import com.litongjava.openai.chat.OpenAiChatResponse;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.template.PromptEngine;
@@ -67,7 +67,7 @@ public class LlmRewriteQuestionService {
   }
 
   public String openAiGpt(String question, String prompt) {
-    OpenAiChatResponseVo chatCompletions = OpenAiClient.chatWithModel(OpenAiModels.GPT_4O_MINI, "system", prompt);
+    OpenAiChatResponse chatCompletions = OpenAiClient.chatWithModel(OpenAiModels.GPT_4O_MINI, "system", prompt);
     String content = chatCompletions.getChoices().get(0).getMessage().getContent();
     return content;
   }

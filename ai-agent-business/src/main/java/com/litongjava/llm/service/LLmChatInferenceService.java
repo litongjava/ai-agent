@@ -34,8 +34,8 @@ import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.openai.ChatProvider;
-import com.litongjava.openai.chat.OpenAiChatRequestVo;
-import com.litongjava.openai.chat.OpenAiChatResponseVo;
+import com.litongjava.openai.chat.OpenAiChatRequest;
+import com.litongjava.openai.chat.OpenAiChatResponse;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.openrouter.OpenRouterConst;
@@ -142,10 +142,10 @@ public class LLmChatInferenceService {
       if (ModelPlatformName.SILICONFLOW.equals(provider)) {
 
       } else {
-        OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(OpenAiModels.GPT_4O_MINI)
+        OpenAiChatRequest chatRequestVo = new OpenAiChatRequest().setModel(OpenAiModels.GPT_4O_MINI)
             //
             .setChatMessages(history);
-        OpenAiChatResponseVo chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
+        OpenAiChatResponse chatCompletions = OpenAiClient.chatCompletions(chatRequestVo);
         List<String> citations = chatCompletions.getCitations();
         String answerContent = chatCompletions.getChoices().get(0).getMessage().getContent();
         Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sessionId, answerContent);
@@ -178,7 +178,7 @@ public class LLmChatInferenceService {
     // deepseek v3
     Threads.getTioExecutor().execute(() -> {
       try {
-        OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_250324, messages, answerId);
+        OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_250324, messages, answerId);
         ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo,
             answerId, start, textQuesiton, latch);
         String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
@@ -194,7 +194,7 @@ public class LLmChatInferenceService {
     Threads.getTioExecutor().execute(() -> {
       try {
         long id = SnowflakeIdUtils.id();
-        OpenAiChatRequestVo genOpenAiRequestVo = genOpenAiRequestVo(OpenAiModels.GPT_4O, messages, id);
+        OpenAiChatRequest genOpenAiRequestVo = genOpenAiRequestVo(OpenAiModels.GPT_4O, messages, id);
         ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo,
             id, start, textQuesiton, latch);
         Call openAicall = OpenAiClient.chatCompletions(genOpenAiRequestVo, openAiCallback);
@@ -238,7 +238,7 @@ public class LLmChatInferenceService {
         model = SiliconFlowModels.DEEPSEEK_V3;
       }
 
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, apiChatSendVo.getMessages(), answerId);
+      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, apiChatSendVo.getMessages(), answerId);
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
@@ -262,7 +262,7 @@ public class LLmChatInferenceService {
       } else if (ModelNames.DEEPSEEK_V3.equals(model)) {
         model = VolcEngineModels.DEEPSEEK_V3_250324;
       }
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
@@ -278,7 +278,7 @@ public class LLmChatInferenceService {
       return null;
 
     } else if (provider.equals(ModelPlatformName.OPENROUTER)) {
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
       if (OpenRouterModels.QWEN_QWEN3_CODER.equals(model)) {
         chatRequestVo.setProvider(ChatProvider.cerebras());
@@ -306,7 +306,7 @@ public class LLmChatInferenceService {
         model = GiteeModels.QWEN3_CODER_480B_A35B_INSTRUCT;
       }
 
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
       Threads.getTioExecutor().execute(() -> {
         try {
@@ -342,7 +342,7 @@ public class LLmChatInferenceService {
     }
     //
     else {
-      OpenAiChatRequestVo chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
+      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
 
       Threads.getTioExecutor().execute(() -> {
         try {
@@ -361,8 +361,8 @@ public class LLmChatInferenceService {
     }
   }
 
-  private OpenAiChatRequestVo genOpenAiRequestVo(String model, List<UniChatMessage> messages, Long answerId) {
-    OpenAiChatRequestVo chatRequestVo = new OpenAiChatRequestVo().setModel(model)
+  private OpenAiChatRequest genOpenAiRequestVo(String model, List<UniChatMessage> messages, Long answerId) {
+    OpenAiChatRequest chatRequestVo = new OpenAiChatRequest().setModel(model)
         //
         .setChatMessages(messages);
 
