@@ -14,7 +14,7 @@ import com.litongjava.consts.ModelNames;
 import com.litongjava.consts.ModelPlatformName;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
-import com.litongjava.gemini.GeminiChatRequestVo;
+import com.litongjava.gemini.GeminiChatRequest;
 import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GeminiContentVo;
 import com.litongjava.gemini.GeminiFileDataVo;
@@ -208,7 +208,7 @@ public class LLmChatInferenceService {
     Threads.getTioExecutor().execute(() -> {
       try {
         long id = SnowflakeIdUtils.id();
-        GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, id);
+        GeminiChatRequest geminiChatRequestVo = genGeminiRequestVo(messages, id);
         ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiSendVo,
             id, start, textQuesiton, latch);
         Call geminiCall = GeminiClient.stream(GoogleModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
@@ -328,7 +328,7 @@ public class LLmChatInferenceService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          GeminiChatRequestVo geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
+          GeminiChatRequest geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
           ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext,
               apiChatSendVo, answerId, start, textQuestion);
           Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
@@ -379,8 +379,8 @@ public class LLmChatInferenceService {
     return chatRequestVo;
   }
 
-  private GeminiChatRequestVo genGeminiRequestVo(List<UniChatMessage> messages, long answerId) {
-    GeminiChatRequestVo geminiChatRequestVo = new GeminiChatRequestVo();
+  private GeminiChatRequest genGeminiRequestVo(List<UniChatMessage> messages, long answerId) {
+    GeminiChatRequest geminiChatRequestVo = new GeminiChatRequest();
 
     List<GeminiContentVo> contents = new ArrayList<>(messages.size());
     for (UniChatMessage chatMessage : messages) {

@@ -8,8 +8,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.litongjava.gemini.GeminiCandidateVo;
-import com.litongjava.gemini.GeminiChatRequestVo;
-import com.litongjava.gemini.GeminiChatResponseVo;
+import com.litongjava.gemini.GeminiChatRequest;
+import com.litongjava.gemini.GeminiChatResponse;
 import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GeminiContentVo;
 import com.litongjava.gemini.GeminiInlineDataVo;
@@ -40,10 +40,10 @@ public class GeminiClientImageTest {
     parts.add(new GeminiPartVo("识别图片内容"));
     parts.add(new GeminiPartVo(new GeminiInlineDataVo(mimeType, encodeImage)));
     GeminiContentVo content = new GeminiContentVo("user", parts);
-    GeminiChatRequestVo reqVo = new GeminiChatRequestVo(Collections.singletonList(content));
+    GeminiChatRequest reqVo = new GeminiChatRequest(Collections.singletonList(content));
 
     // 2. Sync request: generateContent
-    GeminiChatResponseVo respVo = GeminiClient.generate(googleApiKey, GoogleModels.GEMINI_1_5_FLASH, reqVo);
+    GeminiChatResponse respVo = GeminiClient.generate(googleApiKey, GoogleModels.GEMINI_1_5_FLASH, reqVo);
     if (respVo != null && respVo.getCandidates() != null) {
       GeminiCandidateVo candidate = respVo.getCandidates().get(0);
       if (candidate.getContent() != null && candidate.getContent().getParts() != null) {

@@ -6,7 +6,7 @@ import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
 import com.litongjava.gemini.GeminiCandidateVo;
-import com.litongjava.gemini.GeminiChatResponseVo;
+import com.litongjava.gemini.GeminiChatResponse;
 import com.litongjava.gemini.GeminiContentResponseVo;
 import com.litongjava.gemini.GeminiPartVo;
 import com.litongjava.jfinal.aop.Aop;
@@ -182,7 +182,7 @@ public class ChatGeminiStreamCommonCallback implements Callback {
         String data = line.substring(6);
         if (data.endsWith("}")) {
 
-          GeminiChatResponseVo chatResponse = FastJson2Utils.parse(data, GeminiChatResponseVo.class);
+          GeminiChatResponse chatResponse = FastJson2Utils.parse(data, GeminiChatResponse.class);
           model = chatResponse.getModelVersion();
 
           List<GeminiCandidateVo> candidates = chatResponse.getCandidates();

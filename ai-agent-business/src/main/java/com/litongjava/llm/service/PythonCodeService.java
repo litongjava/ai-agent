@@ -8,8 +8,8 @@ import com.litongjava.chat.UniChatResponse;
 import com.litongjava.chat.UniResponseSchema;
 import com.litongjava.consts.ModelPlatformName;
 import com.litongjava.gemini.GeminiCandidateVo;
-import com.litongjava.gemini.GeminiChatRequestVo;
-import com.litongjava.gemini.GeminiChatResponseVo;
+import com.litongjava.gemini.GeminiChatRequest;
+import com.litongjava.gemini.GeminiChatResponse;
 import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GeminiGenerationConfig;
 import com.litongjava.gemini.GeminiPartVo;
@@ -41,7 +41,7 @@ public class PythonCodeService {
 
   private String useGemini(String quesiton, String answer, String systemPrompt, String userPrompt) {
     // 1. Construct request body
-    GeminiChatRequestVo reqVo = new GeminiChatRequestVo();
+    GeminiChatRequest reqVo = new GeminiChatRequest();
     reqVo.setUserPrompts(userPrompt, quesiton, answer);
     reqVo.setSystemPrompt(systemPrompt);
 
@@ -52,7 +52,7 @@ public class PythonCodeService {
     reqVo.setGenerationConfig(geminiGenerationConfigVo);
 
     // 2. Send sync request: generateContent
-    GeminiChatResponseVo respVo = GeminiClient.generate(GoogleModels.GEMINI_2_0_FLASH, reqVo);
+    GeminiChatResponse respVo = GeminiClient.generate(GoogleModels.GEMINI_2_0_FLASH, reqVo);
     if (respVo != null) {
       List<GeminiCandidateVo> candidates = respVo.getCandidates();
       GeminiCandidateVo candidate = candidates.get(0);

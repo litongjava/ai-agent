@@ -6,12 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.jfinal.template.Template;
+import com.litongjava.chat.PlatformInput;
 import com.litongjava.chat.UniChatClient;
 import com.litongjava.chat.UniChatMessage;
 import com.litongjava.chat.UniChatRequest;
 import com.litongjava.chat.UniChatResponse;
-import com.litongjava.consts.ModelPlatformName;
-import com.litongjava.openrouter.OpenRouterModels;
 import com.litongjava.template.PromptEngine;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SummaryQuestionService {
 
-  public String summary(String question) {
+  public String summary(PlatformInput platformInput, String question) {
     // 1. 渲染模板
     Template template = PromptEngine.getTemplate("summary_question_prompt.txt");
     Map<String, Object> values = new HashMap<>();
@@ -31,9 +30,8 @@ public class SummaryQuestionService {
     List<UniChatMessage> messages = new ArrayList<>();
     messages.add(user);
 
-    UniChatRequest uniChatRequest = new UniChatRequest(ModelPlatformName.OPENROUTER, OpenRouterModels.QWEN_QWEN3_CODER,
-        messages);
-
+    UniChatRequest uniChatRequest = new UniChatRequest(platformInput);
+    uniChatRequest.setMessages(messages);
     String content = null;
     UniChatResponse chatResponse = generate(uniChatRequest);
 
@@ -43,7 +41,7 @@ public class SummaryQuestionService {
     if ("not_needed".equals(content)) {
       return question;
     }
-    return null;
+    return content;
 
   }
 
