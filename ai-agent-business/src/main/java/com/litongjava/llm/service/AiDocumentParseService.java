@@ -1,4 +1,4 @@
-package com.litongjava.llm.handler;
+package com.litongjava.llm.service;
 
 import java.util.concurrent.locks.Lock;
 
@@ -22,7 +22,7 @@ import com.litongjava.tio.utils.crypto.Md5Utils;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
-public class DocuementParseService {
+public class AiDocumentParseService {
   private static final Striped<Lock> locks = Striped.lock(1024);
 
   private GiteeClient giteeClient = Aop.get(GiteeClient.class);

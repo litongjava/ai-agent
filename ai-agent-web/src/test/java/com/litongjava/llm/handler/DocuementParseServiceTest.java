@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import com.litongjava.ai.agent.config.AdminAppConfig;
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.llm.service.AiDocumentParseService;
 import com.litongjava.model.TaskResponse;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.tio.boot.testing.TioBootTest;
@@ -22,7 +23,7 @@ public class DocuementParseServiceTest {
     String name = file.getName();
     byte[] bytes = FileUtil.readBytes(file);
     UploadFile uploadFile = new UploadFile(name, bytes);
-    RespBodyVo body = Aop.get(DocuementParseService.class).parse(uploadFile);
+    RespBodyVo body = Aop.get(AiDocumentParseService.class).parse(uploadFile);
     System.out.println(JsonUtils.toJson(body));
   }
 
@@ -30,7 +31,7 @@ public class DocuementParseServiceTest {
   public void getTask() {
     TioBootTest.runWith(AdminAppConfig.class);
     long taskId = 580332660355862528L;
-    TaskResponse task = Aop.get(DocuementParseService.class).getTask(taskId);
+    TaskResponse task = Aop.get(AiDocumentParseService.class).getTask(taskId);
     System.out.println(task.getResult());
   }
 }
