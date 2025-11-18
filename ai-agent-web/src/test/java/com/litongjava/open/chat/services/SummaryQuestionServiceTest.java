@@ -3,7 +3,10 @@ package com.litongjava.open.chat.services;
 import org.junit.Test;
 
 import com.litongjava.agent.service.SummaryQuestionService;
+import com.litongjava.chat.PlatformInput;
+import com.litongjava.consts.ModelPlatformName;
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.tio.boot.admin.config.TioAdminEnjoyEngineConfig;
 import com.litongjava.tio.utils.environment.EnvUtils;
 
@@ -14,7 +17,8 @@ public class SummaryQuestionServiceTest {
     EnvUtils.load();
     new TioAdminEnjoyEngineConfig();
     SummaryQuestionService summaryQuestionService = Aop.get(SummaryQuestionService.class);
-    String summary = summaryQuestionService.summary("What is the first day of sjsu in Fall 2024");
+    PlatformInput platformInput = new PlatformInput(ModelPlatformName.OPENAI, OpenAiModels.GPT_5);
+    String summary = summaryQuestionService.summary(platformInput, "What is the first day of sjsu in Fall 2024");
     System.out.println(summary);
   }
 //
