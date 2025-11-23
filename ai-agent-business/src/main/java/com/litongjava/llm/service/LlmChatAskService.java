@@ -10,6 +10,7 @@ import com.litongjava.agent.service.PromptService;
 import com.litongjava.agent.service.TranslateService;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.UniChatMessage;
+import com.litongjava.consts.ModelPlatformName;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.google.search.GoogleCustomSearchClient;
 import com.litongjava.google.search.GoogleCustomSearchResponse;
@@ -35,6 +36,7 @@ import com.litongjava.openai.chat.OpenAiChatRequest;
 import com.litongjava.openai.chat.OpenAiChatResponse;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
+import com.litongjava.openrouter.OpenRouterModels;
 import com.litongjava.searxng.SearxngResult;
 import com.litongjava.searxng.SearxngSearchClient;
 import com.litongjava.searxng.SearxngSearchResponse;
@@ -75,11 +77,11 @@ public class LlmChatAskService {
   private RunningNotificationService notification = AiAgentContext.me().getNotification();
   private boolean enableRewrite = false;
 
-  public RespBodyVo index(ChannelContext channelContext, ChatAskVo apiChatAskVo) {
+  public RespBodyVo index(ChannelContext channelContext, ChatAskVo askVo) {
     /**
      * inputQestion 用户输入的问题 textQuestion 用户输入的问题和提示词
      */
-    List<UniChatMessage> messages = apiChatAskVo.getMessages();
+    List<UniChatMessage> messages = askVo.getMessages();
     String inputQestion = null;
     String augmentedQuestion = null;
     if (messages != null && messages.size() > 0) {
@@ -88,21 +90,23 @@ public class LlmChatAskService {
       augmentedQuestion = inputQestion;
     }
 
-    apiChatAskVo.setUser_input_quesiton(inputQestion);
+    askVo.setUser_input_quesiton(inputQestion);
 
     // save file content to history
     ChatParamVo chatParamVo = new ChatParamVo();
-    String type = apiChatAskVo.getType();
-    boolean stream = apiChatAskVo.isStream();
+    String type = askVo.getType();
+    boolean stream = askVo.isStream();
 
-    Long schoolId = apiChatAskVo.getSchool_id();
-    String userId = apiChatAskVo.getUser_id();
-    Long sessionId = apiChatAskVo.getSession_id();
-    Long appId = apiChatAskVo.getApp_id();
-    List<Long> file_ids = apiChatAskVo.getFile_ids();
-    String cmd = apiChatAskVo.getCmd();
-    ChatMessageArgs chatSendArgs = apiChatAskVo.getArgs();
-    boolean history_enabled = apiChatAskVo.isHistory_enabled();
+    Long schoolId = askVo.getSchool_id();
+    String userId = askVo.getUser_id();
+    Long sessionId = askVo.getSession_id();
+    Long appId = askVo.getApp_id();
+    List<Long> file_ids = askVo.getFile_ids();
+    String cmd = askVo.getCmd();
+    ChatMessageArgs chatSendArgs = askVo.getArgs();
+    boolean history_enabled = askVo.isHistory_enabled();
+    String model = askVo.getModel();
+    String provider = askVo.getProvider();
 
     SchoolDict schoolDict = null;
 
@@ -125,7 +129,7 @@ public class LlmChatAskService {
 
     // 2.问题预处理
     if (ApiChatAskType.translator.equals(type)) {
-      modelSelectService.select(type, apiChatAskVo);
+      modelSelectService.select(type, askVo);
 
       if (StrUtil.isNotBlank(inputQestion)) {
         augmentedQuestion = translateService.augmenteQuesiton(inputQestion);
@@ -135,7 +139,7 @@ public class LlmChatAskService {
       }
     }
     if (ApiChatAskType.english_vocabulary.equals(type)) {
-      modelSelectService.select(type, apiChatAskVo);
+      modelSelectService.select(type, askVo);
       if (StrUtil.isNotBlank(inputQestion)) {
         String fileName = "english_vocabulary_prompt.txt";
         Kv by = Kv.by("word", inputQestion);
@@ -146,7 +150,7 @@ public class LlmChatAskService {
       }
     }
     if (ApiChatAskType.english_sentence.equals(type)) {
-      modelSelectService.select(type, apiChatAskVo);
+      modelSelectService.select(type, askVo);
       if (StrUtil.isNotBlank(inputQestion)) {
         String fileName = "english_sentence_prompt.txt";
         Kv by = Kv.by("sentence", inputQestion);
@@ -203,9 +207,9 @@ public class LlmChatAskService {
     }
 
     // 移除历史
-    if (apiChatAskVo.isRe_generate()) {
-      Long previous_question_id = apiChatAskVo.getPrevious_question_id();
-      Long previous_answer_id = apiChatAskVo.getPrevious_answer_id();
+    if (askVo.isRe_generate()) {
+      Long previous_question_id = askVo.getPrevious_question_id();
+      Long previous_answer_id = askVo.getPrevious_answer_id();
       llmChatHistoryService.remove(previous_question_id, previous_answer_id);
     }
 
@@ -302,8 +306,8 @@ public class LlmChatAskService {
           String str = record.getStr("metadata");
           List<UploadResultVo> uploadVos = JsonUtils.parseArray(str, UploadResultVo.class);
           for (UploadResultVo uploadResult : uploadVos) {
-            historyMessage.add(new UniChatMessage(role,
-                String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
+            historyMessage.add(
+                new UniChatMessage(role, String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
           }
 
           if (StrUtil.notBlank(content)) {
@@ -312,9 +316,6 @@ public class LlmChatAskService {
         }
       }
     }
-
-    String model = apiChatAskVo.getModel();
-    String provider = apiChatAskVo.getProvider();
 
     // 5.记录问题
     // save to the user question to db
@@ -399,16 +400,22 @@ public class LlmChatAskService {
       chatParamVo.setSystemPrompt(systemPrompt);
 
     } else if (ApiChatAskType.math.equals(type)) {
-      modelSelectService.select(type, apiChatAskVo);
+      modelSelectService.select(type, askVo);
       String fileName = "math_prompt.txt";
       // Kv by = Kv.by("data", inputQestion);
       String systemPrompt = promptService.render(fileName);
       chatParamVo.setSystemPrompt(systemPrompt);
+      
+      provider = ModelPlatformName.OPENROUTER;
+      model = OpenRouterModels.ANTHROPIC_CLAUDE_SONNET_4_5;
 
     } else if (ApiChatAskType.geogebra.equals(type)) {
-      modelSelectService.select(type, apiChatAskVo);
+      modelSelectService.select(type, askVo);
       String systemPrompt = agentPromptService.renderGeoGebraPrompt();
       chatParamVo.setSystemPrompt(systemPrompt);
+      // 设置模型
+      provider = ModelPlatformName.OPENROUTER;
+      model = OpenRouterModels.ANTHROPIC_CLAUDE_SONNET_4_5;
 
     } else if (ApiChatAskType.youtube.equals(type)) {
       if (ApiChatSendCmd.summary.equals(cmd)) {
@@ -444,13 +451,11 @@ public class LlmChatAskService {
           ResponseVo responseVo = webPageService.get(url);
           if (responseVo != null && responseVo.isOk()) {
             StringBuffer htmlContent = new StringBuffer();
-            htmlContent.append("source:").append(url).append(" content:").append(responseVo.getBodyString())
-                .append("  ");
+            htmlContent.append("source:").append(url).append(" content:").append(responseVo.getBodyString()).append("  ");
             String string = htmlContent.toString();
 
             message = "Read result:" + string;
-            Tio.bSend(channelContext,
-                new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+            Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
             historyMessage.add(new UniChatMessage("user", string));
 
           } else {
@@ -458,8 +463,7 @@ public class LlmChatAskService {
             message = String.format(message, url);
             historyMessage.add(new UniChatMessage("user", message));
             message = String.format(message, url);
-            Tio.bSend(channelContext,
-                new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+            Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
           }
         }
       }
@@ -521,24 +525,26 @@ public class LlmChatAskService {
         //
         .setHistory(historyMessage).setChannelContext(channelContext);
 
+    askVo.setModel(model);
+    askVo.setProvider(provider);
     if (augmentedQuestion != null && augmentedQuestion.startsWith("4o:")) {
       if (stream) {
         SsePacket packet = new SsePacket(AiChatEventName.progress,
             "The user specifies that the gpt4o model is used for message processing");
         Tio.bSend(channelContext, packet);
       }
-      String answer = processMessageByChatModel(apiChatAskVo, channelContext);
+      String answer = processMessageByChatModel(askVo, channelContext);
       aiChatResponseVo.setContent(answer);
       return RespBodyVo.ok(aiChatResponseVo);
 
     } else {
-      dispatcherService.predict(apiChatAskVo, chatParamVo, aiChatResponseVo);
+      dispatcherService.predict(askVo, chatParamVo, aiChatResponseVo);
       return RespBodyVo.ok(aiChatResponseVo);
     }
   }
 
-  private String tutor(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage,
-      SchoolDict schoolDict, String model) {
+  private String tutor(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage, SchoolDict schoolDict,
+      String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
     return promptService.render("general_prompt.txt", kv);
@@ -574,8 +580,8 @@ public class LlmChatAskService {
     return systemPrompt;
   }
 
-  private String advise(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage,
-      SchoolDict schoolDict, String model) {
+  private String advise(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage, SchoolDict schoolDict,
+      String model) {
     String full_name = schoolDict.getFull_name();
     String domain_name = schoolDict.getDomain_name();
     if (channelContext != null) {
@@ -756,8 +762,7 @@ public class LlmChatAskService {
     String textQuestion = vo.getUser_input_quesiton();
     messages.add(new UniChatMessage("user", textQuestion));
 
-    OpenAiChatRequest chatRequestVo = new OpenAiChatRequest().setModel(OpenAiModels.GPT_4O_MINI)
-        .setChatMessages(messages);
+    OpenAiChatRequest chatRequestVo = new OpenAiChatRequest().setModel(OpenAiModels.GPT_4O_MINI).setChatMessages(messages);
 
     long answerId = SnowflakeIdUtils.id();
     if (stream) {
@@ -769,8 +774,7 @@ public class LlmChatAskService {
       // ChatOpenAiStreamCommonCallback callback = new
       // ChatOpenAiStreamCommonCallback(channelContext, vo, answerId, start,
       // textQuestion);
-      ChatOpenAiEventSourceListener listener = new ChatOpenAiEventSourceListener(channelContext, vo, answerId, start,
-          textQuestion);
+      ChatOpenAiEventSourceListener listener = new ChatOpenAiEventSourceListener(channelContext, vo, answerId, start, textQuestion);
       // Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
       EventSource eventSource = OpenAiClient.chatCompletions(chatRequestVo, listener);
       log.info("add call:{}", sessionId);

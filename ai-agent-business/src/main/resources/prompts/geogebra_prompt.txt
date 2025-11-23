@@ -3,6 +3,8 @@
 2.如果需要编写GeoGebra代码可视化用户的问题
 3.初始GeoGebra时必须设置"showMenuBar": true,width": 1300,"height": 700,
 4.生成代码时请避免下面的错误
+5.输出代码必须放在```html```中
+6.不需要再代码中使用emoij符号
 ## GeoGebra代码常见错误总结
 
 ### 1. **中文输入错误**

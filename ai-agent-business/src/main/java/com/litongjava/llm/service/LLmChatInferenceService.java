@@ -224,13 +224,13 @@ public class LLmChatInferenceService {
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId,
+  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo askVo, long answerId,
       String textQuestion) {
-    Long sessionId = apiChatSendVo.getSession_id();
-    String provider = apiChatSendVo.getProvider();
-    String model = apiChatSendVo.getModel();
+    Long sessionId = askVo.getSession_id();
+    String provider = askVo.getProvider();
+    String model = askVo.getModel();
 
-    List<UniChatMessage> messages = apiChatSendVo.getMessages();
+    List<UniChatMessage> messages = askVo.getMessages();
     if (provider.equals(ModelPlatformName.SILICONFLOW)) {
       if (ModelNames.DEEPSEEK_R1.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_R1;
@@ -238,12 +238,12 @@ public class LLmChatInferenceService {
         model = SiliconFlowModels.DEEPSEEK_V3;
       }
 
-      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, apiChatSendVo.getMessages(), answerId);
+      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, askVo.getMessages(), answerId);
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
 
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
               answerId, start, textQuestion);
           String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
           Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo,
@@ -266,7 +266,7 @@ public class LLmChatInferenceService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
               answerId, start, textQuestion);
           String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
           Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo, callback);
@@ -287,7 +287,7 @@ public class LLmChatInferenceService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
               answerId, start, textQuestion);
           Call call = OpenAiClient.chatCompletions(OpenRouterConst.API_PREFIX_URL, UniChatClient.OPENROUTER_API_KEY,
               chatRequestVo, callback);
@@ -311,7 +311,7 @@ public class LLmChatInferenceService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
               answerId, start, textQuestion);
 
           Call call = OpenAiClient.chatCompletions(GiteeConst.API_PREFIX_URL, UniChatClient.GITEE_API_KEY,
@@ -330,8 +330,8 @@ public class LLmChatInferenceService {
           long start = System.currentTimeMillis();
           GeminiChatRequest geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
           ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext,
-              apiChatSendVo, answerId, start, textQuestion);
-          Call geminiCall = GeminiClient.stream(apiChatSendVo.getModel(), geminiChatRequestVo, geminiCallback);
+              askVo, answerId, start, textQuestion);
+          Call geminiCall = GeminiClient.stream(askVo.getModel(), geminiChatRequestVo, geminiCallback);
           ChatStreamCallCan.put(sessionId, geminiCall);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -347,7 +347,7 @@ public class LLmChatInferenceService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiChatSendVo,
+          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
               answerId, start, textQuestion);
           Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);

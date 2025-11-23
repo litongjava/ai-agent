@@ -28,7 +28,7 @@
         "showResetIcon": true,
         "enableRightClick": true,
         "appletOnLoad": function (api) {
-            console.log('✅ GeoGebra 已加载完成');
+            console.log('GeoGebra 已加载完成');
 
             // 绘制球面 x^2 + y^2 + z^2 = 4
             api.evalCommand('x^2 + y^2 + z^2 = 4');
@@ -49,7 +49,7 @@
             api.setColor('Curve(1 + cos(t), sqrt(2)*sin(t), 1 - cos(t), t, 0, 2*pi)', 255, 0, 0);
             api.setLineThickness('Curve(1 + cos(t), sqrt(2)*sin(t), 1 - cos(t), t, 0, 2*pi)', 3);
 
-            console.log('🎨 球面和平面已创建');
+            console.log('球面和平面已创建');
         }
     };
 

@@ -38,12 +38,11 @@ public class AdminAppConfig {
       SystemFileTencentCosHandler systemUploadHandler = Aop.get(SystemFileTencentCosHandler.class);
       r.add("/api/system/file/upload", systemUploadHandler::upload);
       r.add("/api/system/file/url", systemUploadHandler::getUrl);
-      
+
       ApiChatHandler apiChatHandler = Aop.get(ApiChatHandler.class);
-      
+
       GeogebraChatHandler geogebraChatHandler = new GeogebraChatHandler();
-      
-      
+
       r.add("/api/v1/chat/recommend", apiChatHandler::recommend);
       r.add("/api/v1/chat/create", apiChatHandler::createSession);
       r.add("/api/v1/chat/list", apiChatHandler::listSession);
@@ -52,11 +51,12 @@ public class AdminAppConfig {
       r.add("/api/v1/chat/like", apiChatHandler::like);
       r.add("/api/v1/chat/history", apiChatHandler::getChatHistory);
       r.add("/api/v1/chat/stop", apiChatHandler::stop);
+
       ApiChatAskHandler apiChatAskHandler = Aop.get(ApiChatAskHandler.class);
-      r.add("/api/v1/chat/ask", apiChatAskHandler::send);
+      r.add("/api/v1/chat/ask", apiChatAskHandler);
+
       r.add("/api/v1/geogebra/chat", geogebraChatHandler::chat);
     }
-
 
     // 配置控制器
     new TioAdminControllerConfiguration().config();
