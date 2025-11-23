@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>球面与平面可视化</title>
+<style>    
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+#ggbApplet {
+    width: 100%;
+    height: 100vh;
+}
+</style>    
 </head>
 <body>
 <div class="container">
@@ -18,8 +30,7 @@
     // GeoGebra 配置参数
     const parameters = {
         "appName": "3d",
-        "width": 1300,
-        "height": 700,
+        scaleContainerClass: "ggb-full",
         "showToolBar": true,
         "showAlgebraInput": true,
         "showMenuBar": true,

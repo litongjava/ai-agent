@@ -4,8 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GeoGebra 三角函数交互演示</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+#ggbApplet {
+    width: 100%;
+    height: 100vh;
+}
+</style>    
 </head>
+
 <body>
+
 <div class="container">
     <h1>GeoGebra 交互式单位圆</h1>
     <div id="ggbApplet"></div>
@@ -20,8 +34,7 @@
     // GeoGebra 配置参数
     const parameters = {
         "appName": "classic",
-        "width": 940,
-        "height": 600,
+        scaleContainerClass: "ggb-full",
         "showToolBar": true,
         "showAlgebraInput": false,
         "showMenuBar": true,
