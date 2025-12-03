@@ -1,9 +1,7 @@
 package com.litongjava.agent.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.jfinal.template.Template;
 import com.litongjava.chat.PlatformInput;
@@ -21,16 +19,19 @@ public class SummaryQuestionService {
   public String summary(PlatformInput platformInput, String question) {
     // 1. 渲染模板
     Template template = PromptEngine.getTemplate("summary_question_prompt.txt");
-    Map<String, Object> values = new HashMap<>();
-    values.put("query", question);
-    String prompt = template.renderToString(values);
+    String systemPrompt = template.renderToString();
+    return summary(platformInput, systemPrompt, question);
+  }
 
+  public String summary(PlatformInput platformInput, String systemPrompt, String question) {
     // 2. 调用大模型进行推理
+    String prompt = "Question: " + question + ". \nSummary:";
     UniChatMessage user = UniChatMessage.buildUser(prompt);
     List<UniChatMessage> messages = new ArrayList<>();
     messages.add(user);
 
     UniChatRequest uniChatRequest = new UniChatRequest(platformInput);
+    uniChatRequest.setSystemPrompt(systemPrompt);
     uniChatRequest.setMessages(messages);
     String content = null;
     UniChatResponse chatResponse = generate(uniChatRequest);
@@ -42,7 +43,6 @@ public class SummaryQuestionService {
       return question;
     }
     return content;
-
   }
 
   private UniChatResponse generate(UniChatRequest uniChatRequest) {
