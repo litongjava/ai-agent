@@ -25,13 +25,14 @@ public class SummaryQuestionService {
 
   public String summary(PlatformInput platformInput, String systemPrompt, String question) {
     // 2. 调用大模型进行推理
-    String prompt = "Question: " + question + ". \nSummary:";
+    String prompt = "Input: " + question + ". \nSummary:";
     UniChatMessage user = UniChatMessage.buildUser(prompt);
     List<UniChatMessage> messages = new ArrayList<>();
     messages.add(user);
 
     UniChatRequest uniChatRequest = new UniChatRequest(platformInput);
     uniChatRequest.setSystemPrompt(systemPrompt);
+    uniChatRequest.setCacheSystemPrompt(true);
     uniChatRequest.setMessages(messages);
     String content = null;
     UniChatResponse chatResponse = generate(uniChatRequest);
