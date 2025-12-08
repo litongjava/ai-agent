@@ -62,7 +62,7 @@ import okhttp3.sse.EventSource;
 @Slf4j
 public class LlmChatAskService {
 
-  private LLmChatInferenceService dispatcherService = Aop.get(LLmChatInferenceService.class);
+  private LLmChatRequestService dispatcherService = Aop.get(LLmChatRequestService.class);
   private WebPageService webPageService = Aop.get(WebPageService.class);
   private LlmRewriteQuestionService llmRewriteQuestionService = Aop.get(LlmRewriteQuestionService.class);
   private LlmChatHistoryService llmChatHistoryService = Aop.get(LlmChatHistoryService.class);
@@ -137,6 +137,9 @@ public class LlmChatAskService {
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
+
+      provider = ModelPlatformName.OPENROUTER;
+      model = OpenRouterModels.Z_AI_GLM_4_6;
     }
     if (ApiChatAskType.english_vocabulary.equals(type)) {
       modelSelectService.select(type, askVo);
@@ -148,6 +151,9 @@ public class LlmChatAskService {
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
+
+      provider = ModelPlatformName.OPENROUTER;
+      model = OpenRouterModels.Z_AI_GLM_4_6;
     }
     if (ApiChatAskType.english_sentence.equals(type)) {
       modelSelectService.select(type, askVo);
@@ -159,6 +165,9 @@ public class LlmChatAskService {
       } else {
         return RespBodyVo.fail("input question can not be empty");
       }
+
+      provider = ModelPlatformName.OPENROUTER;
+      model = OpenRouterModels.Z_AI_GLM_4_6;
     }
 
     else if (ApiChatAskType.celebrity.equals(type)) {
@@ -405,7 +414,7 @@ public class LlmChatAskService {
       // Kv by = Kv.by("data", inputQestion);
       String systemPrompt = promptService.render(fileName);
       chatParamVo.setSystemPrompt(systemPrompt);
-      
+
       provider = ModelPlatformName.OPENROUTER;
       model = OpenRouterModels.ANTHROPIC_CLAUDE_SONNET_4_5;
 
@@ -527,6 +536,7 @@ public class LlmChatAskService {
 
     askVo.setModel(model);
     askVo.setProvider(provider);
+
     if (augmentedQuestion != null && augmentedQuestion.startsWith("4o:")) {
       if (stream) {
         SsePacket packet = new SsePacket(AiChatEventName.progress,

@@ -3,6 +3,7 @@ package com.litongjava.llm.vo;
 import java.util.List;
 
 import com.litongjava.chat.UniChatMessage;
+import com.litongjava.openai.ChatProvider;
 import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 
@@ -23,4 +24,5 @@ public class ChatParamVo {
   private List<UniChatMessage> history;
   private ChannelContext channelContext;
   private List<UploadResultVo> uploadFiles;
+  private ChatProvider chatProvider;
 }

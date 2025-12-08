@@ -25,8 +25,8 @@ import com.litongjava.gitee.GiteeConst;
 import com.litongjava.gitee.GiteeModels;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.kit.PgObjectUtils;
-import com.litongjava.llm.callback.ChatGeminiStreamCommonCallback;
-import com.litongjava.llm.callback.ChatOpenAiStreamCommonCallback;
+import com.litongjava.llm.callback.ChatGeminiEventSourceListener;
+import com.litongjava.llm.callback.ChatOpenAiEventSourceListener;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatAskType;
@@ -56,10 +56,10 @@ import com.litongjava.volcengine.VolcEngineConst;
 import com.litongjava.volcengine.VolcEngineModels;
 
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Call;
+import okhttp3.sse.EventSource;
 
 @Slf4j
-public class LLmChatInferenceService {
+public class LLmChatRequestService {
 
   private AgentNotificationService agentNotificationService = Aop.get(AgentNotificationService.class);
 
@@ -76,17 +76,17 @@ public class LLmChatInferenceService {
    * @param aiChatResponseVo
    * @return 响应对象
    */
-  public AiChatResponseVo predict(ChatAskVo apiSendVo, ChatParamVo paramVo, AiChatResponseVo aiChatResponseVo) {
-    String provider = apiSendVo.getProvider();
-    Boolean stream = apiSendVo.isStream();
-    String type = apiSendVo.getType();
-    ChannelContext channelContext = paramVo.getChannelContext();
-    List<UniChatMessage> history = paramVo.getHistory();
-    Long sessionId = apiSendVo.getSession_id();
-    String rewrite_quesiton = paramVo.getRewriteQuestion();
-    String textQuestion = paramVo.getTextQuestion();
-    List<UploadResultVo> uploadFiles = paramVo.getUploadFiles();
-    String systemPrompt = paramVo.getSystemPrompt();
+  public AiChatResponseVo predict(ChatAskVo chatAskVo, ChatParamVo chatParamVo, AiChatResponseVo aiChatResponseVo) {
+    String provider = chatAskVo.getProvider();
+    Boolean stream = chatAskVo.isStream();
+    String type = chatAskVo.getType();
+    ChannelContext channelContext = chatParamVo.getChannelContext();
+    List<UniChatMessage> history = chatParamVo.getHistory();
+    Long sessionId = chatAskVo.getSession_id();
+    String rewrite_quesiton = chatParamVo.getRewriteQuestion();
+    String textQuestion = chatParamVo.getTextQuestion();
+    List<UploadResultVo> uploadFiles = chatParamVo.getUploadFiles();
+    String systemPrompt = chatParamVo.getSystemPrompt();
     if (rewrite_quesiton != null) {
       textQuestion = rewrite_quesiton;
     }
@@ -125,17 +125,17 @@ public class LLmChatInferenceService {
     // }
     // }
 
-    apiSendVo.setMessages(history);
+    chatAskVo.setMessages(history);
     long answerId = SnowflakeIdUtils.id();
     if (stream) {
       // SsePacket packet = new SsePacket(AiChatEventName.input,
       // JsonUtils.toJson(history));
       // Tio.bSend(channelContext, packet);
       if (ApiChatAskType.compare.equals(type)) {
-        return multiModel(channelContext, apiSendVo, answerId, textQuestion);
+        return multiModel(channelContext, chatAskVo, answerId, textQuestion);
 
       } else {
-        return singleModel(channelContext, apiSendVo, answerId, textQuestion);
+        return singleModel(channelContext, chatAskVo, answerId, textQuestion);
       }
 
     } else {
@@ -168,21 +168,22 @@ public class LLmChatInferenceService {
    * @param answerId
    * @return
    */
-  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskVo apiSendVo, long answerId,
-      String textQuesiton) {
+  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskVo chatAskVo, long answerId, String textQuesiton) {
     CountDownLatch latch = new CountDownLatch(3);
-    List<UniChatMessage> messages = apiSendVo.getMessages();
+    List<UniChatMessage> messages = chatAskVo.getMessages();
 
     long start = System.currentTimeMillis();
-    List<Call> calls = new ArrayList<Call>();
+    List<EventSource> calls = new ArrayList<>();
     // deepseek v3
     Threads.getTioExecutor().execute(() -> {
       try {
         OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(VolcEngineModels.DEEPSEEK_V3_250324, messages, answerId);
-        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo,
-            answerId, start, textQuesiton, latch);
+//        ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo, answerId, start,
+//            textQuesiton, latch);
+        ChatOpenAiEventSourceListener callback = new ChatOpenAiEventSourceListener(channelContext, chatAskVo, answerId, start, textQuesiton,
+            latch);
         String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-        Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo, callback);
+        EventSource call = OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo, callback);
         calls.add(call);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
@@ -195,9 +196,9 @@ public class LLmChatInferenceService {
       try {
         long id = SnowflakeIdUtils.id();
         OpenAiChatRequest genOpenAiRequestVo = genOpenAiRequestVo(OpenAiModels.GPT_4O, messages, id);
-        ChatOpenAiStreamCommonCallback openAiCallback = new ChatOpenAiStreamCommonCallback(channelContext, apiSendVo,
-            id, start, textQuesiton, latch);
-        Call openAicall = OpenAiClient.chatCompletions(genOpenAiRequestVo, openAiCallback);
+        ChatOpenAiEventSourceListener callback = new ChatOpenAiEventSourceListener(channelContext, chatAskVo, answerId, start, textQuesiton,
+            latch);
+        EventSource openAicall = OpenAiClient.chatCompletions(genOpenAiRequestVo, callback);
         calls.add(openAicall);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
@@ -209,28 +210,27 @@ public class LLmChatInferenceService {
       try {
         long id = SnowflakeIdUtils.id();
         GeminiChatRequest geminiChatRequestVo = genGeminiRequestVo(messages, id);
-        ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext, apiSendVo,
-            id, start, textQuesiton, latch);
-        Call geminiCall = GeminiClient.stream(GoogleModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
-        calls.add(geminiCall);
+        ChatGeminiEventSourceListener geminiCallback = new ChatGeminiEventSourceListener(channelContext, chatAskVo, id, start, textQuesiton,
+            latch);
+        EventSource call = GeminiClient.stream(GoogleModels.GEMINI_2_0_FLASH_EXP, geminiChatRequestVo, geminiCallback);
+        calls.add(call);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
       }
 
     });
 
-    ChatStreamCallCan.put(apiSendVo.getSession_id(), calls);
+    ChatStreamCallCan.put(chatAskVo.getSession_id(), calls);
     return null;
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo askVo, long answerId,
-      String textQuestion) {
-    Long sessionId = askVo.getSession_id();
-    String provider = askVo.getProvider();
-    String model = askVo.getModel();
+  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo chatAskVo, long answerId, String textQuestion) {
+    Long sessionId = chatAskVo.getSession_id();
+    String provider = chatAskVo.getProvider();
+    String model = chatAskVo.getModel();
 
-    List<UniChatMessage> messages = askVo.getMessages();
+    List<UniChatMessage> messages = chatAskVo.getMessages();
     if (provider.equals(ModelPlatformName.SILICONFLOW)) {
       if (ModelNames.DEEPSEEK_R1.equals(model)) {
         model = SiliconFlowModels.DEEPSEEK_R1;
@@ -238,16 +238,15 @@ public class LLmChatInferenceService {
         model = SiliconFlowModels.DEEPSEEK_V3;
       }
 
-      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, askVo.getMessages(), answerId);
+      OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, chatAskVo.getMessages(), answerId);
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
 
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
-              answerId, start, textQuestion);
+          ChatOpenAiEventSourceListener callback = new ChatOpenAiEventSourceListener(channelContext, chatAskVo, answerId, start,
+              textQuestion);
           String apiKey = EnvUtils.getStr("SILICONFLOW_API_KEY");
-          Call call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo,
-              callback);
+          EventSource call = OpenAiClient.chatCompletions(SiliconFlowConsts.SELICONFLOW_API_BASE, apiKey, chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -262,14 +261,15 @@ public class LLmChatInferenceService {
       } else if (ModelNames.DEEPSEEK_V3.equals(model)) {
         model = VolcEngineModels.DEEPSEEK_V3_250324;
       }
+
       OpenAiChatRequest chatRequestVo = genOpenAiRequestVo(model, messages, answerId);
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
-              answerId, start, textQuestion);
+          ChatOpenAiEventSourceListener callback = new ChatOpenAiEventSourceListener(channelContext, chatAskVo, answerId, start,
+              textQuestion);
           String apiKey = EnvUtils.getStr("VOLCENGINE_API_KEY");
-          Call call = OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo, callback);
+          EventSource call = OpenAiClient.chatCompletions(VolcEngineConst.API_PREFIX_URL, apiKey, chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -282,15 +282,18 @@ public class LLmChatInferenceService {
 
       if (OpenRouterModels.QWEN_QWEN3_CODER.equals(model)) {
         chatRequestVo.setProvider(ChatProvider.cerebras());
+      } else if (OpenRouterModels.Z_AI_GLM_4_6.equals(model)) {
+        chatRequestVo.setProvider(ChatProvider.cerebras());
+        chatRequestVo.setEnable_thinking(false);
       }
 
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
-              answerId, start, textQuestion);
-          Call call = OpenAiClient.chatCompletions(OpenRouterConst.API_PREFIX_URL, UniChatClient.OPENROUTER_API_KEY,
-              chatRequestVo, callback);
+          ChatOpenAiEventSourceListener callback = new ChatOpenAiEventSourceListener(channelContext, chatAskVo, answerId, start,
+              textQuestion);
+          EventSource call = OpenAiClient.chatCompletions(OpenRouterConst.API_PREFIX_URL, UniChatClient.OPENROUTER_API_KEY, chatRequestVo,
+              callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -301,7 +304,7 @@ public class LLmChatInferenceService {
     } else if (provider.equals(ModelPlatformName.GITEE)) {
       if (OpenRouterModels.QWEN_QWEN3_CODER.equals(model)) {
         model = GiteeModels.QWEN3_CODER_480B_A35B_INSTRUCT;
-        
+
       } else if (OpenRouterModels.AUTO.equals(model)) {
         model = GiteeModels.QWEN3_CODER_480B_A35B_INSTRUCT;
       }
@@ -311,11 +314,10 @@ public class LLmChatInferenceService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
-              answerId, start, textQuestion);
+          ChatOpenAiEventSourceListener callback = new ChatOpenAiEventSourceListener(channelContext, chatAskVo, answerId, start,
+              textQuestion);
 
-          Call call = OpenAiClient.chatCompletions(GiteeConst.API_PREFIX_URL, UniChatClient.GITEE_API_KEY,
-              chatRequestVo, callback);
+          EventSource call = OpenAiClient.chatCompletions(GiteeConst.API_PREFIX_URL, UniChatClient.GITEE_API_KEY, chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -329,9 +331,9 @@ public class LLmChatInferenceService {
         try {
           long start = System.currentTimeMillis();
           GeminiChatRequest geminiChatRequestVo = genGeminiRequestVo(messages, answerId);
-          ChatGeminiStreamCommonCallback geminiCallback = new ChatGeminiStreamCommonCallback(channelContext,
-              askVo, answerId, start, textQuestion);
-          Call geminiCall = GeminiClient.stream(askVo.getModel(), geminiChatRequestVo, geminiCallback);
+          ChatGeminiEventSourceListener geminiCallback = new ChatGeminiEventSourceListener(channelContext, chatAskVo, answerId, start,
+              textQuestion);
+          EventSource geminiCall = GeminiClient.stream(chatAskVo.getModel(), geminiChatRequestVo, geminiCallback);
           ChatStreamCallCan.put(sessionId, geminiCall);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -347,9 +349,9 @@ public class LLmChatInferenceService {
       Threads.getTioExecutor().execute(() -> {
         try {
           long start = System.currentTimeMillis();
-          ChatOpenAiStreamCommonCallback callback = new ChatOpenAiStreamCommonCallback(channelContext, askVo,
-              answerId, start, textQuestion);
-          Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
+          ChatOpenAiEventSourceListener callback = new ChatOpenAiEventSourceListener(channelContext, chatAskVo, answerId, start,
+              textQuestion);
+          EventSource call = OpenAiClient.chatCompletions(chatRequestVo, callback);
           ChatStreamCallCan.put(sessionId, call);
         } catch (Exception e) {
           log.error(e.getMessage(), e);
@@ -373,8 +375,7 @@ public class LLmChatInferenceService {
     // save to database
     TioThreadUtils.execute(() -> {
       String sanitizedJson = requestJson.replaceAll("\u0000", "");
-      Db.save(AgentLLMTableNames.llm_chat_completion,
-          Row.by("id", answerId).set("request", PgObjectUtils.json(sanitizedJson)));
+      Db.save(AgentLLMTableNames.llm_chat_completion, Row.by("id", answerId).set("request", PgObjectUtils.json(sanitizedJson)));
     });
     return chatRequestVo;
   }
@@ -429,8 +430,7 @@ public class LLmChatInferenceService {
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
-      Db.save(AgentLLMTableNames.llm_chat_completion,
-          Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
+      Db.save(AgentLLMTableNames.llm_chat_completion, Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
     });
     return geminiChatRequestVo;
 
