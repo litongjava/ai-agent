@@ -12,7 +12,7 @@ import com.litongjava.db.activerecord.Row;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.dao.SchoolDictDao;
-import com.litongjava.llm.sql.LlmIntentClassification;
+import com.litongjava.llm.sql.LlmIntentClassificationSql;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.openai.embedding.EmbeddingResponseVo;
@@ -38,7 +38,7 @@ public class SearchPromptService {
 
     String string = EmbeddingVectorUtils.toString(vector.getData().get(0).getEmbedding());
 
-    String sql = LlmIntentClassification.intent;
+    String sql = LlmIntentClassificationSql.intent;
 
     // 查询数据库
     Row record = Db.findFirst(sql, string, EnvUtils.get(ServerConfigKeys.APP_ENV));

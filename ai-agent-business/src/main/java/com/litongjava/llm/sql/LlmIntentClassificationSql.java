@@ -1,6 +1,6 @@
 package com.litongjava.llm.sql;
 
-public interface LlmIntentClassification {
+public interface LlmIntentClassificationSql {
 
   String intent = """
       --# llm_intent_classification.intent
