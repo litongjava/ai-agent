@@ -139,7 +139,7 @@ public class LlmChatAskService {
       }
 
       provider = ModelPlatformName.OPENROUTER;
-      model = OpenRouterModels.Z_AI_GLM_4_6;
+      model = OpenRouterModels.DEEPSEEK_DEEPSEEK_V3_2;
     }
     if (ApiChatAskType.english_vocabulary.equals(type)) {
       modelSelectService.select(type, askVo);
@@ -153,7 +153,7 @@ public class LlmChatAskService {
       }
 
       provider = ModelPlatformName.OPENROUTER;
-      model = OpenRouterModels.Z_AI_GLM_4_6;
+      model = OpenRouterModels.DEEPSEEK_DEEPSEEK_V3_2;
     }
     if (ApiChatAskType.english_sentence.equals(type)) {
       modelSelectService.select(type, askVo);
@@ -167,7 +167,7 @@ public class LlmChatAskService {
       }
 
       provider = ModelPlatformName.OPENROUTER;
-      model = OpenRouterModels.Z_AI_GLM_4_6;
+      model = OpenRouterModels.DEEPSEEK_DEEPSEEK_V3_2;
     }
 
     else if (ApiChatAskType.celebrity.equals(type)) {

@@ -16,10 +16,10 @@ import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.gemini.GeminiChatRequest;
 import com.litongjava.gemini.GeminiClient;
-import com.litongjava.gemini.GeminiContentVo;
-import com.litongjava.gemini.GeminiFileDataVo;
-import com.litongjava.gemini.GeminiPartVo;
-import com.litongjava.gemini.GeminiSystemInstructionVo;
+import com.litongjava.gemini.GeminiContent;
+import com.litongjava.gemini.GeminiFileData;
+import com.litongjava.gemini.GeminiPart;
+import com.litongjava.gemini.GeminiSystemInstruction;
 import com.litongjava.gemini.GoogleModels;
 import com.litongjava.gitee.GiteeConst;
 import com.litongjava.gitee.GiteeModels;
@@ -383,7 +383,7 @@ public class LLmChatRequestService {
   private GeminiChatRequest genGeminiRequestVo(List<UniChatMessage> messages, long answerId) {
     GeminiChatRequest geminiChatRequestVo = new GeminiChatRequest();
 
-    List<GeminiContentVo> contents = new ArrayList<>(messages.size());
+    List<GeminiContent> contents = new ArrayList<>(messages.size());
     for (UniChatMessage chatMessage : messages) {
       String role = chatMessage.getRole();
       String content = chatMessage.getContent();
@@ -393,30 +393,30 @@ public class LLmChatRequestService {
       ChatMessageArgs args = chatMessage.getArgs();
 
       if (args != null) {
-        List<GeminiPartVo> parts = new ArrayList<>();
+        List<GeminiPart> parts = new ArrayList<>();
         if (args.getUrl() != null) {
           String url = args.getUrl();
-          GeminiFileDataVo geminiFileDataVo = new GeminiFileDataVo("video/*", url);
-          GeminiPartVo videoPart = new GeminiPartVo(geminiFileDataVo);
+          GeminiFileData geminiFileDataVo = new GeminiFileData("video/*", url);
+          GeminiPart videoPart = new GeminiPart(geminiFileDataVo);
           parts.add(videoPart);
         }
 
-        GeminiPartVo questionPart = new GeminiPartVo(content);
+        GeminiPart questionPart = new GeminiPart(content);
         parts.add(questionPart);
-        GeminiContentVo vo = new GeminiContentVo("user", parts);
+        GeminiContent vo = new GeminiContent("user", parts);
         contents.add(vo);
       } else {
 
         if (role.equals("assistant")) {
           role = "model";
         } else if (role.equals("system")) {
-          GeminiPartVo part = new GeminiPartVo(content);
-          GeminiSystemInstructionVo geminiSystemInstructionVo = new GeminiSystemInstructionVo(part);
+          GeminiPart part = new GeminiPart(content);
+          GeminiSystemInstruction geminiSystemInstructionVo = new GeminiSystemInstruction(part);
           geminiChatRequestVo.setSystem_instruction(geminiSystemInstructionVo);
           continue;
         }
-        GeminiPartVo part = new GeminiPartVo(content);
-        GeminiContentVo vo = new GeminiContentVo(role, Collections.singletonList(part));
+        GeminiPart part = new GeminiPart(content);
+        GeminiContent vo = new GeminiContent(role, Collections.singletonList(part));
         contents.add(vo);
       }
 

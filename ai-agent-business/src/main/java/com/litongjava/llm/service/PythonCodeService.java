@@ -7,12 +7,12 @@ import com.litongjava.chat.UniChatRequest;
 import com.litongjava.chat.UniChatResponse;
 import com.litongjava.chat.UniResponseSchema;
 import com.litongjava.consts.ModelPlatformName;
-import com.litongjava.gemini.GeminiCandidateVo;
+import com.litongjava.gemini.GeminiCandidate;
 import com.litongjava.gemini.GeminiChatRequest;
 import com.litongjava.gemini.GeminiChatResponse;
 import com.litongjava.gemini.GeminiClient;
 import com.litongjava.gemini.GeminiGenerationConfig;
-import com.litongjava.gemini.GeminiPartVo;
+import com.litongjava.gemini.GeminiPart;
 import com.litongjava.gemini.GoogleModels;
 import com.litongjava.openai.ChatProvider;
 import com.litongjava.openrouter.OpenRouterModels;
@@ -54,9 +54,9 @@ public class PythonCodeService {
     // 2. Send sync request: generateContent
     GeminiChatResponse respVo = GeminiClient.generate(GoogleModels.GEMINI_2_0_FLASH, reqVo);
     if (respVo != null) {
-      List<GeminiCandidateVo> candidates = respVo.getCandidates();
-      GeminiCandidateVo candidate = candidates.get(0);
-      List<GeminiPartVo> parts = candidate.getContent().getParts();
+      List<GeminiCandidate> candidates = respVo.getCandidates();
+      GeminiCandidate candidate = candidates.get(0);
+      List<GeminiPart> parts = candidate.getContent().getParts();
       if (candidate != null && candidate.getContent() != null && parts != null) {
         String text = parts.get(0).getText();
         return text;

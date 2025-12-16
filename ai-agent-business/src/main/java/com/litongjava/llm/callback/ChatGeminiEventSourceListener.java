@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.gemini.GeminiCandidateVo;
+import com.litongjava.gemini.GeminiCandidate;
 import com.litongjava.gemini.GeminiChatResponse;
-import com.litongjava.gemini.GeminiContentResponseVo;
-import com.litongjava.gemini.GeminiPartVo;
+import com.litongjava.gemini.GeminiContentResponse;
+import com.litongjava.gemini.GeminiPart;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.config.AiAgentContext;
@@ -86,22 +86,22 @@ public class ChatGeminiEventSourceListener extends EventSourceListener {
 
       this.model = chatResponse.getModelVersion();
 
-      List<GeminiCandidateVo> candidates = chatResponse.getCandidates();
+      List<GeminiCandidate> candidates = chatResponse.getCandidates();
       if (candidates == null || candidates.isEmpty()) {
         return;
       }
 
-      GeminiContentResponseVo contentVo = candidates.get(0).getContent();
+      GeminiContentResponse contentVo = candidates.get(0).getContent();
       if (contentVo == null) {
         return;
       }
 
-      List<GeminiPartVo> parts = contentVo.getParts();
+      List<GeminiPart> parts = contentVo.getParts();
       if (parts == null || parts.isEmpty()) {
         return;
       }
 
-      for (GeminiPartVo part : parts) {
+      for (GeminiPart part : parts) {
         if (part == null) {
           continue;
         }
