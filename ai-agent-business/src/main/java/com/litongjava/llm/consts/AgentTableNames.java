@@ -14,5 +14,7 @@ public interface AgentTableNames {
   String youtube_video_subtitle = "youtube_video_subtitle";
 
   String llm_document_parsed_file_cache = "llm_document_parsed_file_cache";
+  
+  String ai_audio_asr_cache = "ai_audio_asr_cache";
 
 }
