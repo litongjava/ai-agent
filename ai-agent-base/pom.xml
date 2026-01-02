@@ -6,6 +6,7 @@
     <version>1.0.0</version>
   </parent>
   <artifactId>ai-agent-base</artifactId>
+  <name>ai-agent-base</name>
   <properties>
     <!-- 项目属性 -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -50,13 +51,13 @@
     <dependency>
       <groupId>com.litongjava</groupId>
       <artifactId>tio-boot-admin</artifactId>
-      <version>1.0.7</version>
+      <version>1.0.9</version>
     </dependency>
 
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>s3</artifactId>
-      <version>2.17.100</version> <!-- 请检查并使用最新版本 -->
+      <version>2.17.100</version>
     </dependency>
 
     <dependency>

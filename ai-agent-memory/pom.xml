@@ -7,6 +7,7 @@
   </parent>
 
   <artifactId>ai-agent-memory</artifactId>
+  <name>ai-agent-memory</name>
 
   <properties>
     <!-- 项目属性 -->
