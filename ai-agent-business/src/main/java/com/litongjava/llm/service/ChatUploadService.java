@@ -13,14 +13,14 @@ import com.litongjava.ehcache.EhCacheKit;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.AgentTableNames;
 import com.litongjava.model.body.RespBodyVo;
+import com.litongjava.model.upload.UploadFile;
+import com.litongjava.model.upload.UploadResult;
 import com.litongjava.table.services.ApiTable;
 import com.litongjava.tio.boot.admin.consts.StoragePlatformConst;
 import com.litongjava.tio.boot.admin.costants.TioBootAdminTableNames;
 import com.litongjava.tio.boot.admin.dao.SystemUploadFileDao;
 import com.litongjava.tio.boot.admin.services.system.SystemUploadFileService;
 import com.litongjava.tio.boot.admin.utils.AwsS3Utils;
-import com.litongjava.tio.boot.admin.vo.UploadResultVo;
-import com.litongjava.tio.http.common.UploadFile;
 import com.litongjava.tio.utils.crypto.Md5Utils;
 import com.litongjava.tio.utils.hutool.FilenameUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
@@ -37,7 +37,7 @@ public class ChatUploadService {
     if (StrKit.isBlank(category)) {
       category = "default";
     }
-    UploadResultVo uploadResultVo = uploadFile(category, uploadFile);
+    UploadResult uploadResultVo = uploadFile(category, uploadFile);
     Long id = uploadResultVo.getId();
     if (!Db.exists(AgentTableNames.chat_upload_file, "id", id)) {
       try {
@@ -58,7 +58,7 @@ public class ChatUploadService {
     return RespBodyVo.ok(uploadResultVo);
   }
 
-  public UploadResultVo uploadFile(String category, UploadFile uploadFile) {
+  public UploadResult uploadFile(String category, UploadFile uploadFile) {
     // 上传文件
     long id = SnowflakeIdUtils.id();
     String suffix = FilenameUtils.getSuffix(uploadFile.getName());
@@ -78,7 +78,7 @@ public class ChatUploadService {
    * @param suffix
    * @return
    */
-  public UploadResultVo uploadFile(long id, String targetName, UploadFile uploadFile, String suffix) {
+  public UploadResult uploadFile(long id, String targetName, UploadFile uploadFile, String suffix) {
     String originFilename = uploadFile.getName();
     long size = uploadFile.getSize();
 
@@ -94,7 +94,7 @@ public class ChatUploadService {
       kv.remove("bucket_name");
       kv.set("url", url);
       kv.set("md5", md5);
-      return new UploadResultVo(id, uploadFile.getName(), uploadFile.getSize(), url, md5);
+      return new UploadResult(id, uploadFile.getName(), uploadFile.getSize(), url, md5);
     } else {
       log.info("not found from cache table:{}", md5);
     }
@@ -121,7 +121,7 @@ public class ChatUploadService {
     TableResult<Kv> save = ApiTable.save(TioBootAdminTableNames.tio_boot_admin_system_upload_file, kv);
     String downloadUrl = getUrl(AwsS3Utils.bucketName, targetName);
 
-    return new UploadResultVo(save.getData().getLong("id"), originFilename, Long.valueOf(size), downloadUrl, md5);
+    return new UploadResult(save.getData().getLong("id"), originFilename, Long.valueOf(size), downloadUrl, md5);
 
   }
 
@@ -130,21 +130,21 @@ public class ChatUploadService {
         targetName);
   }
 
-  public UploadResultVo getUrlById(String id) {
+  public UploadResult getUrlById(String id) {
     return Aop.get(SystemUploadFileService.class).getUrlById(id);
   }
 
-  public UploadResultVo getUrlById(long id) {
+  public UploadResult getUrlById(long id) {
     return Aop.get(SystemUploadFileService.class).getUrlById(id);
   }
 
-  public UploadResultVo getUrlByMd5(String md5) {
+  public UploadResult getUrlByMd5(String md5) {
     return Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);
   }
 
   public RespBodyVo file(String md5) {
     String cacheName = AgentTableNames.chat_upload_file + "_result";
-    UploadResultVo resultVo = EhCacheKit.get(cacheName, md5);
+    UploadResult resultVo = EhCacheKit.get(cacheName, md5);
     if (resultVo == null) {
       resultVo = realFile(md5);
     }
@@ -155,9 +155,9 @@ public class ChatUploadService {
     return RespBodyVo.fail();
   }
 
-  private UploadResultVo realFile(String md5) {
+  private UploadResult realFile(String md5) {
     boolean exists = Db.exists(AgentTableNames.chat_upload_file, "md5", md5);
-    UploadResultVo uploadResultVo = null;
+    UploadResult uploadResultVo = null;
     if (exists) {
       uploadResultVo = Aop.get(SystemUploadFileService.class).getUrlByMd5(md5);
       if (uploadResultVo != null) {
@@ -167,16 +167,16 @@ public class ChatUploadService {
     return null;
   }
 
-  public List<UploadResultVo> getFileBasicInfoByIds(List<Long> file_ids) {
+  public List<UploadResult> getFileBasicInfoByIds(List<Long> file_ids) {
     List<Row> row = Aop.get(SystemUploadFileDao.class).getFileBasicInfoByIds(file_ids);
-    List<UploadResultVo> files = new ArrayList<>();
+    List<UploadResult> files = new ArrayList<>();
     for (Row record : row) {
       Long id = record.getLong("id");
       String url = this.getUrl(record.getStr("bucket_name"), record.getStr("target_name"));
       String originFilename = record.getStr("name");
       String md5 = record.getString("md5");
       Long size = record.getLong("size");
-      UploadResultVo uploadResultVo = new UploadResultVo(id, originFilename, size, url, md5);
+      UploadResult uploadResultVo = new UploadResult(id, originFilename, size, url, md5);
       Row contentRow = Db.findColumnsById(AgentTableNames.chat_upload_file, "content", id);
       if (row != null) {
         String content = contentRow.getStr("content");

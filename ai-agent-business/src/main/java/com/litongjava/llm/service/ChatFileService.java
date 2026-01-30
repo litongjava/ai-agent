@@ -9,7 +9,7 @@ import com.litongjava.llm.utils.DocxUtils;
 import com.litongjava.llm.utils.ExcelUtils;
 import com.litongjava.llm.utils.PdfUtils;
 import com.litongjava.llm.utils.PptxUtils;
-import com.litongjava.tio.http.common.UploadFile;
+import com.litongjava.model.upload.UploadFile;
 import com.litongjava.tio.utils.hutool.FilenameUtils;
 
 public class ChatFileService {

@@ -5,8 +5,8 @@ import java.io.File;
 import org.junit.Test;
 
 import com.litongjava.jfinal.aop.Aop;
+import com.litongjava.model.upload.UploadFile;
 import com.litongjava.tio.boot.admin.config.TioAdminDbConfiguration;
-import com.litongjava.tio.http.common.UploadFile;
 import com.litongjava.tio.utils.environment.EnvUtils;
 import com.litongjava.tio.utils.hutool.FileUtil;
 

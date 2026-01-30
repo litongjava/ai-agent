@@ -8,11 +8,11 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.linux.ExecuteCodeRequest;
 import com.litongjava.linux.JavaKitClient;
 import com.litongjava.llm.consts.AiChatEventName;
+import com.litongjava.model.upload.UploadFile;
+import com.litongjava.model.upload.UploadResult;
 import com.litongjava.tio.boot.admin.services.storage.AwsS3StorageService;
-import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
-import com.litongjava.tio.http.common.UploadFile;
 import com.litongjava.tio.http.common.sse.SsePacket;
 import com.litongjava.tio.utils.base64.Base64Utils;
 import com.litongjava.tio.utils.commandline.ProcessResult;
@@ -86,7 +86,7 @@ public class MatplotlibService {
       for (String imageBase64Code : images) {
         ImageVo decodeImage = Base64Utils.decodeImage(imageBase64Code);
         UploadFile uploadFile = new UploadFile("matplotlib." + decodeImage.getExtension(), decodeImage.getData());
-        UploadResultVo resultVo = Aop.get(AwsS3StorageService.class).uploadFile("matplotlib", uploadFile);
+        UploadResult resultVo = Aop.get(AwsS3StorageService.class).uploadFile("matplotlib", uploadFile);
         String url = resultVo.getUrl();
         imageUrls.add(url);
       }

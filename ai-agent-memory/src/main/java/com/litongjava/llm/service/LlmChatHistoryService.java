@@ -16,9 +16,9 @@ import com.litongjava.kit.PgObjectUtils;
 import com.litongjava.llm.consts.AgentMessageType;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
+import com.litongjava.model.upload.UploadResult;
 import com.litongjava.openai.chat.MessageRole;
 import com.litongjava.table.services.ApiTable;
-import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.utils.commandline.ProcessResult;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
@@ -58,7 +58,7 @@ public class LlmChatHistoryService {
     return ts;
   }
 
-  public TableResult<Kv> saveUser(long id, Long sessionId, String textQuestion, List<UploadResultVo> fileInfo) {
+  public TableResult<Kv> saveUser(long id, Long sessionId, String textQuestion, List<UploadResult> fileInfo) {
     TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id",
         sessionId);
     ti.set("type", AgentMessageType.FILE).set("metadata", fileInfo);
@@ -67,7 +67,7 @@ public class LlmChatHistoryService {
     return ts;
   }
 
-  public void saveUser(long questionId, Long sessionId, String inputQestion, List<UploadResultVo> fileInfo,
+  public void saveUser(long questionId, Long sessionId, String inputQestion, List<UploadResult> fileInfo,
       ChatMessageArgs chatSendArgs) {
     Row ti = Row.by("id", questionId).set("session_id", sessionId).set("content", inputQestion).set("role", "user");
     if (fileInfo != null) {

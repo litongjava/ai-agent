@@ -2,7 +2,7 @@ package com.litongjava.llm.vo;
 
 import java.util.List;
 
-import com.litongjava.tio.boot.admin.vo.UploadResultVo;
+import com.litongjava.model.upload.UploadResult;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,7 +17,7 @@ public class AiChatResponseVo {
   private Long quesitonId;
   private Long answerId;
   private String rewrite;
-  private List<UploadResultVo> uploadFiles;
+  private List<UploadResult> uploadFiles;
 
   public AiChatResponseVo(String content) {
     this.content = content;

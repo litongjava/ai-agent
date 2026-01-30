@@ -9,8 +9,8 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.service.AiDocumentParseService;
 import com.litongjava.model.TaskResponse;
 import com.litongjava.model.body.RespBodyVo;
+import com.litongjava.model.upload.UploadFile;
 import com.litongjava.tio.boot.testing.TioBootTest;
-import com.litongjava.tio.http.common.UploadFile;
 import com.litongjava.tio.utils.hutool.FileUtil;
 import com.litongjava.tio.utils.json.JsonUtils;
 

@@ -33,6 +33,7 @@ import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.vo.AiChatResponseVo;
 import com.litongjava.llm.vo.ChatAskVo;
 import com.litongjava.llm.vo.ChatParamVo;
+import com.litongjava.model.upload.UploadResult;
 import com.litongjava.openai.ChatProvider;
 import com.litongjava.openai.chat.OpenAiChatRequest;
 import com.litongjava.openai.chat.OpenAiChatResponse;
@@ -42,7 +43,6 @@ import com.litongjava.openrouter.OpenRouterConst;
 import com.litongjava.openrouter.OpenRouterModels;
 import com.litongjava.siliconflow.SiliconFlowConsts;
 import com.litongjava.siliconflow.SiliconFlowModels;
-import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -85,7 +85,7 @@ public class LLmChatRequestService {
     Long sessionId = chatAskVo.getSession_id();
     String rewrite_quesiton = chatParamVo.getRewriteQuestion();
     String textQuestion = chatParamVo.getTextQuestion();
-    List<UploadResultVo> uploadFiles = chatParamVo.getUploadFiles();
+    List<UploadResult> uploadFiles = chatParamVo.getUploadFiles();
     String systemPrompt = chatParamVo.getSystemPrompt();
     if (rewrite_quesiton != null) {
       textQuestion = rewrite_quesiton;
@@ -104,7 +104,7 @@ public class LLmChatRequestService {
 
     // 添加用户问题
     if (uploadFiles != null) {
-      for (UploadResultVo uploadResultVo : uploadFiles) {
+      for (UploadResult uploadResultVo : uploadFiles) {
         history.add(new UniChatMessage("user", uploadResultVo.getName() + " " + uploadResultVo.getContent()));
       }
     }

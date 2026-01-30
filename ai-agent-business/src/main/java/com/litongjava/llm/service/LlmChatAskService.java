@@ -31,6 +31,7 @@ import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.http.response.ResponseVo;
+import com.litongjava.model.upload.UploadResult;
 import com.litongjava.model.web.WebPageContent;
 import com.litongjava.openai.chat.OpenAiChatRequest;
 import com.litongjava.openai.chat.OpenAiChatResponse;
@@ -44,7 +45,6 @@ import com.litongjava.tavily.TavilyClient;
 import com.litongjava.tavily.TavilySearchResponse;
 import com.litongjava.tavily.TavilySearchResult;
 import com.litongjava.template.PromptEngine;
-import com.litongjava.tio.boot.admin.vo.UploadResultVo;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -313,8 +313,8 @@ public class LlmChatAskService {
           String role = record.getStr("role");
           String content = record.getStr("content");
           String str = record.getStr("metadata");
-          List<UploadResultVo> uploadVos = JsonUtils.parseArray(str, UploadResultVo.class);
-          for (UploadResultVo uploadResult : uploadVos) {
+          List<UploadResult> uploadVos = JsonUtils.parseArray(str, UploadResult.class);
+          for (UploadResult uploadResult : uploadVos) {
             historyMessage.add(
                 new UniChatMessage(role, String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
           }
@@ -329,7 +329,7 @@ public class LlmChatAskService {
     // 5.记录问题
     // save to the user question to db
     long questionId = SnowflakeIdUtils.id();
-    List<UploadResultVo> fileInfo = null;
+    List<UploadResult> fileInfo = null;
     try {
       if (file_ids != null) {
         fileInfo = Aop.get(ChatUploadService.class).getFileBasicInfoByIds(file_ids);
