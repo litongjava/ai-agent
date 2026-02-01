@@ -45,6 +45,7 @@ import com.litongjava.tavily.TavilyClient;
 import com.litongjava.tavily.TavilySearchResponse;
 import com.litongjava.tavily.TavilySearchResult;
 import com.litongjava.template.PromptEngine;
+import com.litongjava.tio.boot.admin.utils.TioVirtualThreadUtils;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -315,8 +316,8 @@ public class LlmChatAskService {
           String str = record.getStr("metadata");
           List<UploadResult> uploadVos = JsonUtils.parseArray(str, UploadResult.class);
           for (UploadResult uploadResult : uploadVos) {
-            historyMessage.add(
-                new UniChatMessage(role, String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
+            historyMessage.add(new UniChatMessage(role,
+                String.format("user upload %s conent is :%s", uploadResult.getName(), uploadResult.getContent())));
           }
 
           if (StrUtil.notBlank(content)) {
@@ -460,11 +461,13 @@ public class LlmChatAskService {
           ResponseVo responseVo = webPageService.get(url);
           if (responseVo != null && responseVo.isOk()) {
             StringBuffer htmlContent = new StringBuffer();
-            htmlContent.append("source:").append(url).append(" content:").append(responseVo.getBodyString()).append("  ");
+            htmlContent.append("source:").append(url).append(" content:").append(responseVo.getBodyString())
+                .append("  ");
             String string = htmlContent.toString();
 
             message = "Read result:" + string;
-            Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+            Tio.bSend(channelContext,
+                new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
             historyMessage.add(new UniChatMessage("user", string));
 
           } else {
@@ -472,7 +475,8 @@ public class LlmChatAskService {
             message = String.format(message, url);
             historyMessage.add(new UniChatMessage("user", message));
             message = String.format(message, url);
-            Tio.bSend(channelContext, new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
+            Tio.bSend(channelContext,
+                new SsePacket(AiChatEventName.reasoning, JsonUtils.toJson(Kv.by("content", message))));
           }
         }
       }
@@ -511,8 +515,14 @@ public class LlmChatAskService {
 
       log.info("question:{}", notificationStringBuffer.toString());
       if (notification != null) {
-        Long appTenant = EnvUtils.getLong("app.tenant");
-        notification.sendQuestion(appTenant, notificationStringBuffer.toString());
+        TioVirtualThreadUtils.execute(() -> {
+          try {
+            Long appTenant = EnvUtils.getLong("app.tenant");
+            notification.sendQuestion(appTenant, notificationStringBuffer.toString());
+          } catch (Exception e) {
+            log.error(e.getMessage(), e);
+          }
+        });
       }
 
       if (!EnvUtils.isDev()) {
@@ -553,8 +563,8 @@ public class LlmChatAskService {
     }
   }
 
-  private String tutor(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage, SchoolDict schoolDict,
-      String model) {
+  private String tutor(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage,
+      SchoolDict schoolDict, String model) {
     String isoTimeStr = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
     Kv kv = Kv.by("date", isoTimeStr);
     return promptService.render("general_prompt.txt", kv);
@@ -590,8 +600,8 @@ public class LlmChatAskService {
     return systemPrompt;
   }
 
-  private String advise(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage, SchoolDict schoolDict,
-      String model) {
+  private String advise(ChannelContext channelContext, String textQuestion, List<UniChatMessage> historyMessage,
+      SchoolDict schoolDict, String model) {
     String full_name = schoolDict.getFull_name();
     String domain_name = schoolDict.getDomain_name();
     if (channelContext != null) {
@@ -772,7 +782,8 @@ public class LlmChatAskService {
     String textQuestion = vo.getUser_input_quesiton();
     messages.add(new UniChatMessage("user", textQuestion));
 
-    OpenAiChatRequest chatRequestVo = new OpenAiChatRequest().setModel(OpenAiModels.GPT_4O_MINI).setChatMessages(messages);
+    OpenAiChatRequest chatRequestVo = new OpenAiChatRequest().setModel(OpenAiModels.GPT_4O_MINI)
+        .setChatMessages(messages);
 
     long answerId = SnowflakeIdUtils.id();
     if (stream) {
@@ -784,7 +795,8 @@ public class LlmChatAskService {
       // ChatOpenAiStreamCommonCallback callback = new
       // ChatOpenAiStreamCommonCallback(channelContext, vo, answerId, start,
       // textQuestion);
-      ChatOpenAiEventSourceListener listener = new ChatOpenAiEventSourceListener(channelContext, vo, answerId, start, textQuestion);
+      ChatOpenAiEventSourceListener listener = new ChatOpenAiEventSourceListener(channelContext, vo, answerId, start,
+          textQuestion);
       // Call call = OpenAiClient.chatCompletions(chatRequestVo, callback);
       EventSource eventSource = OpenAiClient.chatCompletions(chatRequestVo, listener);
       log.info("add call:{}", sessionId);

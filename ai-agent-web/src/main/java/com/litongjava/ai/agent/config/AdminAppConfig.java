@@ -39,7 +39,7 @@ public class AdminAppConfig {
       r.add("/api/system/file/upload", systemUploadHandler::upload);
       r.add("/api/system/file/url", systemUploadHandler::getUrl);
 
-      ApiChatHandler apiChatHandler = Aop.get(ApiChatHandler.class);
+      ApiChatHandler apiChatHandler = new ApiChatHandler();
 
       GeogebraChatHandler geogebraChatHandler = new GeogebraChatHandler();
 
@@ -52,7 +52,7 @@ public class AdminAppConfig {
       r.add("/api/v1/chat/history", apiChatHandler::getChatHistory);
       r.add("/api/v1/chat/stop", apiChatHandler::stop);
 
-      ApiChatAskHandler apiChatAskHandler = Aop.get(ApiChatAskHandler.class);
+      ApiChatAskHandler apiChatAskHandler = new ApiChatAskHandler();
       r.add("/api/v1/chat/ask", apiChatAskHandler);
 
       r.add("/api/v1/geogebra/chat", geogebraChatHandler::chat);
