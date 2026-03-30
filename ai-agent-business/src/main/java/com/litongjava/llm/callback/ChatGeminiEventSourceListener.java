@@ -17,7 +17,7 @@ import com.litongjava.llm.service.FollowUpQuestionService;
 import com.litongjava.llm.service.LlmChatHistoryService;
 import com.litongjava.llm.service.MatplotlibService;
 import com.litongjava.llm.service.RunningNotificationService;
-import com.litongjava.llm.vo.ChatAskVo;
+import com.litongjava.llm.vo.ChatAskRequest;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -39,7 +39,7 @@ public class ChatGeminiEventSourceListener extends EventSourceListener {
   private final MatplotlibService matplotlibService = Aop.get(MatplotlibService.class);
 
   private final ChannelContext channelContext;
-  private final ChatAskVo apiChatSendVo;
+  private final ChatAskRequest apiChatSendVo;
   private final long answerId;
   private final long startTs;
   private final String textQuestion;
@@ -49,12 +49,12 @@ public class ChatGeminiEventSourceListener extends EventSourceListener {
   private final StringBuilder completionContent = new StringBuilder();
   private boolean continueSend = true;
 
-  public ChatGeminiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs,
+  public ChatGeminiEventSourceListener(ChannelContext channelContext, ChatAskRequest apiChatSendVo, long answerId, long startTs,
       String textQuestion) {
     this(channelContext, apiChatSendVo, answerId, startTs, textQuestion, null);
   }
 
-  public ChatGeminiEventSourceListener(ChannelContext channelContext, ChatAskVo apiChatSendVo, long answerId, long startTs,
+  public ChatGeminiEventSourceListener(ChannelContext channelContext, ChatAskRequest apiChatSendVo, long answerId, long startTs,
       String textQuestion, CountDownLatch latch) {
     this.channelContext = channelContext;
     this.apiChatSendVo = apiChatSendVo;

@@ -26,7 +26,7 @@ import com.litongjava.llm.consts.ApiChatSendCmd;
 import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.utils.AgentBotQuestionUtils;
 import com.litongjava.llm.vo.AiChatResponseVo;
-import com.litongjava.llm.vo.ChatAskVo;
+import com.litongjava.llm.vo.ChatAskRequest;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.model.body.RespBodyVo;
@@ -78,7 +78,7 @@ public class LlmChatAskService {
   private RunningNotificationService notification = AiAgentContext.me().getNotification();
   private boolean enableRewrite = false;
 
-  public RespBodyVo index(ChannelContext channelContext, ChatAskVo askVo) {
+  public RespBodyVo index(ChannelContext channelContext, ChatAskRequest askVo) {
     /**
      * inputQestion 用户输入的问题 textQuestion 用户输入的问题和提示词
      */
@@ -773,7 +773,7 @@ public class LlmChatAskService {
     return markdown;
   }
 
-  public String processMessageByChatModel(ChatAskVo vo, ChannelContext channelContext) {
+  public String processMessageByChatModel(ChatAskRequest vo, ChannelContext channelContext) {
     boolean stream = vo.isStream();
     Long sessionId = vo.getSession_id();
     long start = System.currentTimeMillis();

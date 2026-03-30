@@ -3,13 +3,13 @@ package com.litongjava.llm.service;
 import com.litongjava.consts.ModelPlatformName;
 import com.litongjava.gemini.GoogleModels;
 import com.litongjava.llm.consts.ApiChatAskType;
-import com.litongjava.llm.vo.ChatAskVo;
+import com.litongjava.llm.vo.ChatAskRequest;
 import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.openrouter.OpenRouterModels;
 
 public class ModelSelectService {
 
-  public void select(String type, ChatAskVo apiChatAskVo) {
+  public void select(String type, ChatAskRequest apiChatAskVo) {
     if (ApiChatAskType.translator.equals(type)) {
       if (ModelPlatformName.AUTO.equals(apiChatAskVo.getProvider())) {
         apiChatAskVo.setProvider(ModelPlatformName.GOOGLE);

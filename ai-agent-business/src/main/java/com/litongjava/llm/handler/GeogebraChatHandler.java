@@ -11,23 +11,27 @@ import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.service.LlmChatAskService;
 import com.litongjava.llm.service.LlmChatSessionService;
-import com.litongjava.llm.vo.ChatAskVo;
+import com.litongjava.llm.vo.ChatAskRequest;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.HttpRequest;
 import com.litongjava.tio.http.common.HttpResponse;
+import com.litongjava.tio.http.server.handler.HttpRequestHandler;
 import com.litongjava.tio.http.server.util.CORSUtils;
 import com.litongjava.tio.utils.json.FastJson2Utils;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GeogebraChatHandler {
+public class GeogebraChatHandler implements HttpRequestHandler {
   private LlmChatAskService llmAiChatService = Aop.get(LlmChatAskService.class);
 
-  public HttpResponse chat(HttpRequest httpRequest) {
+
+
+  @Override
+  public HttpResponse handle(HttpRequest httpRequest) throws Exception {
     HttpResponse response = TioRequestContext.getResponse();
     CORSUtils.enableCORS(response);
 
@@ -100,7 +104,7 @@ public class GeogebraChatHandler {
 
     JSONArray messages = reqVo.getJSONArray("messages");
     JSONObject args = reqVo.getJSONObject("args");
-    ChatAskVo chatAskVo = new ChatAskVo();
+    ChatAskRequest chatAskVo = new ChatAskRequest();
     if (args != null) {
       ChatMessageArgs javaObject = args.toJavaObject(ChatMessageArgs.class);
       javaObject.setType(type);

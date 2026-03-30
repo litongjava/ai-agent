@@ -41,8 +41,6 @@ public class AdminAppConfig {
 
       ApiChatHandler apiChatHandler = new ApiChatHandler();
 
-      GeogebraChatHandler geogebraChatHandler = new GeogebraChatHandler();
-
       r.add("/api/v1/chat/recommend", apiChatHandler::recommend);
       r.add("/api/v1/chat/create", apiChatHandler::createSession);
       r.add("/api/v1/chat/list", apiChatHandler::listSession);
@@ -52,10 +50,8 @@ public class AdminAppConfig {
       r.add("/api/v1/chat/history", apiChatHandler::getChatHistory);
       r.add("/api/v1/chat/stop", apiChatHandler::stop);
 
-      ApiChatAskHandler apiChatAskHandler = new ApiChatAskHandler();
-      r.add("/api/v1/chat/ask", apiChatAskHandler);
-
-      r.add("/api/v1/geogebra/chat", geogebraChatHandler::chat);
+      GeogebraChatHandler geogebraChatHandler = new GeogebraChatHandler();
+      r.add("/api/v1/geogebra/chat", geogebraChatHandler);
     }
 
     // 配置控制器

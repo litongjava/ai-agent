@@ -32,7 +32,7 @@ import com.litongjava.llm.can.ChatStreamCallCan;
 import com.litongjava.llm.consts.AiChatEventName;
 import com.litongjava.llm.consts.ApiChatAskType;
 import com.litongjava.llm.vo.AiChatResponseVo;
-import com.litongjava.llm.vo.ChatAskVo;
+import com.litongjava.llm.vo.ChatAskRequest;
 import com.litongjava.llm.vo.ChatParamVo;
 import com.litongjava.model.upload.UploadResult;
 import com.litongjava.openai.ChatProvider;
@@ -76,7 +76,7 @@ public class LLmChatRequestService {
    * @param aiChatResponseVo
    * @return 响应对象
    */
-  public AiChatResponseVo predict(ChatAskVo chatAskVo, ChatParamVo chatParamVo, AiChatResponseVo aiChatResponseVo) {
+  public AiChatResponseVo predict(ChatAskRequest chatAskVo, ChatParamVo chatParamVo, AiChatResponseVo aiChatResponseVo) {
     String provider = chatAskVo.getProvider();
     Boolean stream = chatAskVo.isStream();
     String type = chatAskVo.getType();
@@ -168,7 +168,7 @@ public class LLmChatRequestService {
    * @param answerId
    * @return
    */
-  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskVo chatAskVo, long answerId,
+  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskRequest chatAskVo, long answerId,
       String textQuesiton) {
     CountDownLatch latch = new CountDownLatch(3);
     List<UniChatMessage> messages = chatAskVo.getMessages();
@@ -227,7 +227,7 @@ public class LLmChatRequestService {
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskVo chatAskVo, long answerId,
+  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskRequest chatAskVo, long answerId,
       String textQuestion) {
     Long sessionId = chatAskVo.getSession_id();
     String provider = chatAskVo.getProvider();
