@@ -20,11 +20,40 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>tio-core</artifactId>
+      <version>${tio-boot.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>tio-http-common</artifactId>
+      <version>${tio-boot.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>tio-http-server</artifactId>
+      <version>${tio-boot.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>tio-boot-admin-base</artifactId>
+      <version>${tio-boot.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.litongjava</groupId>
       <artifactId>ai-agent-memory</artifactId>
-      <version>1.0.0</version>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.litongjava</groupId>
+      <artifactId>ai-agent-base</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>

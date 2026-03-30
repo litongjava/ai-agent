@@ -4,12 +4,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-import com.litongjava.annotation.AComponentScan;
+import com.litongjava.ai.agent.config.AgentWebAppConfig;
 import com.litongjava.tio.boot.TioApplication;
 import com.litongjava.tio.boot.server.TioBootServer;
 
-@AComponentScan
-public class AgentAdminApp {
+public class AiAgentAdminApp {
   public static void main(String[] args) {
     long start = System.currentTimeMillis();
 
@@ -26,7 +25,7 @@ public class AgentAdminApp {
     server.setWorkThreadFactory(workTf);
     server.setBizExecutor(bizExecutor);
 
-    TioApplication.run(AgentAdminApp.class, args);
+    TioApplication.run(AiAgentAdminApp.class, new AgentWebAppConfig(), args);
     long end = System.currentTimeMillis();
     System.out.println((end - start) + "(ms)");
   }

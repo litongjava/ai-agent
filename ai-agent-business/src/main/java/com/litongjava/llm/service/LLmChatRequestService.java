@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.agent.consts.AgentLLMTableNames;
+import com.litongjava.agent.consts.AiAgentBaseTableNames;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.chat.PlatformInput;
 import com.litongjava.chat.UniChatClient;
@@ -303,7 +303,7 @@ public class LLmChatRequestService {
     // save to database
     TioThreadUtils.execute(() -> {
       String sanitizedJson = requestJson.replaceAll("\u0000", "");
-      Db.save(AgentLLMTableNames.llm_chat_completion,
+      Db.save(AiAgentBaseTableNames.llm_chat_completion,
           Row.by("id", answerId).set("request", PgObjectUtils.json(sanitizedJson)));
     });
     return chatRequestVo;
@@ -359,7 +359,7 @@ public class LLmChatRequestService {
     // log.info("chatRequestVo:{}", requestJson);
     // save to database
     TioThreadUtils.execute(() -> {
-      Db.save(AgentLLMTableNames.llm_chat_completion,
+      Db.save(AiAgentBaseTableNames.llm_chat_completion,
           Row.by("id", answerId).set("request", PgObjectUtils.json(requestJson)));
     });
     return geminiChatRequestVo;
