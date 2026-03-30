@@ -6,7 +6,7 @@ import java.util.List;
 import org.postgresql.util.PGobject;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.agent.consts.AgentLLMTableNames;
+import com.litongjava.agent.consts.AiAgentBaseTableNames;
 import com.litongjava.chat.ChatMessageArgs;
 import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
@@ -36,7 +36,7 @@ public class LlmChatHistoryService {
         //
         .pageNo(pageNo).pageSize(pageSize);
 
-    TableResult<Page<Row>> ts = ApiTable.page(AgentLLMTableNames.llm_chat_history, ti);
+    TableResult<Page<Row>> ts = ApiTable.page(AiAgentBaseTableNames.llm_chat_history, ti);
     List<Row> list = ts.getData().getList();
     List<Kv> kvs = new ArrayList<>();
     for (Row record : list) {
@@ -47,14 +47,14 @@ public class LlmChatHistoryService {
 
   public List<Row> getHistory(Long sessionId) {
     String sql = "select role,type,content,metadata,code_result,args,create_time from %s where session_id =? order by create_time";
-    sql = String.format(sql, AgentLLMTableNames.llm_chat_history);
+    sql = String.format(sql, AiAgentBaseTableNames.llm_chat_history);
     return Db.find(sql, sessionId);
   }
 
   public TableResult<Kv> saveUser(Long id, Long sessionId, String textQuestion) {
     TableInput ti = TableInput.by("id", id).set("content", textQuestion).set("role", "user").set("session_id",
         sessionId);
-    TableResult<Kv> ts = ApiTable.save(AgentLLMTableNames.llm_chat_history, ti);
+    TableResult<Kv> ts = ApiTable.save(AiAgentBaseTableNames.llm_chat_history, ti);
     return ts;
   }
 
@@ -63,7 +63,7 @@ public class LlmChatHistoryService {
         sessionId);
     ti.set("type", AgentMessageType.FILE).set("metadata", fileInfo);
     ti.setJsonFields("metadata");
-    TableResult<Kv> ts = ApiTable.save(AgentLLMTableNames.llm_chat_history, ti);
+    TableResult<Kv> ts = ApiTable.save(AiAgentBaseTableNames.llm_chat_history, ti);
     return ts;
   }
 
@@ -77,13 +77,13 @@ public class LlmChatHistoryService {
     if (chatSendArgs != null) {
       ti.set("args", PgObjectUtils.json(chatSendArgs));
     }
-    Db.save(AgentLLMTableNames.llm_chat_history, ti);
+    Db.save(AiAgentBaseTableNames.llm_chat_history, ti);
   }
 
   public TableResult<Kv> saveAssistant(Long id, Long sessionId, String message) {
     TableInput ti = TableInput.by("id", id).set("content", message).set("role", "assistant").set("session_id",
         sessionId);
-    TableResult<Kv> ts = ApiTable.save(AgentLLMTableNames.llm_chat_history, ti);
+    TableResult<Kv> ts = ApiTable.save(AiAgentBaseTableNames.llm_chat_history, ti);
     return ts;
   }
 
@@ -91,7 +91,7 @@ public class LlmChatHistoryService {
     Row row = Row.by("id", id).set("content", message).set("role", "assistant").set("model", model)
         //
         .set("session_id", chatId);
-    Db.save(AgentLLMTableNames.llm_chat_history, row);
+    Db.save(AiAgentBaseTableNames.llm_chat_history, row);
   }
 
   public void saveAssistant(long answerId, Long session_id, String model, String message, ProcessResult codeResult) {
@@ -101,19 +101,19 @@ public class LlmChatHistoryService {
     if (codeResult != null) {
       row.set("code_result", PgObjectUtils.json(codeResult));
     }
-    Db.save(AgentLLMTableNames.llm_chat_history, row);
+    Db.save(AiAgentBaseTableNames.llm_chat_history, row);
   }
 
   public void like(Long questionId, Long answerId, Boolean like, String userId) {
     String sql = "update %s set liked=? where id=?";
-    sql = String.format(sql, AgentLLMTableNames.llm_chat_history);
+    sql = String.format(sql, AiAgentBaseTableNames.llm_chat_history);
     Db.updateBySql(sql, like, questionId);
     Db.updateBySql(sql, like, answerId);
   }
 
   public void saveAnswer(Long chatId, String answer, long answer_id) {
     Row row = Row.by("id", answer_id).set("content", answer).set("role", "assistant").set("session_id", chatId);
-    Db.save(AgentLLMTableNames.llm_chat_history, row);
+    Db.save(AiAgentBaseTableNames.llm_chat_history, row);
   }
 
   public void saveFuntionValue(Long chatId, String fnName, String fnValue) {
@@ -122,12 +122,12 @@ public class LlmChatHistoryService {
     Row saveMessage = Row.by("id", SnowflakeIdUtils.id()).set("session_id", chatId)
         //
         .set("role", MessageRole.function).set("content", fnName).set("metadata", pgJson);
-    Db.save(AgentLLMTableNames.llm_chat_history, saveMessage);
+    Db.save(AiAgentBaseTableNames.llm_chat_history, saveMessage);
   }
 
   public void remove(Long previous_question_id, Long previous_answer_id) {
     String sql = "delete from %s where id=? or id=?";
-    sql = String.format(sql, AgentLLMTableNames.llm_chat_history);
+    sql = String.format(sql, AiAgentBaseTableNames.llm_chat_history);
     Db.delete(sql, previous_question_id, previous_answer_id);
   }
 

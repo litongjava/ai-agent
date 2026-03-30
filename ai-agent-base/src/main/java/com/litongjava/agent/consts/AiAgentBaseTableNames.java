@@ -1,6 +1,6 @@
 package com.litongjava.agent.consts;
 
-public interface AgentLLMTableNames {
+public interface AiAgentBaseTableNames {
 
   String llm_question_recommend = "llm_uestion_recommend";
   String llm_chat_session = "llm_chat_session";

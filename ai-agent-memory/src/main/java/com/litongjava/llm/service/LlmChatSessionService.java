@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jfinal.kit.Kv;
-import com.litongjava.agent.consts.AgentLLMTableNames;
+import com.litongjava.agent.consts.AiAgentBaseTableNames;
 import com.litongjava.db.TableInput;
 import com.litongjava.db.TableResult;
 import com.litongjava.db.activerecord.Db;
@@ -29,7 +29,7 @@ public class LlmChatSessionService {
     if (appId != null) {
       record.set("app_id", appId);
     }
-    boolean save = Db.save(AgentLLMTableNames.llm_chat_session, record);
+    boolean save = Db.save(AiAgentBaseTableNames.llm_chat_session, record);
     if (save) {
       return TableResult.ok(Kv.by("id", id).set("name", name));
     } else {
@@ -38,14 +38,14 @@ public class LlmChatSessionService {
   }
 
   public boolean exists(String userId, Long id) {
-    String cacheName = AgentLLMTableNames.llm_chat_session + "_exists";
+    String cacheName = AiAgentBaseTableNames.llm_chat_session + "_exists";
     String key = id + "_" + userId;
     Boolean exists = EhCacheKit.getBoolean(cacheName, key);
     if (exists != null && exists) {
       return exists;
     }
     String sql = "select count(1) from %s where id=? and user_id=? and deleted=0";
-    sql = String.format(sql, AgentLLMTableNames.llm_chat_session);
+    sql = String.format(sql, AiAgentBaseTableNames.llm_chat_session);
     exists = Db.existsBySql(sql, id, userId);
     if (exists) {
       EhCacheKit.put(cacheName, key, exists);
@@ -66,7 +66,7 @@ public class LlmChatSessionService {
     ti.pageNo(pageNo).pageSize(pageSize);
     ti.orderBy("create_time").asc(false);
 
-    TableResult<Page<Row>> result = ApiTable.page(AgentLLMTableNames.llm_chat_session, ti);
+    TableResult<Page<Row>> result = ApiTable.page(AiAgentBaseTableNames.llm_chat_session, ti);
     Page<Row> paginate = result.getData();
 
     List<Row> list = paginate.getList();
@@ -78,20 +78,20 @@ public class LlmChatSessionService {
   }
 
   public int updateSessionName(String name, Long id, String userId) {
-    String sql = String.format("update %s set name=? where id=? and user_id=?", AgentLLMTableNames.llm_chat_session);
+    String sql = String.format("update %s set name=? where id=? and user_id=?", AiAgentBaseTableNames.llm_chat_session);
     return Db.updateBySql(sql, name, id, userId);
   }
 
   public int softDelete(Long id, String userId) {
     String sql = "update %s set deleted=1 where id=? and user_id=?";
-    sql = String.format(sql, AgentLLMTableNames.llm_chat_session);
+    sql = String.format(sql, AiAgentBaseTableNames.llm_chat_session);
     return Db.updateBySql(sql, id, userId);
   }
 
   public boolean createIfNotExists(String userId, Long session_id, String session_type, String session_name) {
     if (session_type != null) {
       Row record = Row.by("id", session_id);
-      record.setTableName(AgentLLMTableNames.llm_chat_session);
+      record.setTableName(AiAgentBaseTableNames.llm_chat_session);
       record.set("name", session_name);
       record.set("user_id", userId);
       record.set("type", session_type);

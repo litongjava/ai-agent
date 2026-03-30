@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.postgresql.util.PGobject;
 
-import com.litongjava.agent.consts.AgentLLMTableNames;
+import com.litongjava.agent.consts.AiAgentBaseTableNames;
 import com.litongjava.db.activerecord.Db;
 import com.litongjava.db.activerecord.Row;
 import com.litongjava.db.utils.PgVectorUtils;
@@ -28,7 +28,7 @@ public class VectorService {
   public String getVector(String text) {
     String v = null;
     String md5 = Md5Utils.md5Hex(text);
-    String sql = String.format("select v from %s where md5=? and m=?", AgentLLMTableNames.llm_vector_embedding);
+    String sql = String.format("select v from %s where md5=? and m=?", AiAgentBaseTableNames.llm_vector_embedding);
     PGobject pGobject = Db.queryFirst(sql, md5, OpenAiModels.TEXT_EMBEDDING_3_LARGE);
     if (pGobject != null) {
       v = pGobject.getValue();
@@ -54,7 +54,7 @@ public class VectorService {
 
   public synchronized EmbeddingResponse getVector(String text, String model) {
     String md5 = Md5Utils.md5Hex(text);
-    String sql = String.format("select v from %s where md5=? and m=?", AgentLLMTableNames.llm_vector_embedding);
+    String sql = String.format("select v from %s where md5=? and m=?", AiAgentBaseTableNames.llm_vector_embedding);
     PGobject pGobject = Db.queryFirst(sql, md5, model);
     if (pGobject != null) {
       String value = pGobject.getValue();
@@ -83,7 +83,7 @@ public class VectorService {
         PGobject pgVector = PgVectorUtils.getPgVector(string);
         Row saveRecord = Row.by("id", id).set("md5", md5).set("t", text).set("v", pgVector)
             //
-            .set("m", model).setTableName(AgentLLMTableNames.llm_vector_embedding);
+            .set("m", model).setTableName(AiAgentBaseTableNames.llm_vector_embedding);
         synchronized (writeLock) {
           Db.save(saveRecord);
         }
