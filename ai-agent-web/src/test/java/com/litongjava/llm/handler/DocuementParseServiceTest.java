@@ -4,7 +4,7 @@ import java.io.File;
 
 import org.junit.Test;
 
-import com.litongjava.ai.agent.config.AdminAppConfig;
+import com.litongjava.ai.agent.config.AgentWebAppConfig;
 import com.litongjava.jfinal.aop.Aop;
 import com.litongjava.llm.service.AiDocumentParseService;
 import com.litongjava.model.TaskResponse;
@@ -18,7 +18,7 @@ public class DocuementParseServiceTest {
 
   @Test
   public void testParse() {
-    TioBootTest.runWith(AdminAppConfig.class);
+    TioBootTest.runWith(AgentWebAppConfig.class);
     File file = new File("F:\\my_document\\subject-docs\\06_ICS\\ICS241\\ICS241_Topic1_Intro.pdf");
     String name = file.getName();
     byte[] bytes = FileUtil.readBytes(file);
@@ -29,7 +29,7 @@ public class DocuementParseServiceTest {
 
   @Test
   public void getTask() {
-    TioBootTest.runWith(AdminAppConfig.class);
+    TioBootTest.runWith(AgentWebAppConfig.class);
     long taskId = 580332660355862528L;
     TaskResponse task = Aop.get(AiDocumentParseService.class).getTask(taskId);
     System.out.println(task.getResult());
