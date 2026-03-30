@@ -24,6 +24,7 @@ public class AgentWebAppConfig {
     new TioAdminHandlerConfiguration().config();
 
     new AgentWebHandlerConfig().config();
+    new AgentControllerConfiguration().config();
     // 配置控制器
     new TioAdminControllerConfiguration().config();
   }

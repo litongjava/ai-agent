@@ -1,6 +1,6 @@
 package com.litongjava.llm.service;
 
-import com.litongjava.llm.config.AiAgentContext;
+import com.litongjava.llm.context.AiAgentContext;
 import com.litongjava.tio.utils.environment.EnvUtils;
 
 public class AgentNotificationService {
