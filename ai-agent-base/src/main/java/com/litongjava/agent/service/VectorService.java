@@ -13,8 +13,8 @@ import com.litongjava.db.utils.PgVectorUtils;
 import com.litongjava.openai.client.OpenAiClient;
 import com.litongjava.openai.consts.OpenAiModels;
 import com.litongjava.openai.embedding.EmbeddingData;
-import com.litongjava.openai.embedding.EmbeddingRequestVo;
-import com.litongjava.openai.embedding.EmbeddingResponseVo;
+import com.litongjava.openai.embedding.EmbeddingRequest;
+import com.litongjava.openai.embedding.EmbeddingResponse;
 import com.litongjava.openai.utils.EmbeddingVectorUtils;
 import com.litongjava.tio.utils.crypto.Md5Utils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
@@ -52,7 +52,7 @@ public class VectorService {
     return v;
   }
 
-  public synchronized EmbeddingResponseVo getVector(String text, String model) {
+  public synchronized EmbeddingResponse getVector(String text, String model) {
     String md5 = Md5Utils.md5Hex(text);
     String sql = String.format("select v from %s where md5=? and m=?", AgentLLMTableNames.llm_vector_embedding);
     PGobject pGobject = Db.queryFirst(sql, md5, model);
@@ -64,13 +64,13 @@ public class VectorService {
       embeddingData.setEmbedding(floats);
       lists.add(embeddingData);
 
-      EmbeddingResponseVo embeddingResponseVo = new EmbeddingResponseVo();
+      EmbeddingResponse embeddingResponseVo = new EmbeddingResponse();
       embeddingResponseVo.setModel(model);
       embeddingResponseVo.setData(lists);
       return embeddingResponseVo;
     } else {
-      EmbeddingRequestVo embeddingRequestVo = new EmbeddingRequestVo(model, text);
-      EmbeddingResponseVo embeddingResponseVo = null;
+      EmbeddingRequest embeddingRequestVo = new EmbeddingRequest(model, text);
+      EmbeddingResponse embeddingResponseVo = null;
       synchronized (vectorLock) {
         embeddingResponseVo = OpenAiClient.embeddings(embeddingRequestVo);
       }

@@ -10,15 +10,6 @@
   <artifactId>ai-agent-base</artifactId>
   <name>ai-agent-base</name>
   <properties>
-    <!-- 项目属性 -->
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
-
-    <!-- 版本属性 -->
-    <lombok-version>1.18.30</lombok-version>
-    <fastjson2.version>2.0.52</fastjson2.version>
-
     <!-- 应用程序属性 -->
     <final.name>web-hello</final.name>
   </properties>
@@ -44,7 +35,6 @@
       <version>4.0.3</version>
     </dependency>
 
-
     <!-- Lombok 用于简化代码 -->
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -66,7 +56,7 @@
     <dependency>
       <groupId>com.litongjava</groupId>
       <artifactId>tio-boot-admin</artifactId>
-      <version>1.1.1</version>
+      <version>${tio-boot-admin.version}</version>
     </dependency>
 
     <dependency>

@@ -15,9 +15,8 @@ import com.litongjava.llm.dao.SchoolDictDao;
 import com.litongjava.llm.sql.LlmIntentClassificationSql;
 import com.litongjava.llm.vo.SchoolDict;
 import com.litongjava.openai.consts.OpenAiModels;
-import com.litongjava.openai.embedding.EmbeddingResponseVo;
+import com.litongjava.openai.embedding.EmbeddingResponse;
 import com.litongjava.openai.utils.EmbeddingVectorUtils;
-import com.litongjava.template.SqlTemplates;
 import com.litongjava.tio.core.ChannelContext;
 import com.litongjava.tio.core.Tio;
 import com.litongjava.tio.http.common.sse.SsePacket;
@@ -34,7 +33,7 @@ public class SearchPromptService {
     Map<String, String> params = new HashMap<>();
 
     // 向量
-    EmbeddingResponseVo vector = Aop.get(VectorService.class).getVector(textQuestion, OpenAiModels.TEXT_EMBEDDING_3_LARGE);
+    EmbeddingResponse vector = Aop.get(VectorService.class).getVector(textQuestion, OpenAiModels.TEXT_EMBEDDING_3_LARGE);
 
     String string = EmbeddingVectorUtils.toString(vector.getData().get(0).getEmbedding());
 

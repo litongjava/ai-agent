@@ -22,7 +22,7 @@ import com.litongjava.llm.service.RunningNotificationService;
 import com.litongjava.llm.service.SearchPromptService;
 import com.litongjava.model.body.RespBodyVo;
 import com.litongjava.model.page.Page;
-import com.litongjava.openai.embedding.EmbeddingResponseVo;
+import com.litongjava.openai.embedding.EmbeddingResponse;
 import com.litongjava.tio.boot.http.TioRequestContext;
 import com.litongjava.tio.http.common.HttpRequest;
 import com.litongjava.tio.http.common.HttpResponse;
@@ -396,7 +396,7 @@ public class ApiChatHandler {
     }
 
     VectorService vectorService = Aop.get(VectorService.class);
-    EmbeddingResponseVo embedding = vectorService.getVector(text, model);
+    EmbeddingResponse embedding = vectorService.getVector(text, model);
 
     Map<String, Object> data = new HashMap<>();
     data.put("embedding", embedding.getData().get(0).getEmbedding());

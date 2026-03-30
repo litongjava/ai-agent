@@ -20,14 +20,13 @@ import com.litongjava.tio.boot.admin.consts.StoragePlatformConst;
 import com.litongjava.tio.boot.admin.costants.TioBootAdminTableNames;
 import com.litongjava.tio.boot.admin.dao.SystemUploadFileDao;
 import com.litongjava.tio.boot.admin.services.system.SystemUploadFileService;
-import com.litongjava.tio.boot.admin.utils.AwsS3Utils;
+import com.litongjava.tio.boot.admin.utils.TioAdminEnvUtils;
+import com.litongjava.tio.boot.admin.utils.storage.UniStorageUploadUtils;
 import com.litongjava.tio.utils.crypto.Md5Utils;
 import com.litongjava.tio.utils.hutool.FilenameUtils;
 import com.litongjava.tio.utils.snowflake.SnowflakeIdUtils;
 
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 @Slf4j
 public class ChatUploadService {
@@ -99,35 +98,32 @@ public class ChatUploadService {
       log.info("not found from cache table:{}", md5);
     }
 
-    String etag = null;
-    try (S3Client client = AwsS3Utils.buildClient();) {
-      PutObjectResponse response = AwsS3Utils.upload(client, AwsS3Utils.bucketName, targetName, fileContent, suffix);
-      etag = response.eTag();
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
+    String etag = UniStorageUploadUtils.upload(targetName, fileContent, suffix);
+    String storagePlatform = TioAdminEnvUtils.getStoragePlatform();
+    String regionName = UniStorageUploadUtils.getRegionName();
+    String bucketName = UniStorageUploadUtils.getBucketName();
 
     // Log and save to database
     log.info("Uploaded with ETag: {}", etag);
 
     TableInput kv = TableInput.create().set("name", originFilename).set("size", size).set("md5", md5)
         //
-        .set("platform", StoragePlatformConst.aws_s3).set("region_name", AwsS3Utils.regionName)
-        .set("bucket_name", AwsS3Utils.bucketName)
+        .set("platform", storagePlatform).set("region_name", regionName).set("bucket_name", bucketName)
         //
         .set("target_name", targetName).set("file_id", etag);
 
     TableResult<Kv> save = ApiTable.save(TioBootAdminTableNames.tio_boot_admin_system_upload_file, kv);
-    String downloadUrl = getUrl(AwsS3Utils.bucketName, targetName);
+    String downloadUrl = getUrl(bucketName, targetName);
 
     return new UploadResult(save.getData().getLong("id"), originFilename, Long.valueOf(size), downloadUrl, md5);
 
   }
 
   public String getUrl(String bucketName, String targetName) {
-    return Aop.get(SystemUploadFileService.class).getUrl(StoragePlatformConst.aws_s3, AwsS3Utils.regionName, bucketName,
-        targetName);
+    String storagePlatform = TioAdminEnvUtils.getStoragePlatform();
+    String regionName = UniStorageUploadUtils.getRegionName();
+
+    return Aop.get(SystemUploadFileService.class).getUrl(storagePlatform, regionName, bucketName, targetName);
   }
 
   public UploadResult getUrlById(String id) {
