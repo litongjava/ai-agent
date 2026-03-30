@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.litongjava</groupId>
@@ -9,6 +11,16 @@
   <name>ai-agent-web</name>
 
   <dependencies>
+
+    <!-- Lombok 用于简化代码 -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok-version}</version>
+      <optional>true</optional>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- JUnit 用于测试 -->
     <dependency>
       <groupId>junit</groupId>
@@ -21,6 +33,8 @@
       <artifactId>ai-agent-business</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+
   </dependencies>
   <profiles>
     <!-- development -->

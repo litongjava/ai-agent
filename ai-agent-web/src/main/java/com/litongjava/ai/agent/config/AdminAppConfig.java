@@ -1,11 +1,10 @@
 package com.litongjava.ai.agent.config;
 
+import com.litongjava.ai.agent.handler.ApiChatHandler;
+import com.litongjava.ai.agent.handler.GeogebraChatHandler;
 import com.litongjava.annotation.AConfiguration;
 import com.litongjava.annotation.Initialization;
 import com.litongjava.jfinal.aop.Aop;
-import com.litongjava.llm.handler.ApiChatAskHandler;
-import com.litongjava.llm.handler.ApiChatHandler;
-import com.litongjava.llm.handler.GeogebraChatHandler;
 import com.litongjava.tio.boot.admin.config.TioAdminControllerConfiguration;
 import com.litongjava.tio.boot.admin.config.TioAdminDbConfiguration;
 import com.litongjava.tio.boot.admin.config.TioAdminEhCacheConfig;

@@ -15,10 +15,6 @@
     <!-- 项目属性 -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- 版本属性 -->
-    <lombok-version>1.18.30</lombok-version>
-    <fastjson2.version>2.0.52</fastjson2.version>
-
     <!-- 应用程序属性 -->
     <final.name>web-hello</final.name>
   </properties>
