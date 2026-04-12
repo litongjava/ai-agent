@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>球面与平面可视化</title>
+<style>    
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+#ggbApplet {
+    width: 100%;
+    height: 100vh;
+}
+</style>    
+</head>
+<body>
+<div class="container">
+    <h1>球面 x² + y² + z² = 4 与平面 x + z = 2 的可视化</h1>
+    <div id="ggbApplet"></div>
+</div>
+
+<!-- GeoGebra API -->
+<script src="https://www.geogebra.org/apps/deployggb.js"></script>
+
+<script>
+    // GeoGebra 配置参数
+    const parameters = {
+        "appName": "3d",
+        scaleContainerClass: "ggb-full",
+        "showToolBar": true,
+        "showAlgebraInput": true,
+        "showMenuBar": true,
+        "language": "en",
+        "enableShiftDragZoom": true,
+        "showResetIcon": true,
+        "enableRightClick": true,
+        "appletOnLoad": function (api) {
+            console.log('GeoGebra 已加载完成');
+
+            // 绘制球面 x^2 + y^2 + z^2 = 4
+            api.evalCommand('x^2 + y^2 + z^2 = 4');
+            
+            // 绘制平面 x + z = 2
+            api.evalCommand('x + z = 2');
+            
+            // 绘制交线（球面与平面的交线是一个圆）
+            // 在平面 x + z = 2 上，z = 2 - x
+            // 代入球面方程：x^2 + y^2 + (2-x)^2 = 4
+            // 展开：x^2 + y^2 + 4 - 4x + x^2 = 4
+            // 简化：2x^2 + y^2 - 4x = 0
+            // 完成平方：2(x-1)^2 + y^2 = 2
+            // 参数方程：x = 1 + sqrt(1)*cos(t), y = sqrt(2)*sin(t), z = 2 - x = 1 - sqrt(1)*cos(t)
+            api.evalCommand('Curve(1 + cos(t), sqrt(2)*sin(t), 1 - cos(t), t, 0, 2*pi)');
+            
+            // 设置交线样式
+            api.setColor('Curve(1 + cos(t), sqrt(2)*sin(t), 1 - cos(t), t, 0, 2*pi)', 255, 0, 0);
+            api.setLineThickness('Curve(1 + cos(t), sqrt(2)*sin(t), 1 - cos(t), t, 0, 2*pi)', 3);
+
+            console.log('球面和平面已创建');
+        }
+    };
+
+    // 创建并注入 GeoGebra 应用
+    const applet = new GGBApplet(parameters, true);
+
+    // 页面加载完成后注入
+    window.addEventListener('load', function () {
+        applet.inject('ggbApplet');
+    });
+</script>
+</body>
+</html>

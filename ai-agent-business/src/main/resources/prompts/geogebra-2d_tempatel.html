@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoGebra 三角函数交互演示</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+#ggbApplet {
+    width: 100%;
+    height: 100vh;
+}
+</style>    
+</head>
+
+<body>
+
+<div class="container">
+    <h1>GeoGebra 交互式单位圆</h1>
+    <div id="ggbApplet"></div>
+
+</div>
+
+
+<!-- GeoGebra API -->
+<script src="https://www.geogebra.org/apps/deployggb.js"></script>
+
+<script>
+    // GeoGebra 配置参数
+    const parameters = {
+        "appName": "classic",
+        scaleContainerClass: "ggb-full",
+        "showToolBar": true,
+        "showAlgebraInput": false,
+        "showMenuBar": true,
+        "language": "zh_CN",
+        "enableShiftDragZoom": true,
+        "showResetIcon": true,
+        "enableRightClick": true,
+
+        // 当 GeoGebra 加载完成后执行
+        "appletOnLoad": function (api) {
+            console.log('GeoGebra 已加载完成');
+
+            // 设置为几何视图
+            api.setPerspective('G');
+
+            // 创建单位圆
+            api.evalCommand('Circle((0,0),1)');
+
+            // 创建角度滑块 (默认30度)
+            api.evalCommand('α = 30°');
+
+            // 创建单位圆上的点 A
+            api.evalCommand('A = (cos(α), sin(α))');
+            api.setColor('A', 231, 76, 60);  // 红色
+            api.setPointSize('A', 5);
+
+            // 创建从原点到点 A 的线段
+            api.evalCommand('Segment((0,0), A)');
+
+            // 创建 cos(α) 的投影点 B
+            api.evalCommand('B = (cos(α), 0)');
+
+            // 创建绿色水平线段 (cos值)
+            api.evalCommand('Segment(A, B)');
+            api.setColor('Segment(A, B)', 46, 204, 113);  // 绿色
+            api.setLineThickness('Segment(A, B)', 3);
+
+            // 创建 sin(α) 的投影点 C
+            api.evalCommand('C = (0, sin(α))');
+
+            // 创建红色竖直线段 (sin值)
+            api.evalCommand('Segment(A, C)');
+            api.setColor('Segment(A, C)', 231, 76, 60);  // 红色
+            api.setLineThickness('Segment(A, C)', 3);
+
+            // 显示角度标记
+            api.evalCommand('Angle((1,0), (0,0), A)');
+            api.setVisible('α', true);
+
+            // 创建显示文本
+            api.evalCommand('Text1 = Text("角度 α = " + α, (2, 2))');
+            api.evalCommand('Text2 = Text("cos(α) = " + round(cos(α), 3), (2, 1))');
+            api.evalCommand('Text3 = Text("sin(α) = " + round(sin(α), 3), (2, 0))');
+            api.evalCommand('Text4 = Text("tan(α) = " + round(tan(α), 3), (2, -1))');
+
+            // 固定文本位置
+            api.setFixed('Text1', true, true);
+            api.setFixed('Text2', true, true);
+            api.setFixed('Text3', true, true);
+            api.setFixed('Text4', true, true);
+
+            console.log('单位圆和三角函数可视化已创建');
+        }
+    };
+
+    // 创建并注入 GeoGebra 应用
+    const applet = new GGBApplet(parameters, true);
+
+    // 页面加载完成后注入
+    window.addEventListener('load', function () {
+        applet.inject('ggbApplet');
+    });
+</script>
+</body>
+</html>

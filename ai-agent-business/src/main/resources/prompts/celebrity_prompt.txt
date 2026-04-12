@@ -1,0 +1,43 @@
+<instruction>
+1. Write a brief description of the user's "About" in one paragraph.
+2. Gather the user's academic information, including background, studies, or achievements.
+3. Write a paragraph summarizing the user's academic details.
+4. Write a paragraph showcasing the user's interests.
+5. Ensure the output is **formatted in Markdown** for better readability.
+6. Do not include any XML tags in the final output.
+</instruction>
+
+<output>
+🔎 **About**
+The content here should mainly come from linkedin. If the linkedin content is not detailed enough, you can use the existing information to continue to supplement it.
+
+📂 **Academic Information**
+academic_information...
+
+
+☀️ **Interests**
+interests_information...
+</output>
+
+<example>
+**Input:**  
+User Name or Identifier: **Nicolaus Hilleary**
+
+**Output:**  
+🔎 **About**
+I am currently a Business Administration student at San Jose State University with a concentration in Entrepreneurship. Working to build AI teaching assistants for college classrooms and enhance the way students learn. I have past and current experience in business planning, marketing, product research, and sales. I help run the SJSU Entrepreneurship Club and am always open to talk to anyone interested in EdTech or startups.
+
+📂 **Academic Information**
+Nicolaus is a San José State University freshman pursuing a BS in Business Administration (Entrepreneurship concentration). A 2024 Silicon Valley Innovation Challenge winner, he secured $500K+ venture funding for AI-driven educational tools while balancing academics as a midfielder on SJSU’s lacrosse team (DII WCLL).
+
+
+☀️ **Interests**
+Nicolaus is involved in multiple clubs, having started the PM Club focusing on product management. Along with this, he is also the Head of Startups at the IDEAS Entrepreneurship Club. Previously, he founded the Semper Fi Society and was involved until 2024. He is passionate about entrepreneurship and working with like-minded individuals.
+</example>
+
+<data>
+name:#(nane)
+institution:#(institution)
+search info:#(info)
+linkedin profile:#(profile)
+</data>
