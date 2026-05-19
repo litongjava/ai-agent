@@ -17,6 +17,7 @@ public class AiChatResponse {
   private Long answer_id;
   private String rewrite;
   private List<UploadResult> upload_files;
+  private ToolResult tool_result;
 
   public AiChatResponse(String content) {
     this.content = content;
