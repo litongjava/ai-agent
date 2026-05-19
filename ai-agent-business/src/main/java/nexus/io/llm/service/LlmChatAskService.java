@@ -9,13 +9,11 @@ import com.jfinal.kit.Kv;
 
 import lombok.extern.slf4j.Slf4j;
 import nexus.io.agent.model.LlmChatHistory;
-import nexus.io.agent.model.LlmChatSession;
 import nexus.io.agent.service.PromptService;
 import nexus.io.agent.service.TranslateService;
 import nexus.io.chat.ChatMessageArgs;
 import nexus.io.chat.UniChatMessage;
 import nexus.io.consts.ModelPlatformName;
-import nexus.io.db.activerecord.Row;
 import nexus.io.google.search.GoogleCustomSearchClient;
 import nexus.io.google.search.GoogleCustomSearchResponse;
 import nexus.io.google.search.SearchResultItem;
@@ -30,9 +28,8 @@ import nexus.io.llm.consts.ApiChatAskType;
 import nexus.io.llm.consts.ApiChatSendCmd;
 import nexus.io.llm.context.AiAgentContext;
 import nexus.io.llm.dao.SchoolDictDao;
-import nexus.io.llm.service.LlmChatHistoryService;
 import nexus.io.llm.utils.AgentBotQuestionUtils;
-import nexus.io.llm.vo.AiChatResponseVo;
+import nexus.io.llm.vo.AiChatResponse;
 import nexus.io.llm.vo.ChatAskRequest;
 import nexus.io.llm.vo.ChatParamVo;
 import nexus.io.llm.vo.SchoolDict;
@@ -215,7 +212,7 @@ public class LlmChatAskService implements ChatAskService {
 
           SseEmitter.closeSeeConnection(channelContext);
         }
-        return RespBodyVo.ok(new AiChatResponseVo(split[1]));
+        return RespBodyVo.ok(new AiChatResponse(split[1]));
       }
     }
 
@@ -227,7 +224,7 @@ public class LlmChatAskService implements ChatAskService {
     }
 
     // 3.查询历史
-    AiChatResponseVo aiChatResponseVo = new AiChatResponseVo();
+    AiChatResponse aiChatResponseVo = new AiChatResponse();
     List<LlmChatHistory> histories = null;
     if (history_enabled) {
       if (!ApiChatAskType.translator.equals(type)) {
@@ -349,9 +346,9 @@ public class LlmChatAskService implements ChatAskService {
       SsePacket packet = new SsePacket(AiChatEventName.message_id, JsonUtils.toJson(kv));
       Tio.bSend(channelContext, packet);
     }
-    aiChatResponseVo.setQuesitonId(questionId);
+    aiChatResponseVo.setQuesiton_id(questionId);
     if (fileInfo != null) {
-      aiChatResponseVo.setUploadFiles(fileInfo);
+      aiChatResponseVo.setUpload_files(fileInfo);
     }
 
     String rewriteQuestion = null;

@@ -40,8 +40,9 @@ public class LlmChatSessionService {
 
   public boolean exists(String userId, Long id) {
     String cacheName = AiAgentBaseTableNames.llm_chat_session + "_exists";
+    Boolean exists = false;
     String key = id + "_" + userId;
-    Boolean exists = EhCacheKit.getBoolean(cacheName, key);
+    exists = EhCacheKit.getBoolean(cacheName, key);
     if (exists != null && exists) {
       return exists;
     }

@@ -10,15 +10,15 @@ import nexus.io.model.upload.UploadResult;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AiChatResponseVo {
+public class AiChatResponse {
   private String content;
-  private List<String> cition;
-  private Long quesitonId;
-  private Long answerId;
+  private List<String> citions;
+  private Long quesiton_id;
+  private Long answer_id;
   private String rewrite;
-  private List<UploadResult> uploadFiles;
+  private List<UploadResult> upload_files;
 
-  public AiChatResponseVo(String content) {
+  public AiChatResponse(String content) {
     this.content = content;
   }
 }

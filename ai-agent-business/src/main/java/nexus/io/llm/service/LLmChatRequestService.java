@@ -35,7 +35,7 @@ import nexus.io.llm.can.ChatStreamCallCan;
 import nexus.io.llm.consts.AiChatEventName;
 import nexus.io.llm.consts.ApiChatAskType;
 import nexus.io.llm.service.LlmChatHistoryService;
-import nexus.io.llm.vo.AiChatResponseVo;
+import nexus.io.llm.vo.AiChatResponse;
 import nexus.io.llm.vo.ChatAskRequest;
 import nexus.io.llm.vo.ChatParamVo;
 import nexus.io.model.upload.UploadResult;
@@ -77,7 +77,7 @@ public class LLmChatRequestService {
    * @param aiChatResponseVo
    * @return 响应对象
    */
-  public AiChatResponseVo predict(ChatAskRequest chatAskVo, ChatParamVo chatParamVo, AiChatResponseVo aiChatResponseVo) {
+  public AiChatResponse predict(ChatAskRequest chatAskVo, ChatParamVo chatParamVo, AiChatResponse aiChatResponseVo) {
     String provider = chatAskVo.getProvider();
     Boolean stream = chatAskVo.isStream();
     String type = chatAskVo.getType();
@@ -151,8 +151,8 @@ public class LLmChatRequestService {
         String answerContent = chatCompletions.getChoices().get(0).getMessage().getContent();
         Aop.get(LlmChatHistoryService.class).saveAssistant(answerId, sessionId, answerContent);
         aiChatResponseVo.setContent(answerContent);
-        aiChatResponseVo.setAnswerId(answerId);
-        aiChatResponseVo.setCition(citations);
+        aiChatResponseVo.setAnswer_id(answerId);
+        aiChatResponseVo.setCitions(citations);
         return aiChatResponseVo;
       }
 
@@ -169,7 +169,7 @@ public class LLmChatRequestService {
    * @param answerId
    * @return
    */
-  private AiChatResponseVo multiModel(ChannelContext channelContext, ChatAskRequest chatAskVo, long answerId,
+  private AiChatResponse multiModel(ChannelContext channelContext, ChatAskRequest chatAskVo, long answerId,
       String textQuesiton) {
     CountDownLatch latch = new CountDownLatch(3);
     List<UniChatMessage> messages = chatAskVo.getMessages();
@@ -228,7 +228,7 @@ public class LLmChatRequestService {
 
   }
 
-  private AiChatResponseVo singleModel(ChannelContext channelContext, ChatAskRequest chatAskVo, long answerId,
+  private AiChatResponse singleModel(ChannelContext channelContext, ChatAskRequest chatAskVo, long answerId,
       String textQuestion) {
     Long sessionId = chatAskVo.getSession_id();
     String provider = chatAskVo.getProvider();
