@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class ToolVo {
+public class ToolResult {
+  private String id;
   private String action;
   private String tool;
   private String code;
