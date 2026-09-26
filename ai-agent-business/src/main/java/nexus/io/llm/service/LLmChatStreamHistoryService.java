@@ -5,7 +5,6 @@ import com.jfinal.kit.Kv;
 import nexus.io.http.common.sse.SsePacket;
 import nexus.io.jfinal.aop.Aop;
 import nexus.io.llm.consts.AiChatEventName;
-import nexus.io.llm.service.LlmChatHistoryService;
 import nexus.io.tio.core.ChannelContext;
 import nexus.io.tio.core.Tio;
 import nexus.io.tio.utils.json.JsonUtils;
